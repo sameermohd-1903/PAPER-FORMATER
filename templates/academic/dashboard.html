@@ -1,0 +1,64 @@
+{% extends 'academic/principal_base.html' %}
+
+{% block title %}
+Principal Dashboard
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow">
+
+    <div class="card-header bg-primary text-white">
+
+        <h3>
+
+            Principal Dashboard
+
+        </h3>
+
+    </div>
+
+    <div class="card-body">
+
+        <h4>
+
+            Welcome,
+            {{ request.user.first_name }} {{ request.user.last_name }}!
+
+        </h4>
+
+        <hr>
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <a href="{% url 'academic:add_program' %}"
+                   class="btn btn-primary w-100">
+
+                    Add Program
+
+                </a>
+
+            </div>
+
+            
+
+            <div class="col-md-6">
+
+                <a href="{% url 'academic:add_subject' %}"
+                   class="btn btn-warning w-100"> 
+
+                    Add Subject
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

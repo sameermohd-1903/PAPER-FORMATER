@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<div class="card shadow">
+
+<div class="card-header bg-success text-white">
+
+<h3>
+Upload Question Bank
+</h3>
+
+</div>
+
+<div class="card-body">
+
+<div class="alert alert-primary">
+
+<h5 class="mb-3">
+Selected Details
+</h5>
+
+<table class="table table-borderless mb-0">
+
+<tr>
+
+<td width="180">
+
+<strong>Level</strong>
+
+</td>
+
+<td>
+
+{{ program.get_level_display }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+<strong>Program</strong>
+
+</td>
+
+<td>
+
+{{ program.name }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+<strong>Semester</strong>
+
+</td>
+
+<td>
+
+Semester {{ semester.number }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+<strong>Subject</strong>
+
+</td>
+
+<td>
+
+{{ subject.name }}
+
+</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<form
+method="post"
+enctype="multipart/form-data"
+>
+
+{% csrf_token %}
+
+{{ form.as_p }}
+
+<button
+type="submit"
+class="btn btn-success"
+>
+
+<i class="fas fa-upload"></i>
+
+Upload Excel
+
+</button>
+
+</form>
+
+<hr>
+
+<h4>
+
+Required Excel Format
+
+</h4>
+
+<table class="table table-bordered table-striped">
+
+<thead class="table-dark">
+
+<tr>
+
+<th>Question</th>
+
+<th>Module</th>
+
+<th>Unit</th>
+
+<th>Bloom</th>
+
+<th>Marks</th>
+
+<th>Difficulty</th>
+
+<th>Question Type</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>
+
+Explain SDLC.
+
+</td>
+
+<td>
+
+1
+
+</td>
+
+<td>
+
+1
+
+</td>
+
+<td>
+
+Understand
+
+</td>
+
+<td>
+
+5
+
+</td>
+
+<td>
+
+Medium
+
+</td>
+
+<td>
+
+Theory
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="alert alert-warning mt-4">
+
+<h5>
+
+Importer Features
+
+</h5>
+
+<ul class="mb-0">
+
+<li>✅ Columns may be in any order</li>
+
+<li>✅ Capital or small letters accepted</li>
+
+<li>✅ Extra spaces are ignored</li>
+
+<li>✅ Extra columns are ignored</li>
+
+<li>✅ Duplicate questions are skipped</li>
+
+<li>✅ Missing columns are reported</li>
+
+<li>✅ Invalid rows are reported with row number</li>
+
+<li>✅ Import summary is displayed after upload</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}
+Create Paper Pattern
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header bg-primary text-white">
+
+            <h3 class="mb-0">
+
+                <i class="fas fa-file-alt"></i>
+
+                Paper Pattern Builder
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="post" id="patternForm">
+
+                {% csrf_token %}
+
+                <!-- ====================================== -->
+                <!-- PAPER INFORMATION -->
+                <!-- ====================================== -->
+
+                <h5 class="mb-3">
+
+                    <i class="fas fa-info-circle"></i>
+
+                    Paper Information
+
+                </h5>
+
+                <div class="row">
+
+                    <!-- Level -->
+
+                    <div class="col-md-3 mb-3">
+
+                        <label class="form-label">
+
+                            Level
+
+                        </label>
+
+                        <select
+                            id="level"
+                            class="form-select">
+
+                            <option value="">
+
+                                Select Level
+
+                            </option>
+
+                            <option value="UG">
+
+                                Under Graduate
+
+                            </option>
+
+                            <option value="PG">
+
+                                Post Graduate
+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- Program -->
+
+                    <div class="col-md-3 mb-3">
+
+                        <label class="form-label">
+
+                            Program
+
+                        </label>
+
+                        {{ form.program }}
+
+                    </div>
+
+                    <!-- Semester -->
+
+                    <div class="col-md-3 mb-3">
+
+                        <label class="form-label">
+
+                            Semester
+
+                        </label>
+
+                        {{ form.semester }}
+
+                    </div>
+
+                    <!-- Subject -->
+
+                    <div class="col-md-3 mb-3">
+
+                        <label class="form-label">
+
+                            Subject
+
+                        </label>
+
+                        {{ form.subject }}
+
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">
+
+                            Pattern Name
+
+                        </label>
+
+                        {{ form.pattern_name }}
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">
+
+                            Exam Type
+
+                        </label>
+
+                        {{ form.exam_type }}
+
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+
+                            Exam Date
+
+                        </label>
+
+                        {{ form.exam_date }}
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+
+                            Time Allowed
+
+                        </label>
+
+                        {{ form.time_allowed }}
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+
+                            Total Marks
+
+                        </label>
+
+                        {{ form.total_marks }}
+
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Paper Header
+
+                    </label>
+
+                    {{ form.paper_header }}
+
+                </div>
+
+                <div class="mb-4">
+
+                    <label class="form-label">
+
+                        Instructions
+
+                    </label>
+
+                    {{ form.instructions }}
+
+                </div>
+
+                <hr>
+
+                <!-- ====================================== -->
+                <!-- PATTERN ROWS -->
+                <!-- ====================================== -->
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+
+                    <h4 class="mb-0">
+
+                        Pattern Rows
+
+                    </h4>
+
+                    <button
+                        type="button"
+                        class="btn btn-success"
+                        id="addRowBtn">
+
+                        <i class="fas fa-plus"></i>
+
+                        Add Row
+
+                    </button>
+
+                </div>
+
+                <div class="table-responsive">
+
+                    <table
+                        class="table table-bordered table-hover align-middle"
+                        id="patternTable">
+
+                        <thead class="table-dark">
+
+                            <tr>
+
+                                <th width="60">
+
+                                    Order
+
+                                </th>
+
+                                <th>
+
+                                    Q.No
+
+                                </th>
+
+                                <th>
+
+                                    Attempt Rule
+
+                                </th>
+
+                                <th>
+
+                                    Unit
+
+                                </th>
+
+                                <th>
+
+                                    Bloom
+
+                                </th>
+
+                                <th>
+
+                                    Difficulty
+
+                                </th>
+
+                                <th>
+
+                                    Question Type
+
+                                </th>
+
+                                <th>
+
+                                    Marks
+
+                                </th>
+
+                                <th>
+
+                                    No. Questions
+
+                                </th>
+
+                                <th width="120">
+
+                                    Action
+
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="patternBody">
+
+                            <!-- Dynamic Rows -->
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="text-end mt-4">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-lg">
+
+                        <i class="fas fa-save"></i>
+
+                        Save Pattern
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="{% static 'js/pattern_builder.js' %}"></script>
+
+{% endblock %}

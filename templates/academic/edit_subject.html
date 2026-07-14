@@ -1,0 +1,195 @@
+{% extends "academic/principal_base.html" %}
+
+{% block title %}
+Edit Subject
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+```
+<div class="card">
+
+    <div class="card-header">
+        <h3>Edit Subject</h3>
+    </div>
+
+    <div class="card-body">
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label">Level</label>
+
+                <select
+                    id="level"
+                    name="level"
+                    class="form-control"
+                >
+                    <option value="UG"
+                        {% if subject.program.level == 'UG' %}
+                        selected
+                        {% endif %}
+                    >
+                        UG
+                    </option>
+
+                    <option value="PG"
+                        {% if subject.program.level == 'PG' %}
+                        selected
+                        {% endif %}
+                    >
+                        PG
+                    </option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Program</label>
+
+                <select
+                    id="program"
+                    name="program"
+                    class="form-control"
+                    required
+                >
+                    {% for p in programs %}
+
+                    <option
+                        value="{{ p.id }}"
+                        {% if p.id == subject.program.id %}
+                        selected
+                        {% endif %}
+                    >
+                        {{ p.name }}
+                    </option>
+
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Semester</label>
+
+                <select
+                    id="semester"
+                    name="semester"
+                    class="form-control"
+                    required
+                >
+                    {% for semester in semesters %}
+
+                    <option
+                        value="{{ semester.id }}"
+                        {% if semester.id == subject.semester.id %}
+                        selected
+                        {% endif %}
+                    >
+                        Semester {{ semester.number }}
+                    </option>
+
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Subject Name
+                </label>
+
+                <input
+                    type="text"
+                    name="name"
+                    class="form-control"
+                    value="{{ subject.name }}"
+                    required
+                >
+            </div>
+
+            <button
+                type="submit"
+                class="btn btn-success"
+            >
+                Update Subject
+            </button>
+
+            <a
+                href="{% url 'academic:add_subject' %}"
+                class="btn btn-secondary"
+            >
+                Cancel
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+```
+
+</div>
+
+<script>
+
+const levelSelect = document.getElementById("level");
+const programSelect = document.getElementById("program");
+const semesterSelect = document.getElementById("semester");
+
+levelSelect.addEventListener("change", function () {
+
+    fetch("/academic/ajax/programs/?level=" + this.value)
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        programSelect.innerHTML = "";
+
+        data.forEach(program => {
+
+            programSelect.innerHTML += `
+                <option value="${program.id}">
+                    ${program.name}
+                </option>
+            `;
+
+        });
+
+        programSelect.dispatchEvent(
+            new Event("change")
+        );
+
+    });
+
+});
+
+programSelect.addEventListener("change", function () {
+
+    fetch("/academic/ajax/semesters/?program=" + this.value)
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        semesterSelect.innerHTML = "";
+
+        data.forEach(semester => {
+
+            semesterSelect.innerHTML += `
+                <option value="${semester.id}">
+                    Semester ${semester.number}
+                </option>
+            `;
+
+        });
+
+    });
+
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate Paper - Paper Formatter{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-play"></i> Generate Paper</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <h5>Pattern: {{ pattern.pattern_name }}</h5>
+                    <p><strong>Subject:</strong> {{ pattern.subject }}</p>
+                    <p><strong>Total Marks:</strong> {{ pattern.total_marks }}</p>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-cogs"></i> Generate Question Paper
+                            </button>
+                            <a href="{% url 'papers:pattern_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Patterns
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Pattern Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Section A:</strong> {{ pattern.section_a_questions }} questions</p>
+                    <p><strong>Section B:</strong> {{ pattern.section_b_questions }} questions</p>
+                    <p><strong>Section C:</strong> {{ pattern.section_c_questions }} questions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

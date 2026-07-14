@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}
+Verify Email
+{% endblock %}
+
+{% block page_content %}
+
+<div class="container mt-5">
+
+    <div class="card shadow">
+
+        <div class="card-body text-center">
+
+            <h2 class="text-success">
+                📧 Verification Email Sent
+            </h2>
+
+            <hr>
+
+            <p>
+
+                We have sent a verification email.
+
+            </p>
+
+            <p>
+
+                Please check your inbox and click the verification link.
+
+            </p>
+
+            <a
+                href="{% url 'accounts:login' %}"
+                class="btn btn-primary"
+            >
+
+                Back to Login
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

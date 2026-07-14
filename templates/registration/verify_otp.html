@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}
+Verify OTP
+{% endblock %}
+
+{% block page_content %}
+
+<div class="row justify-content-center mt-5">
+
+    <div class="col-md-6 col-lg-5">
+
+        <div class="card shadow-lg border-0">
+
+            <div class="card-header bg-primary text-white text-center">
+
+                <h2>
+                    <i class="fas fa-shield-alt"></i>
+                    Verify OTP
+                </h2>
+
+                <p class="mb-0">
+                    Enter the 6-digit code sent to your email
+                </p>
+
+            </div>
+
+            <div class="card-body p-4">
+
+                {% if messages %}
+                    {% for message in messages %}
+
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST">
+
+                    {% csrf_token %}
+
+                    <div class="text-center mb-4">
+
+                        <label class="form-label fw-bold">
+                            Enter OTP
+                        </label>
+
+                        <input
+                            type="text"
+                            maxlength="6"
+                            name="otp"
+                            id="otp"
+                            class="form-control form-control-lg text-center"
+                            style="
+                                font-size:30px;
+                                letter-spacing:15px;
+                                font-weight:bold;
+                            "
+                            autocomplete="off"
+                            required
+                        >
+
+                    </div>
+
+                    <button
+                        class="btn btn-primary w-100 btn-lg"
+                        type="submit"
+                    >
+                        <i class="fas fa-check-circle"></i>
+                        Verify OTP
+                    </button>
+
+                </form>
+
+                <hr>
+
+                <div class="text-center">
+
+                    <p class="mb-1">
+
+                        Didn't receive OTP?
+
+                    </p>
+
+                    <button
+                        class="btn btn-link"
+                        id="resendBtn"
+                        disabled
+                    >
+                        Resend OTP
+                    </button>
+
+                    <div>
+
+                        <small class="text-muted">
+
+                            Resend available in
+
+                            <span id="timer">
+                                60
+                            </span>
+
+                            sec
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let seconds = 60;
+
+const timer = document.getElementById("timer");
+
+const resend = document.getElementById("resendBtn");
+
+const interval = setInterval(function(){
+
+    seconds--;
+
+    timer.innerHTML = seconds;
+
+    if(seconds <= 0){
+
+        clearInterval(interval);
+
+        resend.disabled = false;
+
+        resend.innerHTML = "Resend OTP";
+
+    }
+
+},1000);
+
+</script>
+
+{% endblock %}

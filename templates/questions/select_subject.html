@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<div class="card shadow">
+
+<div class="card-header bg-primary text-white">
+
+<h3>Select Details</h3>
+
+</div>
+
+<div class="card-body">
+
+<form method="post">
+
+{% csrf_token %}
+
+<div class="mb-3">
+
+<label>Level</label>
+
+<select
+    id="level"
+    name="level"
+    class="form-control"3
+>
+
+<option value="">
+Select Level
+</option>
+
+<option value="UG">
+UG
+</option>
+
+<option value="PG">
+PG
+</option>
+
+</select>
+
+</div>
+
+<div class="mb-3">
+
+<label>Program</label>
+
+<select
+    id="program"
+    name="program"
+    class="form-control"
+>
+
+<option value="">
+Select Program
+</option>
+
+</select>
+
+</div>
+
+<div class="mb-3">
+
+<label>Semester</label>
+
+<select
+    id="semester"
+    name="semester"
+    class="form-control"
+>
+
+<option value="">
+Select Semester
+</option>
+
+</select>
+
+</div>
+
+<div class="mb-3">
+
+<label>Subject</label>
+
+<select
+    id="subject"
+    name="subject"
+    class="form-control"
+>
+
+<option value="">
+Select Subject
+</option>
+
+</select>
+
+</div>
+
+<button
+    type="submit"
+    class="btn btn-success"
+>
+Continue
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const level =
+document.getElementById("level");
+
+const program =
+document.getElementById("program");
+
+const semester =
+document.getElementById("semester");
+
+const subject =
+document.getElementById("subject");
+
+level.addEventListener(
+    "change",
+    function(){
+
+fetch(
+"/academic/ajax/programs/?level="
++ this.value
+)
+
+.then(
+response => response.json()
+)
+
+.then(
+data => {
+
+program.innerHTML =
+'<option value="">Select Program</option>';
+
+data.forEach(
+item => {
+
+program.innerHTML +=
+`<option value="${item.id}">
+${item.name}
+</option>`;
+
+}
+);
+
+}
+);
+
+}
+);
+
+program.addEventListener(
+    "change",
+    function(){
+
+fetch(
+"/academic/ajax/semesters/?program="
++ this.value
+)
+
+.then(
+response => response.json()
+)
+
+.then(
+data => {
+
+semester.innerHTML =
+'<option value="">Select Semester</option>';
+
+data.forEach(
+item => {
+
+semester.innerHTML +=
+`<option value="${item.id}">
+Semester ${item.number}
+</option>`;
+
+}
+);
+
+}
+);
+
+}
+);
+
+semester.addEventListener(
+    "change",
+    function(){
+
+fetch(
+"/academic/ajax/subjects/?program="
++ program.value
++ "&semester="
++ this.value
+)
+
+.then(
+response => response.json()
+)
+
+.then(
+data => {
+
+subject.innerHTML =
+'<option value="">Select Subject</option>';
+
+data.forEach(
+item => {
+
+subject.innerHTML +=
+`<option value="${item.id}">
+${item.name}
+</option>`;
+
+}
+);
+
+}
+);
+
+}
+);
+
+</script>
+
+{% endblock %}

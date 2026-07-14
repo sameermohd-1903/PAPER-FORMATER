@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<div class="card shadow">
+
+    <div class="card-header bg-warning">
+
+        <h3>Edit Question</h3>
+
+    </div>
+
+    <div class="card-body">
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label>Program Name</label>
+                <input
+                    type="text"
+                    name="program_name"
+                    class="form-control"
+                    value="{{ question.program_name }}"
+                >
+            </div>
+
+            <div class="mb-3">
+                <label>Semester</label>
+                <input
+                    type="text"
+                    name="semester"
+                    class="form-control"
+                    value="{{ question.semester }}"
+                >
+            </div>
+
+            <div class="mb-3">
+                <label>Subject</label>
+                <input
+                    type="text"
+                    name="subject"
+                    class="form-control"
+                    value="{{ question.subject }}"
+                >
+            </div>
+
+            <div class="mb-3">
+                <label>Question</label>
+                <textarea
+                    name="question_text"
+                    class="form-control"
+                    rows="5"
+                >{{ question.question_text }}</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label>Bloom Level</label>
+                <input
+                    type="text"
+                    name="bloom_level"
+                    class="form-control"
+                    value="{{ question.bloom_level }}"
+                >
+            </div>
+
+            <div class="mb-3">
+                <label>Marks</label>
+                <input
+                    type="number"
+                    name="marks"
+                    class="form-control"
+                    value="{{ question.marks }}"
+                >
+            </div>
+
+            <button
+                type="submit"
+                class="btn btn-success"
+            >
+                Update Question
+            </button>
+
+            <a
+                href="{% url 'questions:list' %}"
+                class="btn btn-secondary"
+            >
+                Cancel
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

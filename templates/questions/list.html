@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+
+
+
+{% block content %}
+
+<div class="container mt-4">
+
+<div class="d-flex justify-content-between mb-3">
+
+    <h2>Question Bank</h2>
+
+    <div>
+        <a href="{% url 'questions:select' %}"
+           class="btn btn-success">
+            Upload Excel
+        </a>
+    </div>
+
+</div>
+
+<!-- ===== Dashboard Cards START ===== -->
+
+<div class="row mb-4">
+
+    <div class="col-md-3">
+        <div class="card border-primary text-center">
+            <div class="card-body">
+                <h4>Questions</h4>
+                <h1>{{ total_questions }}</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-success text-center">
+            <div class="card-body">
+                <h4>Easy</h4>
+                <h1>{{ easy_count }}</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-warning text-center">
+            <div class="card-body">
+                <h4>Medium</h4>
+                <h1>{{ medium_count }}</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-danger text-center">
+            <div class="card-body">
+                <h4>Hard</h4>
+                <h1>{{ hard_count }}</h1>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===== Dashboard Cards END ===== -->
+
+  <!-- Question Filter -->
+<div class="card shadow mb-4">
+
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+            <i class="fas fa-filter"></i>
+            Question Filters
+        </h4>
+    </div>
+
+    <div class="card-body">
+
+        <form method="get" id="filterForm">
+
+            <div class="row">
+
+                <!-- Level -->
+                <div class="col-md-3 mb-3">
+
+                    <label class="form-label">
+                        Level
+                    </label>
+
+                    <select id="level" name="level" class="form-select">
+
+    <option value="">Select Level</option>
+
+    <option value="UG"
+        {% if selected_level == "UG" %}
+            selected
+        {% endif %}
+    >
+        Under Graduate
+    </option>
+
+    <option value="PG"
+        {% if selected_level == "PG" %}
+            selected
+        {% endif %}
+    >
+        Post Graduate
+    </option>
+
+</select>
+
+                </div>
+
+                <!-- Program -->
+                <div class="col-md-3 mb-3">
+
+                    <label class="form-label">
+                        Program
+                    </label>
+
+                    <select
+                        id="program"
+                        name="program"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            Select Program
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <!-- Semester -->
+                <div class="col-md-3 mb-3">
+
+                    <label class="form-label">
+                        Semester
+                    </label>
+
+                    <select
+                        id="semester"
+                        name="semester"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            Select Semester
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <!-- Subject -->
+                <div class="col-md-3 mb-3">
+
+                    <label class="form-label">
+                        Subject
+                    </label>
+                    
+
+                     <select
+                        id="subject"
+                        name="subject"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            Select Subject
+                        </option>
+
+                    </select> 
+
+                </div>
+
+            </div>
+
+            <div class="text-center mt-3">
+
+                <button
+                    type="submit"
+                    class="btn btn-primary px-4"
+                >
+
+                    <i class="fas fa-filter"></i>
+                    Filter
+
+                </button>
+
+                <a
+                    href="{% url 'questions:list' %}"
+                    class="btn btn-secondary px-4 ms-2"
+                >
+
+                    <i class="fas fa-undo"></i>
+                    Reset
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% comment %} <!-- Search -->
+<form method="get" class="mb-3">
+
+    <div class="input-group">
+
+        <input
+            type="text"
+            name="subject"
+            class="form-control"
+            placeholder="Search by subject..."
+            value="{{ request.GET.subject }}"
+        >
+
+        <button
+            class="btn btn-outline-primary"
+            type="submit"
+        >
+            Search
+        </button>
+
+    </div>
+
+</form> {% endcomment %}
+
+
+<!-- Question Table -->
+
+<div class="table-responsive">
+
+<table class="table table-bordered table-hover align-middle">
+
+    <thead class="table-dark">
+
+        <tr>
+
+            <th>ID</th>
+            <th>Program</th>
+            <th>Semester</th>
+            <th>Subject</th>
+            <th>Unit</th>
+            <th>Question Type</th>
+            <th>Difficulty</th>
+            <th>Bloom Level</th>
+            <th>Marks</th>
+            <th width="35%">Question</th>
+            <th width="140">Actions</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for question in page_obj %}
+
+        <tr
+    data-id="{{ question.id }}"
+    data-level="{{ question.program.level }}"
+    data-program-id="{{ question.program.id }}"
+    data-program-name="{{ question.program.name }}"
+    data-semester-id="{{ question.semester.id }}"
+    data-semester-number="{{ question.semester.number }}"
+    data-subject-id="{{ question.subject.id }}"
+    data-subject-name="{{ question.subject.name }}"
+    data-unit="{{ question.unit }}"
+    data-question-type="{{ question.question_type }}"
+    data-difficulty="{{ question.difficulty }}"
+    data-bloom="{{ question.bloom_level }}"
+    data-marks="{{ question.marks }}"
+>
+
+            <td>{{ question.id }}</td>
+
+            <td>{{ question.program.name }}</td>
+
+            <td>Semester {{ question.semester.number }}</td>
+
+            <td>{{ question.subject.name }}</td>
+
+            <td>{{ question.unit }}</td>
+
+            <td>{{ question.get_question_type_display }}</td>
+
+            <td>
+
+                {% if question.difficulty == "easy" %}
+                    <span class="badge bg-success">
+                        {{ question.get_difficulty_display }}
+                    </span>
+
+                {% elif question.difficulty == "medium" %}
+                    <span class="badge bg-warning text-dark">
+                        {{ question.get_difficulty_display }}
+                    </span>
+
+                {% else %}
+                    <span class="badge bg-danger">
+                        {{ question.get_difficulty_display }}
+                    </span>
+                {% endif %}
+
+            </td>
+
+            <td>{{ question.get_bloom_level_display }}</td>
+
+            <td>{{ question.marks }}</td>
+
+            <td>{{ question.question_text }}</td>
+
+            <td class="action-cell">
+
+    <button
+        type="button"
+        class="btn btn-warning btn-sm edit-btn">
+
+        <i class="fas fa-edit"></i>
+        Edit
+
+    </button>
+
+    <button
+        type="button"
+        class="btn btn-danger btn-sm delete-btn">
+
+        <i class="fas fa-trash"></i>
+        Delete
+
+    </button>
+
+</td>
+
+        </tr>
+
+    {% empty %}
+
+        <tr>
+
+            <td colspan="11" class="text-center">
+                No Questions Found
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+</div>
+  </form>
+
+  <!-- Table and Pagination -->
+  <!-- Your existing table and pagination code here -->
+
+</div>
+{% load static %}
+
+
+</div>
+
+<div id="selected-values"
+
+    data-level="{{ selected_level }}"
+    data-program="{{ selected_program }}"
+    data-semester="{{ selected_semester }}"
+    data-subject="{{ selected_subject }}">
+
+</div>
+
+
+
+{% load static %}
+
+
+
+<script src="{% static 'js/question_bank.js' %}"></script>
+
+
+{% endblock %}

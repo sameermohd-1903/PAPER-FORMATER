@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block title %}Principal / HOD Registration{% endblock %}
+
+{% block page_content %}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-7">
+
+            <div class="card shadow-lg border-0 rounded-4">
+
+                <div class="card-header bg-dark text-white text-center rounded-top-4">
+
+                    <h2 class="fw-bold mb-1">
+                        Principal / HOD Registration
+                    </h2>
+
+                    <p class="mb-0">
+                        Paper Formatter Management System
+                    </p>
+
+                </div>
+
+                <div class="card-body p-4">
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                Full Name
+                            </label>
+
+                            {{ form.first_name }}
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                Email Address
+                            </label>
+
+                            {{ form.email }}
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                Phone Number
+                            </label>
+
+                            <input
+                                type="text"
+                                name="phone_number"
+                                class="form-control"
+                                placeholder="Enter Phone Number"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                Password
+                            </label>
+
+                            <div class="input-group">
+
+                                {{ form.password1 }}
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    onclick="togglePassword('id_password1','eye1')">
+
+                                    <i
+                                        id="eye1"
+                                        class="bi bi-eye">
+                                    </i>
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label class="form-label fw-semibold">
+                                Confirm Password
+                            </label>
+
+                            <div class="input-group">
+
+                                {{ form.password2 }}
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    onclick="togglePassword('id_password2','eye2')">
+
+                                    <i
+                                        id="eye2"
+                                        class="bi bi-eye">
+                                    </i>
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div class="form-check mb-4">
+
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                required
+                                id="terms">
+
+                            <label
+                                class="form-check-label"
+                                for="terms">
+
+                                I agree to the Terms &
+                                Conditions
+
+                            </label>
+
+                        </div>
+
+                        <button
+                            class="btn btn-dark w-100 py-2"
+                            type="submit">
+
+                            <i class="bi bi-person-plus-fill"></i>
+
+                            Register
+
+                        </button>
+
+                    </form>
+
+                    <hr>
+
+                    <div class="text-center">
+
+                        Already have an account?
+
+                        <br>
+
+                        <a
+                            href="{% url 'accounts:login' %}"
+                            class="btn btn-primary mt-2">
+
+                            Login
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+document.querySelectorAll("input").forEach(function(input){
+
+    input.classList.add("form-control");
+
+});
+
+function togglePassword(id,eye){
+
+    let field=document.getElementById(id);
+
+    let icon=document.getElementById(eye);
+
+    if(field.type==="password"){
+
+        field.type="text";
+
+        icon.className="bi bi-eye-slash";
+
+    }
+
+    else{
+
+        field.type="password";
+
+        icon.className="bi bi-eye";
+
+    }
+
+}
+
+</script>
+
+{% endblock %}

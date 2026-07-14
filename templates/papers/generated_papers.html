@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Generated Papers - Paper Formatter{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Generated Papers</h1>
+                <a href="{% url 'papers:pattern_list' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Generate New Paper
+                </a>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if papers %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Title</th>
+                                <th>Subject</th>
+                                <th>Maximum Marks</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for paper in papers %}
+                                <tr>
+                                    <td>{{ paper.title }}</td>
+                                    <td>{{ paper.subject }}</td>
+                                    <td>{{ paper.maximum_marks }}</td>
+                                    <td>{{ paper.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'papers:paper_preview' paper.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> Preview
+                                        </a>
+                                        <a href="{% url 'papers:download_paper' paper.id 'pdf' %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </a>
+                                        <a href="{% url 'papers:download_paper' paper.id 'docx' %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-file-word"></i> DOCX
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle"></i> No generated papers yet. 
+                    <a href="{% url 'papers:pattern_list' %}" class="alert-link">Generate one now</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

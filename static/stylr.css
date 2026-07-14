@@ -1,0 +1,83 @@
+/* Custom styles for Paper Formatter */
+body {
+    background-color: #f8f9fa;
+}
+.sidebar {
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+}
+.sidebar .nav-link {
+    color: #bdc3c7;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid transparent;
+}
+.sidebar .nav-link:hover {
+    color: #ecf0f1;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-left-color: #3498db;
+}
+.sidebar .nav-link.active {
+    color: #ecf0f1;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-left-color: #3498db;
+}
+.stats-card {
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+.border-left-primary { border-left-color: #4e73df !important; }
+.border-left-success { border-left-color: #1cc88a !important; }
+.border-left-info { border-left-color: #36b9cc !important; }
+.border-left-warning { border-left-color: #f6c23e !important; }
+.progress {
+    background-color: #eaecf4;
+}
+/* Table styling */
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #5a5c69;
+}
+/* Card shadows */
+.card {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    border: 1px solid #e3e6f0;
+}
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+/* Button enhancements */
+.btn {
+    border-radius: 0.35rem;
+    font-weight: 600;
+}
+/* Form styling */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+/* Alert styling */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+/* Badge styling */
+.badge {
+    font-size: 0.75em;
+    font-weight: 600;
+}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sidebar {
+        position: static;
+        height: auto;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+}

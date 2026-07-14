@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Paper Preview - Paper Formatter{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-file-pdf"></i> {{ paper.title }}</h4>
+                    <div>
+                        <a href="{% url 'papers:download_paper' paper.id 'pdf' %}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-download"></i> PDF
+                        </a>
+                        <a href="{% url 'papers:download_paper' paper.id 'docx' %}" class="btn btn-info btn-sm">
+                            <i class="fas fa-download"></i> DOCX
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5>Paper Details</h5>
+                    <p><strong>Subject:</strong> {{ paper.subject }}</p>
+                    <p><strong>Maximum Marks:</strong> {{ paper.maximum_marks }}</p>
+                    <p><strong>Created:</strong> {{ paper.created_at|date:"M d, Y H:i" }}</p>
+
+                    <hr>
+
+                    <h5>Section A</h5>
+                    {% if paper.section_a_questions.all %}
+                        <ol>
+                            {% for question in paper.section_a_questions.all %}
+                                <li>{{ question.question_text }} ({{ question.marks }} marks)</li>
+                            {% endfor %}
+                        </ol>
+                    {% else %}
+                        <p class="text-muted">No questions in Section A</p>
+                    {% endif %}
+
+                    <h5>Section B</h5>
+                    {% if paper.section_b_questions.all %}
+                        <ol>
+                            {% for question in paper.section_b_questions.all %}
+                                <li>{{ question.question_text }} ({{ question.marks }} marks)</li>
+                            {% endfor %}
+                        </ol>
+                    {% else %}
+                        <p class="text-muted">No questions in Section B</p>
+                    {% endif %}
+
+                    <h5>Section C</h5>
+                    {% if paper.section_c_questions.all %}
+                        <ol>
+                            {% for question in paper.section_c_questions.all %}
+                                <li>{{ question.question_text }} ({{ question.marks }} marks)</li>
+                            {% endfor %}
+                        </ol>
+                    {% else %}
+                        <p class="text-muted">No questions in Section C</p>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <a href="{% url 'papers:generated_papers' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Generated Papers
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
