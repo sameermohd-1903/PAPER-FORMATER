@@ -53,17 +53,17 @@
 <p>{{ pattern.get_exam_type_display }}</p>
 </div>
 
-<div class="col-md-2">
+<div class="col-md-3">
 <label class="fw-bold">Date</label>
 <p>{{ pattern.exam_date }}</p>
 </div>
 
-<div class="col-md-2">
-<label class="fw-bold">Time</label>
-<p>{{ pattern.exam_time }}</p>
+<div class="col-md-3">
+<label class="fw-bold">Time </label>
+    <p>{{ pattern.time_allowed }}</p>
 </div>
 
-<div class="col-md-2">
+<div class="col-md-3">
 <label class="fw-bold">Total Marks</label>
 <input type="hidden" id="pattern-id" value="{{ pattern.id }}">
 <p id="paperTotalMarks">
@@ -86,8 +86,35 @@
 </small>
 
 <hr>
+<div id="alertBox" class="alert alert-danger d-none mb-3">
 
+    
+</div>
 <h4>Pattern Rows</h4>
+
+<div class="mb-3">
+
+    <strong>
+
+        Current Marks :
+
+    </strong>
+
+    <span id="currentMarks">
+
+        0
+
+    </span>
+
+    /
+
+    <span id="maxMarks">
+
+        {{ pattern.total_marks }}
+
+    </span>
+
+</div>
 
 <button id="addRowBtn" class="btn btn-success">
     + Add Row
@@ -153,7 +180,13 @@ class="table table-bordered table-hover">
     Save Pattern
 </button>
 
+<a
+    href="{% url 'papers:paper_preview_pattern' pattern.id %}"
+    class="btn btn-success ms-2">
 
+    Preview Pattern
+
+</a>
 </div>
 
 </div>

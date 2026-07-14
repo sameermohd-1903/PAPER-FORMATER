@@ -1,72 +1,63 @@
-{% extends 'base.html' %}
-
-{% block title %}Paper Preview - Paper Formatter{% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0"><i class="fas fa-file-pdf"></i> {{ paper.title }}</h4>
-                    <div>
-                        <a href="{% url 'papers:download_paper' paper.id 'pdf' %}" class="btn btn-danger btn-sm">
-                            <i class="fas fa-download"></i> PDF
-                        </a>
-                        <a href="{% url 'papers:download_paper' paper.id 'docx' %}" class="btn btn-info btn-sm">
-                            <i class="fas fa-download"></i> DOCX
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <h5>Paper Details</h5>
-                    <p><strong>Subject:</strong> {{ paper.subject }}</p>
-                    <p><strong>Maximum Marks:</strong> {{ paper.maximum_marks }}</p>
-                    <p><strong>Created:</strong> {{ paper.created_at|date:"M d, Y H:i" }}</p>
 
-                    <hr>
+<div class="container mt-4">
 
-                    <h5>Section A</h5>
-                    {% if paper.section_a_questions.all %}
-                        <ol>
-                            {% for question in paper.section_a_questions.all %}
-                                <li>{{ question.question_text }} ({{ question.marks }} marks)</li>
-                            {% endfor %}
-                        </ol>
-                    {% else %}
-                        <p class="text-muted">No questions in Section A</p>
-                    {% endif %}
+    <div class="card shadow">
 
-                    <h5>Section B</h5>
-                    {% if paper.section_b_questions.all %}
-                        <ol>
-                            {% for question in paper.section_b_questions.all %}
-                                <li>{{ question.question_text }} ({{ question.marks }} marks)</li>
-                            {% endfor %}
-                        </ol>
-                    {% else %}
-                        <p class="text-muted">No questions in Section B</p>
-                    {% endif %}
+        <div class="card-header bg-primary text-white">
 
-                    <h5>Section C</h5>
-                    {% if paper.section_c_questions.all %}
-                        <ol>
-                            {% for question in paper.section_c_questions.all %}
-                                <li>{{ question.question_text }} ({{ question.marks }} marks)</li>
-                            {% endfor %}
-                        </ol>
-                    {% else %}
-                        <p class="text-muted">No questions in Section C</p>
-                    {% endif %}
+            <h3>
 
-                    <div class="mt-4">
-                        <a href="{% url 'papers:generated_papers' %}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Back to Generated Papers
-                        </a>
-                    </div>
-                </div>
-            </div>
+                Pattern Preview
+
+            </h3>
+
         </div>
+
+        <div class="card-body">
+
+            <h4>{{ pattern.pattern_name }}</h4>
+
+            <hr>
+
+            <p>
+
+                <strong>Program:</strong>
+
+                {{ pattern.program.name }}
+
+            </p>
+
+            <p>
+
+                <strong>Semester:</strong>
+
+                {{ pattern.semester.number }}
+
+            </p>
+
+            <p>
+
+                <strong>Subject:</strong>
+
+                {{ pattern.subject.name }}
+
+            </p>
+
+            <p>
+
+                <strong>Total Marks:</strong>
+
+                {{ pattern.total_marks }}
+
+            </p>
+
+        </div>
+
     </div>
+
 </div>
+
 {% endblock %}

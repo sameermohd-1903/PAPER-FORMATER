@@ -367,6 +367,40 @@ def save_pattern_rows(request, pattern_id):
         "message": "Pattern Saved Successfully"
 
     })
+    
+    
+    
+    
+    
+    
+@login_required
+def paper_preview_pattern(request, pattern_id):
+
+    pattern = get_object_or_404(
+        PaperPattern,
+        id=pattern_id,
+        teacher=request.user
+    )
+
+    sections = pattern.sections.all()
+
+    context = {
+
+        "pattern": pattern,
+
+        "sections": sections,
+
+    }
+
+    return render(
+
+        request,
+
+        "papers/paper_preview.html",
+
+        context
+
+    )    
 
 
 

@@ -19,7 +19,11 @@ const patternBody = document.getElementById("patternBody");
 const patternId = document.getElementById("pattern-id");
 
 const totalMarks = document.getElementById("paperTotalMarks");
+const currentMarks =document.getElementById("currentMarks");
+
+const maxMarks =document.getElementById("maxMarks");
 const saveStatus = document.getElementById("saveStatus");
+const alertBox = document.getElementById("alertBox");
 
 
 /* ==========================================================
@@ -81,8 +85,10 @@ function loadSavedRows(){
         data.rows.forEach(function(row){
 
             createRow(row);
+            
 
         });
+        updateTotalMarks();
 
     })
 
@@ -116,6 +122,7 @@ function bindEvents() {
     document.addEventListener("change", function () {
 
         markPatternChanged();
+        updateTotalMarks();
 
     });
         document.addEventListener("click", handleTableButtons);
@@ -193,6 +200,7 @@ function deleteRow(button){
     updateQuestionNumbers();
 
     markPatternChanged();
+    updateTotalMarks();
 
 }
 
@@ -273,13 +281,55 @@ function markPatternSaved() {
 
 }
 
+function updateTotalMarks(){
+
+    let total = 0;
+
+    document
+    .querySelectorAll('[name="marks[]"]')
+    .forEach(function(input){
+
+        total += Number(input.value) || 0;
+
+    });
+
+    currentMarks.innerText = total;
+
+    if(total > Number(maxMarks.innerText)){
+
+        currentMarks.classList.remove("text-success");
+
+        currentMarks.classList.add("text-danger");
+
+    }
+
+    else{
+
+        currentMarks.classList.remove("text-danger");
+
+        currentMarks.classList.add("text-success");
+
+    }
+
+}
+
 
 /**
  * Bootstrap Alert
  */
-function showAlert(message, type = "success") {
+function showAlert(message, type = "danger") {
 
-    alert(message);
+    alertBox.className = `alert alert-${type} mb-3`;
+
+    alertBox.innerHTML = message;
+
+    alertBox.classList.remove("d-none");
+
+    setTimeout(function(){
+
+        alertBox.classList.add("d-none");
+
+    },3000);
 
 }
 
@@ -455,8 +505,35 @@ function createRow(data = null) {
     `;
 
     patternBody.appendChild(row);
+    
+    if(data){
 
-}
+    row.querySelector('[name="attempt_rule[]"]').value =
+        data.attempt_rule;
+
+    row.querySelector('[name="unit[]"]').value =
+        data.unit;
+
+    row.querySelector('[name="bloom[]"]').value =
+        data.bloom_level;
+
+    row.querySelector('[name="difficulty[]"]').value =
+        data.difficulty;
+
+    row.querySelector('[name="question_type[]"]').value =
+        data.question_type;
+
+    row.querySelector('[name="marks[]"]').value =
+        data.marks;
+
+    row.querySelector('[name="number_of_questions[]"]').value =
+        data.number_of_questions;
+
+    }
+
+}   // <-- ADD THIS
+
+
 
 /* ==========================================================
    Update Row Numbers
@@ -486,20 +563,152 @@ function updateRowNumbers() {
    7. PLACEHOLDER FUNCTIONS
    ========================================================== */
 
-function onAddRowClick() {
-
+function onAddRowClick(){
     createRow();
-
     updateRowNumbers();
-
+    updateTotalMarks();
     markPatternChanged();
+}
+
+function onSavePatternClick(){
+
+    const rows=[];
+
+    document
+    .querySelectorAll("#patternBody tr")
+    .forEach(function(row,index){
+
+        const marks =
+        row.querySelector('[name="marks[]"]').value;
+
+        const questions =
+        row.querySelector('[name="number_of_questions[]"]').value;
+
+        const unit =
+        row.querySelector('[name="unit[]"]').value;
+
+        const bloom =
+        row.querySelector('[name="bloom[]"]').value;
+
+        const difficulty =
+        row.querySelector('[name="difficulty[]"]').value;
+
+        const questionType =
+        row.querySelector('[name="question_type[]"]').value;
+
+        if(
+
+            marks==="" ||
+
+            questions==="" ||
+
+            unit==="" ||
+
+            bloom==="" ||
+
+            difficulty==="" ||
+
+            questionType===""
+
+        ){
+
+            showAlert(
+                "Please complete all fields in Row " +
+                (index + 1),
+                "danger"
+            );
+
+            throw new Error("Validation Failed");
+
+      }
+
+        rows.push({
+
+            display_order:
+            row.querySelector(".row-order").innerText,
+
+            question_number:
+            row.querySelector('[name="question_number[]"]').value,
+
+            attempt_rule:
+            row.querySelector('[name="attempt_rule[]"]').value,
+
+            custom_attempt_text:"",
+
+            unit:
+            row.querySelector('[name="unit[]"]').value,
+
+            bloom_level:
+            row.querySelector('[name="bloom[]"]').value,
+
+            difficulty:
+            row.querySelector('[name="difficulty[]"]').value,
+
+            question_type:
+            row.querySelector('[name="question_type[]"]').value,
+
+            marks:
+            row.querySelector('[name="marks[]"]').value,
+
+            number_of_questions:
+            row.querySelector('[name="number_of_questions[]"]').value,
+        
+
+        });
+
+    });
+
+
+
+
+    sendRows(rows);
 
 }
 
-function onSavePatternClick() {
 
-    console.log(getPatternId());
+function sendRows(rows){
 
-    markPatternSaved();
+    fetch(
+
+        `/papers/builder/${getPatternId()}/save/`,
+
+        {
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json",
+                "X-CSRFToken":getCookie("csrftoken")
+            },
+
+            body:JSON.stringify({
+                rows:rows
+            })
+        }
+
+    )
+
+    .then(response=>response.json())
+
+    .then(data=>{
+
+        if(data.success){
+
+            markPatternSaved();
+
+            showAlert(data.message);
+
+        }else{
+
+            showAlert("Save Failed", "danger");
+
+        }
+
+    })
+
+    .catch(error=>{
+
+        console.error(error);
+
+    });
 
 }

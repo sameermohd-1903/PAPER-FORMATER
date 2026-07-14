@@ -36,5 +36,10 @@ urlpatterns = [
         views.load_pattern_rows,
         name="load_pattern_rows"
     ),
+    path(
+    "builder/<int:pattern_id>/preview/",
+    views.paper_preview_pattern,
+    name="paper_preview_pattern",
+),
 
 ]
