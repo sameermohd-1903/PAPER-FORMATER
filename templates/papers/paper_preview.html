@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/paper_preview.css' %}">
+{% endblock %}
 
 {% block content %}
 
@@ -18,46 +23,164 @@
 
         <div class="card-body">
 
-            <h4>{{ pattern.pattern_name }}</h4>
+            <div class="text-center mb-4">
 
-            <hr>
+    <h2>Vidyalankar School Of Information Technology</h2>
 
-            <p>
+    <h4>{{ pattern.get_exam_type_display }}</h4>
 
-                <strong>Program:</strong>
+    <h3>{{ pattern.pattern_name }}</h3>
 
-                {{ pattern.program.name }}
+</div>
 
-            </p>
+<hr>
 
-            <p>
+<div class="row mb-3">
 
-                <strong>Semester:</strong>
+    <div class="col-md-6">
 
-                {{ pattern.semester.number }}
+        <strong>Programme :</strong>
 
-            </p>
+        {{ pattern.program.name }}
 
-            <p>
+    </div>
 
-                <strong>Subject:</strong>
+    <div class="col-md-6 text-end">
 
-                {{ pattern.subject.name }}
+        <strong>Semester :</strong>
 
-            </p>
+        {{ pattern.semester.number }}
 
-            <p>
+    </div>
 
-                <strong>Total Marks:</strong>
+</div>
 
-                {{ pattern.total_marks }}
+<div class="row mb-3">
 
-            </p>
+    <div class="col-md-6">
+
+        <strong>Subject :</strong>
+
+        {{ pattern.subject.name }}
+
+    </div>
+
+    <div class="col-md-6 text-end">
+
+        <strong>Date :</strong>
+
+        {{ pattern.exam_date }}
+
+    </div>
+
+</div>
+
+<div class="row mb-3">
+
+    <div class="col-md-6">
+
+        <strong>Time :</strong>
+
+        {{ pattern.time_allowed }}
+
+    </div>
+
+    <div class="col-md-6 text-end">
+
+        <strong>Maximum Marks :</strong>
+
+        {{ pattern.total_marks }}
+
+    </div>
+
+</div>
+
+<hr>
 
         </div>
 
     </div>
 
 </div>
+<hr>
 
+<hr>
+<hr>
+
+<h3 class="text-center mb-4">
+    QUESTION PAPER
+</h3>
+
+<table class="table table-bordered preview-table">
+    <thead class="table-dark">
+
+        <tr>
+
+            <th style="width:8%">Bloom</th>
+
+            <th style="width:8%">CO</th>
+
+            <th style="width:10%">Q.No</th>
+
+            <th>Question</th>
+
+            <th style="width:10%">Marks</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+{% for row in sections %}
+
+<tr>
+
+    <td rowspan="{{ row.subparts|length|add:1 }}">
+        {{ row.bloom_level }}
+    </td>
+
+    <td rowspan="{{ row.subparts|length|add:1 }}">
+        {{ row.co }}
+    </td>
+
+    <td>
+    <strong>{{ row.question_number }}</strong>
+</td>
+
+<td>
+    <strong>{{ row.get_attempt_rule_display }}</strong>
+</td>
+
+    <td rowspan="{{ row.subparts|length|add:1 }}">
+        <strong>{{ row.marks }}</strong>
+    </td>
+
+</tr>
+
+{% for letter in row.subparts %}
+
+<tr>
+
+    <td>
+
+        {{ letter }}
+
+    </td>
+
+    <td>
+
+        ________________________________________________
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+{% endfor %}
+
+</tbody>
+
+</table>
 {% endblock %}

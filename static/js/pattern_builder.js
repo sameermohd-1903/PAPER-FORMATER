@@ -380,6 +380,8 @@ function createRow(data = null) {
                 <option value="all">Attempt All</option>
                 <option value="1of2">Attempt Any 1 out of 2</option>
                 <option value="2of3">Attempt Any 2 out of 3</option>
+                <option value="3of4">Attempt Any 3 out of 4</option>
+                <option value="4of5">Attempt Any 4 out of 5</option>
                 <option value="custom">Custom</option>
 
             </select>
@@ -417,6 +419,23 @@ function createRow(data = null) {
             </select>
 
         </td>
+
+        <td>
+
+        <select
+            class="form-select"
+            name="co[]">
+
+                <option value="CO1">CO1</option>
+                <option value="CO2">CO2</option>
+                <option value="CO3">CO3</option>
+                <option value="CO4">CO4</option>
+                <option value="CO5">CO5</option>
+                <option value="CO6">CO6</option>
+
+        </select>
+
+          </td>
 
         <td>
 
@@ -517,6 +536,9 @@ function createRow(data = null) {
     row.querySelector('[name="bloom[]"]').value =
         data.bloom_level;
 
+    row.querySelector('[name="co[]"]').value =
+        data.co;    
+
     row.querySelector('[name="difficulty[]"]').value =
         data.difficulty;
 
@@ -589,6 +611,8 @@ function onSavePatternClick(){
 
         const bloom =
         row.querySelector('[name="bloom[]"]').value;
+        co:
+        row.querySelector('[name="co[]"]').value;
 
         const difficulty =
         row.querySelector('[name="difficulty[]"]').value;
@@ -640,6 +664,9 @@ function onSavePatternClick(){
 
             bloom_level:
             row.querySelector('[name="bloom[]"]').value,
+
+            co:
+            row.querySelector('[name="co[]"]').value,
 
             difficulty:
             row.querySelector('[name="difficulty[]"]').value,

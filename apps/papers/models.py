@@ -105,6 +105,8 @@ class PatternSection(models.Model):
         ("all", "Attempt All"),
         ("1of2", "Attempt Any 1 out of 2"),
         ("2of3", "Attempt Any 2 out of 3"),
+        ("3of4", "Attempt Any 3 out of 4"),
+        ("4of5", "Attempt Any 4 out of 5"),
         ("custom", "Custom"),
     ]
 
@@ -137,6 +139,10 @@ class PatternSection(models.Model):
 
     bloom_level = models.CharField(
         max_length=30
+    )
+    co = models.CharField(
+    max_length=10,
+    default="CO1"
     )
 
     difficulty = models.CharField(

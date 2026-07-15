@@ -245,7 +245,8 @@ def save_pattern_builder(request, pattern_id):
             unit=row["unit"],
 
             bloom_level=row["bloom"],
-
+            
+            co=row["co"],
             difficulty=row["difficulty"],
 
             question_type=row["type"],
@@ -286,6 +287,8 @@ def load_pattern_rows(request, pattern_id):
             "unit": row.unit,
 
             "bloom_level": row.bloom_level,
+            
+            "co": row.co,
 
             "difficulty": row.difficulty,
 
@@ -349,6 +352,8 @@ def save_pattern_rows(request, pattern_id):
             unit=row["unit"],
 
             bloom_level=row["bloom_level"],
+            
+            co=row["co"],
 
             difficulty=row["difficulty"],
 
@@ -383,8 +388,16 @@ def paper_preview_pattern(request, pattern_id):
     )
 
     sections = pattern.sections.all()
+    letters = [
+    "a", "b", "c", "d", "e",
+    "f", "g", "h", "i", "j"
+    ]
 
-    context = {
+    for row in sections:
+
+        row.subparts = letters[:row.number_of_questions]
+
+        context = {
 
         "pattern": pattern,
 
