@@ -7,180 +7,42 @@
 
 {% block content %}
 
-<div class="container mt-4">
+<div class="container-fluid bg-light py-4">
 
-    <div class="card shadow">
+    <!-- =========================
+         Print Button
+    ========================== -->
+    <div class="no-print text-end mb-3">
 
-        <div class="card-header bg-primary text-white">
+        <a href="{% url 'papers:paper_print' pattern.id %}"
+           target="_blank"
+           class="btn btn-primary">
 
-            <h3>
+            🖨 Print Preview
 
-                Pattern Preview
+        </a>
+        <a href="{% url 'papers:paper_pdf' pattern.id %}"
+   target="_blank"
+   class="btn btn-success">
 
-            </h3>
+    📄 Download PDF
 
-        </div>
-
-        <div class="card-body">
-
-            <div class="text-center mb-4">
-
-    <h2>Vidyalankar School Of Information Technology</h2>
-
-    <h4>{{ pattern.get_exam_type_display }}</h4>
-
-    <h3>{{ pattern.pattern_name }}</h3>
-
-</div>
-
-<hr>
-
-<div class="row mb-3">
-
-    <div class="col-md-6">
-
-        <strong>Programme :</strong>
-
-        {{ pattern.program.name }}
+</a>
 
     </div>
 
-    <div class="col-md-6 text-end">
+    <!-- =========================
+         Paper Preview
+    ========================== -->
 
-        <strong>Semester :</strong>
+    <div class="paper-preview">
 
-        {{ pattern.semester.number }}
+        {% include "papers/partials/paper_content.html" %}
 
     </div>
 
 </div>
 
-<div class="row mb-3">
 
-    <div class="col-md-6">
 
-        <strong>Subject :</strong>
-
-        {{ pattern.subject.name }}
-
-    </div>
-
-    <div class="col-md-6 text-end">
-
-        <strong>Date :</strong>
-
-        {{ pattern.exam_date }}
-
-    </div>
-
-</div>
-
-<div class="row mb-3">
-
-    <div class="col-md-6">
-
-        <strong>Time :</strong>
-
-        {{ pattern.time_allowed }}
-
-    </div>
-
-    <div class="col-md-6 text-end">
-
-        <strong>Maximum Marks :</strong>
-
-        {{ pattern.total_marks }}
-
-    </div>
-
-</div>
-
-<hr>
-
-        </div>
-
-    </div>
-
-</div>
-<hr>
-
-<hr>
-<hr>
-
-<h3 class="text-center mb-4">
-    QUESTION PAPER
-</h3>
-
-<table class="table table-bordered preview-table">
-    <thead class="table-dark">
-
-        <tr>
-
-            <th style="width:8%">Bloom</th>
-
-            <th style="width:8%">CO</th>
-
-            <th style="width:10%">Q.No</th>
-
-            <th>Question</th>
-
-            <th style="width:10%">Marks</th>
-
-        </tr>
-
-    </thead>
-
-    <tbody>
-
-{% for row in sections %}
-
-<tr>
-
-    <td rowspan="{{ row.subparts|length|add:1 }}">
-        {{ row.bloom_level }}
-    </td>
-
-    <td rowspan="{{ row.subparts|length|add:1 }}">
-        {{ row.co }}
-    </td>
-
-    <td>
-    <strong>{{ row.question_number }}</strong>
-</td>
-
-<td>
-    <strong>{{ row.get_attempt_rule_display }}</strong>
-</td>
-
-    <td rowspan="{{ row.subparts|length|add:1 }}">
-        <strong>{{ row.marks }}</strong>
-    </td>
-
-</tr>
-
-{% for letter in row.subparts %}
-
-<tr>
-
-    <td>
-
-        {{ letter }}
-
-    </td>
-
-    <td>
-
-        ________________________________________________
-
-    </td>
-
-</tr>
-
-{% endfor %}
-
-{% endfor %}
-
-</tbody>
-
-</table>
 {% endblock %}

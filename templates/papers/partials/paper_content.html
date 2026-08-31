@@ -1,0 +1,173 @@
+<div class="text-center mb-4">
+
+    <h2>Vidyalankar School Of Information Technology</h2>
+
+    <h4>{{ pattern.get_exam_type_display }}</h4>
+
+    <h3>{{ pattern.pattern_name }}</h3>
+
+</div>
+
+<hr>
+
+<table style="width:100%; margin-bottom:20px;">
+
+    <tr>
+
+        <td style="width:50%;">
+
+            <strong>Programme :</strong>
+            {{ pattern.program.name }}
+
+        </td>
+
+        <td style="width:50%; text-align:right;">
+
+            <strong>Semester :</strong>
+            {{ pattern.semester.number }}
+
+        </td>
+
+    </tr>
+
+    <tr>
+
+        <td>
+
+            <strong>Subject :</strong>
+            {{ pattern.subject.name }}
+
+        </td>
+
+        <td style="text-align:right;">
+
+            <strong>Date :</strong>
+            {{ pattern.exam_date }}
+
+        </td>
+
+    </tr>
+
+    <tr>
+
+        <td>
+
+            <strong>Time :</strong>
+            {{ pattern.time_allowed }}
+
+        </td>
+
+        <td style="text-align:right;">
+
+            <strong>Maximum Marks :</strong>
+            {{ pattern.total_marks }}
+
+        </td>
+
+    </tr>
+
+</table>
+
+<hr>
+
+<h2 class="text-center mb-4">
+
+    QUESTION PAPER
+
+</h2>
+
+<table class="table table-bordered preview-table">
+
+    <thead>
+
+        <tr>
+
+            <th style="width:8%">Bloom</th>
+            <th style="width:8%">CO</th>
+            <th style="width:10%">Q.No</th>
+            <th>Question</th>
+            <th style="width:10%">Marks</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for row in sections %}
+
+        <!-- Main Question Row -->
+
+        <tr>
+
+            <td rowspan="{{ row.subparts|length|add:1 }}">
+
+                {{ row.bloom_level }}
+
+            </td>
+
+            <td rowspan="{{ row.subparts|length|add:1 }}">
+
+                {{ row.co }}
+
+            </td>
+
+            <td>
+
+                <strong>{{ row.question_number }}</strong>
+
+            </td>
+
+            <td>
+
+                <strong>{{ row.get_attempt_rule_display }}</strong>
+
+            </td>
+
+            <td rowspan="{{ row.subparts|length|add:1 }}">
+
+                <strong>{{ row.marks }}</strong>
+
+            </td>
+
+        </tr>
+
+        <!-- Sub Questions -->
+
+        {% for letter in row.subparts %}
+
+        <tr>
+
+            <td>
+
+                {{ letter }}
+
+            </td>
+
+            <td>
+
+                ________________________________________________
+
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+
+            <td colspan="2">
+
+                ________________________________________________
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    {% endfor %}
+
+    </tbody>
+
+</table>

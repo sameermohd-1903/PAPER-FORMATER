@@ -2,7 +2,66 @@ import random
 from typing import List, Dict, Tuple
 from django.db.models import Q
 from apps.questions.models import Question
-from .models import PaperPattern
+from .models import PaperPattern, PatternSection
+
+
+class QuestionGenerator:
+    
+    def __init__(self, pattern):
+        self.pattern = pattern
+        self.selected_questions = set()
+
+    def generate(self):
+        """
+        Generate a complete paper based on the pattern.
+        """
+
+        generated_paper.append({
+            "section": section,
+            "questions": questions,
+            "total_questions": len(questions),
+        })
+
+        return generated_paper
+
+    def generate_section(self, section):
+        """
+        Generate random questions for one PatternSection.
+        """
+
+        queryset = Question.objects.filter(
+            teacher=self.pattern.teacher,
+            program=self.pattern.program,
+            semester=self.pattern.semester,
+            subject=self.pattern.subject,
+            unit=section.unit,
+            bloom=section.bloom_level,
+            difficulty=section.difficulty,
+            question_type=section.question_type,
+            marks=section.marks,
+        ).exclude(
+            id__in=self.selected_questions
+        )
+
+        available_questions = list(queryset)
+
+        if len(available_questions) < section.number_of_questions:
+            raise ValueError(
+                f"Not enough questions for {section.question_number}"
+            )
+
+        selected = random.sample(
+            available_questions,
+            section.number_of_questions
+        )
+
+        self.selected_questions.update(
+            question.id for question in selected
+        )
+
+        return selected
+
+
 class PaperGeneratorService:
     """Service class for generating question papers"""
     

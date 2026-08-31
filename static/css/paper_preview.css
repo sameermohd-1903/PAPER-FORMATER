@@ -1,0 +1,233 @@
+/* ==========================================
+   Page Background
+========================================== */
+
+body {
+    background: #e9ecef;
+}
+
+@media print {
+
+    body * {
+        visibility: hidden;
+    }
+
+    .paper-preview,
+    .paper-preview * {
+        visibility: visible;
+    }
+
+    .paper-preview {
+
+        position: absolute;
+
+        left: 0;
+        top: 0;
+
+        width: 100%;
+
+        margin: 0;
+        padding: 0;
+
+        border: none;
+        box-shadow: none;
+
+    }
+
+}
+
+
+/* ==========================================
+   A4 Paper Preview
+========================================== */
+
+.paper-preview {
+
+    width: 210mm;
+    min-height: 297mm;
+
+    margin: 30px auto;
+
+    background: #ffffff;
+
+    padding: 20mm;
+
+    border: 1px solid #ddd;
+
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+
+}
+
+
+/* ==========================================
+   Responsive View
+========================================== */
+
+@media (max-width: 1100px) {
+
+    .paper-preview {
+
+        width: 100%;
+
+        min-height: auto;
+
+        padding: 20px;
+
+        margin: 20px auto;
+
+    }
+
+}
+
+
+@media print {
+
+    .no-print {
+        display: none !important;
+    }
+
+}
+
+
+/* ==========================================
+   Question Table
+========================================== */
+
+.preview-table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+}
+
+.preview-table th,
+.preview-table td {
+
+    border: 1px solid #000;
+
+    padding: 8px;
+
+    vertical-align: top;
+
+}
+
+.preview-table th {
+
+    background: #ffffff;
+
+    color: #000;
+
+    text-align: center;
+
+    font-weight: bold;
+
+}
+
+.preview-table td:nth-child(1),
+.preview-table td:nth-child(2),
+.preview-table td:nth-child(3),
+.preview-table td:nth-child(5) {
+
+    text-align: center;
+
+}
+
+.preview-table td:nth-child(4) {
+
+    text-align: left;
+
+}
+
+
+/* ==========================================
+   Prevent Table Row Breaking
+========================================== */
+
+.preview-table {
+
+    page-break-inside: auto;
+
+}
+
+.preview-table tr {
+
+    page-break-inside: avoid;
+
+    page-break-after: auto;
+
+}
+
+
+/* ==========================================
+   Print Mode
+========================================== */
+
+@media print {
+
+    body {
+
+        background: white !important;
+
+    }
+
+    .sidebar,
+    .navbar,
+    .btn,
+    footer {
+
+        display: none !important;
+
+    }
+
+    .paper-preview {
+
+        width: 100%;
+
+        min-height: auto;
+
+        margin: 0;
+
+        padding: 0;
+
+        border: none !important;
+
+        box-shadow: none !important;
+
+    }
+
+    .print-card {
+
+        border: none;
+
+        box-shadow: none;
+
+    }
+
+}
+
+@media print {
+
+    .sidebar,
+    .navbar,
+    footer,
+    header {
+
+        display: none !important;
+
+    }
+
+}
+
+
+/* ==========================================
+   A4 Page Setup
+========================================== */
+
+@page {
+
+    size: A4 portrait;
+
+    margin: 15mm;
+
+}

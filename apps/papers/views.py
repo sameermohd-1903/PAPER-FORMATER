@@ -377,7 +377,6 @@ def save_pattern_rows(request, pattern_id):
     
     
     
-    
 @login_required
 def paper_preview_pattern(request, pattern_id):
 
@@ -388,32 +387,88 @@ def paper_preview_pattern(request, pattern_id):
     )
 
     sections = pattern.sections.all()
+
     letters = [
-    "a", "b", "c", "d", "e",
-    "f", "g", "h", "i", "j"
+        "a", "b", "c", "d", "e",
+        "f", "g", "h", "i", "j"
     ]
 
     for row in sections:
-
         row.subparts = letters[:row.number_of_questions]
 
-        context = {
-
+    context = {
         "pattern": pattern,
-
         "sections": sections,
-
     }
 
     return render(
-
         request,
-
         "papers/paper_preview.html",
-
         context
+    )
+    
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
 
-    )    
+@login_required
+def paper_print(request, pattern_id):
+
+    pattern = get_object_or_404(
+        PaperPattern,
+        id=pattern_id,
+        teacher=request.user
+    )
+
+    sections = pattern.sections.all()
+
+    letters = [
+        "a", "b", "c", "d", "e",
+        "f", "g", "h", "i", "j"
+    ]
+
+    for row in sections:
+        row.subparts = letters[:row.number_of_questions]
+
+    context = {
+        "pattern": pattern,
+        "sections": sections,
+    }
+
+    return render(
+        request,
+        "papers/paper_print.html",
+        context
+    )
+    
+    
+@login_required
+def paper_pdf(request, paper_id):
+    pattern = get_object_or_404(
+        PaperPattern,
+        id=pattern_id,
+        teacher=request.user
+    )
+
+    sections = pattern.sections.all()
+
+    letters = [
+        "a", "b", "c", "d", "e",
+        "f", "g", "h", "i", "j"
+    ]
+
+    for row in sections:
+        row.subparts = letters[:row.number_of_questions]
+
+    context = {
+        "pattern": pattern,
+        "sections": sections,
+    }
+
+    return render(
+        request,
+        "papers/paper_print.html",
+        context
+    )        
 
 
 

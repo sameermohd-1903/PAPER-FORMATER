@@ -60,7 +60,7 @@ Create Paper Pattern
 
                             <option value="">
 
-                                Select Level
+                                --------
 
                             </option>
 
@@ -89,8 +89,11 @@ Create Paper Pattern
                             Program
 
                         </label>
+                        
+                        
 
                         {{ form.program }}
+                        
 
                     </div>
 
@@ -350,5 +353,35 @@ Create Paper Pattern
 </div>
 
 <script src="{% static 'js/pattern_builder.js' %}"></script>
+<script>
+document.getElementById("level").addEventListener("change", function () {
+
+    const level = this.value;
+    const programSelect = document.getElementById("id_program");
+
+    programSelect.innerHTML =
+        '<option value="">---------</option>';
+
+    if (!level) return;
+
+    fetch(`/academic/ajax/programs/?level=${level}`)
+        .then(response => response.json())
+        .then(data => {
+
+            data.forEach(program => {
+
+                let option = document.createElement("option");
+
+                option.value = program.id;
+                option.textContent = program.name;
+
+                programSelect.appendChild(option);
+
+            });
+
+        });
+
+});
+</script>
 
 {% endblock %}

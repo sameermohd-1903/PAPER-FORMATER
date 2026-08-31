@@ -40,6 +40,16 @@ urlpatterns = [
     "builder/<int:pattern_id>/preview/",
     views.paper_preview_pattern,
     name="paper_preview_pattern",
-),
+    ),
+    path(
+    "builder/<int:pattern_id>/print/",
+    views.paper_print,
+    name="paper_print",
+    ),
+    path(
+    "builder/<int:pattern_id>/pdf/",
+    views.paper_pdf,
+    name="paper_pdf",
+    ),
 
 ]

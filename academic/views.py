@@ -407,7 +407,7 @@ def get_programs(request):
             'name': program.name
         })
 
-    return JsonResponse(data, safe=False)  
+    return JsonResponse(list(programs), safe=False)  
 
 def get_semesters(request):
     
