@@ -2,38 +2,205 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/paper_preview.css' %}">
+
+<link rel="stylesheet"
+      href="{% static 'css/paper_preview.css' %}">
+
+<style>
+
+    /* =====================================================
+       REPLACEMENT MODAL
+       ===================================================== */
+
+    .modal-dialog-scrollable .modal-body {
+        max-height: 70vh;
+    }
+
+
+    .question-item {
+        transition: all 0.2s ease;
+        border-radius: 8px;
+    }
+
+
+    .question-item:hover {
+        background-color: #f8f9fa;
+    }
+
+
+    .question-item + .question-item {
+        margin-top: 8px;
+    }
+
+
+    /* =====================================================
+       BADGES
+       ===================================================== */
+
+    .badge-used {
+        background-color: #dc3545;
+        color: white;
+    }
+
+
+    .badge-current {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+
+    .badge-avail {
+        background-color: #198754;
+        color: white;
+    }
+
+
+    /* =====================================================
+       REPLACEMENT FILTER
+       ===================================================== */
+
+    .replace-filter-row {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+        margin-bottom: 15px;
+    }
+
+
+    .replace-filter-row .filter-unit {
+        flex: 1;
+    }
+
+
+    /* =====================================================
+       CURRENT QUESTION BOX
+       ===================================================== */
+
+    .current-question-box {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+
+
+    .current-question-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #6c757d;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+    }
+
+
+    .current-question-text {
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+
+    /* =====================================================
+       CRITERIA
+       ===================================================== */
+
+    .criteria-box {
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+
+    /* =====================================================
+       EMPTY STATE
+       ===================================================== */
+
+    .empty-question-list {
+        padding: 30px 10px;
+        text-align: center;
+        color: #6c757d;
+    }
+
+
+    /* =====================================================
+       MOBILE
+       ===================================================== */
+
+    @media (max-width: 576px) {
+
+        .replace-filter-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+    }
+
+</style>
+
 {% endblock %}
+
 
 {% block content %}
 
-<div class="container-fluid bg-light py-4">
+<div class="container-fluid py-4">
 
-    <!-- =========================
-         Print Button
-    ========================== -->
-    <div class="no-print text-end mb-3">
 
-        <a href="{% url 'papers:paper_print' pattern.id %}"
-           target="_blank"
-           class="btn btn-primary">
+    <!-- =====================================================
+         TOP ACTION BAR
+         ===================================================== -->
 
-            🖨 Print Preview
+    <div
+        class="no-print d-flex justify-content-between align-items-center mb-3 max-width-container mx-auto"
+        style="max-width: 210mm;"
+    >
 
-        </a>
-        <a href="{% url 'papers:paper_pdf' pattern.id %}"
-   target="_blank"
-   class="btn btn-success">
+        <div>
 
-    📄 Download PDF
+            <a
+                href="{% url 'papers:pattern_list' %}"
+                class="btn btn-outline-secondary btn-sm"
+            >
+                ← Back to Patterns
+            </a>
 
-</a>
+
+            <a
+                href="{% url 'papers:pattern_builder' pattern.id %}"
+                class="btn btn-outline-info btn-sm ms-2"
+            >
+                ✏ Edit Pattern
+            </a>
+
+        </div>
+
+
+        <div>
+
+            <a
+                href="{% url 'papers:paper_print' pattern.id %}"
+                target="_blank"
+                class="btn btn-primary btn-sm me-2"
+            >
+                🖨 Print Preview
+            </a>
+
+
+            <a
+                href="{% url 'papers:paper_pdf' pattern.id %}"
+                target="_blank"
+                class="btn btn-success btn-sm"
+            >
+                📄 Download PDF
+            </a>
+
+        </div>
 
     </div>
 
-    <!-- =========================
-         Paper Preview
-    ========================== -->
+
+
+    <!-- =====================================================
+         PAPER
+         ===================================================== -->
 
     <div class="paper-preview">
 
@@ -43,6 +210,1457 @@
 
 </div>
 
+
+
+<!-- =========================================================
+     REPLACE QUESTION MODAL
+     ========================================================= -->
+
+<div
+    class="modal fade no-print"
+    id="questionModal"
+    tabindex="-1"
+    aria-labelledby="questionModalLabel"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-dialog modal-lg modal-dialog-scrollable"
+    >
+
+        <div class="modal-content">
+
+
+            <!-- =================================================
+                 MODAL HEADER
+                 ================================================= -->
+
+            <div class="modal-header bg-dark text-white py-2">
+
+                <h5
+                    class="modal-title fs-6"
+                    id="questionModalLabel"
+                >
+                    ↻ Replace Question
+                </h5>
+
+
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 MODAL BODY
+                 ================================================= -->
+
+            <div class="modal-body">
+
+
+                <!-- =================================================
+                     CURRENT QUESTION
+                     ================================================= -->
+
+                <div
+                    class="current-question-box"
+                    id="currentQuestionBox"
+                >
+
+                    <div class="current-question-label">
+                        Current Question
+                    </div>
+
+
+                    <div
+                        class="current-question-text"
+                        id="currentQuestionText"
+                    >
+                        Loading...
+                    </div>
+
+                </div>
+
+
+
+                <!-- =================================================
+                     CRITERIA
+                     ================================================= -->
+
+                <div
+                    class="alert alert-info py-2 px-3 mb-3 criteria-box"
+                    id="sectionCriteriaBanner"
+                >
+
+                    <strong>
+                        Required:
+                    </strong>
+
+                    <span id="criteriaText">
+                        Loading...
+                    </span>
+
+                </div>
+
+
+
+                <!-- =================================================
+                     UNIT FILTER
+                     ================================================= -->
+
+                <div class="replace-filter-row">
+
+                    <div class="filter-unit">
+
+                        <label
+                            for="replaceUnitFilter"
+                            class="form-label small fw-bold mb-1"
+                        >
+                            Unit
+                        </label>
+
+
+                        <select
+                            id="replaceUnitFilter"
+                            class="form-select form-select-sm"
+                        >
+
+                            <option value="">
+                                All Units
+                            </option>
+
+                            <option value="1">
+                                Unit 1
+                            </option>
+
+                            <option value="2">
+                                Unit 2
+                            </option>
+
+                            <option value="3">
+                                Unit 3
+                            </option>
+
+                            <option value="4">
+                                Unit 4
+                            </option>
+
+                            <option value="5">
+                                Unit 5
+                            </option>
+
+                            <option value="6">
+                                Unit 6
+                            </option>
+
+                            <option value="7">
+                                Unit 7
+                            </option>
+
+                            <option value="8">
+                                Unit 8
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div>
+
+                        <button
+                            type="button"
+                            class="btn btn-primary btn-sm"
+                            id="filterQuestionsBtn"
+                        >
+                            Filter
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- =================================================
+                     SEARCH
+                     ================================================= -->
+
+                <div class="mb-3">
+
+                    <input
+                        type="text"
+                        id="questionSearchInput"
+                        class="form-control form-control-sm"
+                        placeholder="Search questions..."
+                    >
+
+                </div>
+
+
+
+                <!-- =================================================
+                     QUESTION LIST
+                     ================================================= -->
+
+                <div id="questionsListContainer">
+
+                    <div class="text-center py-4">
+
+                        <div
+                            class="spinner-border spinner-border-sm text-primary"
+                            role="status"
+                        ></div>
+
+                        <span class="ms-2">
+                            Loading questions...
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =================================================
+                 MODAL FOOTER
+                 ================================================= -->
+
+            <div class="modal-footer py-2">
+
+                <button
+                    type="button"
+                    class="btn btn-sm btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Close
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+{% block extra_js %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    console.log("========================================");
+    console.log("PAPER PREVIEW REPLACE JS LOADED");
+    console.log("========================================");
+
+
+    // =====================================================
+    // BASIC ELEMENTS
+    // =====================================================
+
+    const modalElement =
+        document.getElementById("questionModal");
+
+    const modalTitle =
+        document.getElementById("questionModalLabel");
+
+    const currentQuestionText =
+        document.getElementById("currentQuestionText");
+
+    const criteriaText =
+        document.getElementById("criteriaText");
+
+    const unitFilter =
+        document.getElementById("replaceUnitFilter");
+
+    const filterButton =
+        document.getElementById("filterQuestionsBtn");
+
+    const searchInput =
+        document.getElementById("questionSearchInput");
+
+    const questionsContainer =
+        document.getElementById("questionsListContainer");
+
+
+    // =====================================================
+    // CHECK MODAL
+    // =====================================================
+
+    if (!modalElement) {
+
+        console.error(
+            "❌ questionModal not found."
+        );
+
+        return;
+    }
+
+
+    if (typeof bootstrap === "undefined") {
+
+        console.error(
+            "❌ Bootstrap is not loaded."
+        );
+
+        return;
+    }
+
+
+    const questionModal =
+        new bootstrap.Modal(
+            modalElement
+        );
+
+
+    console.log(
+        "✅ Replace modal initialized."
+    );
+
+
+    // =====================================================
+    // CURRENT REPLACEMENT DATA
+    // =====================================================
+
+    let currentSectionId = null;
+
+    let currentSlotIndex = null;
+
+    let currentQuestionId = null;
+
+    let slotsData = [];
+
+    let currentSlot = null;
+
+
+    // =====================================================
+    // CSRF
+    // =====================================================
+
+    function getCsrfToken() {
+
+        const cookie =
+            document.cookie
+                .split("; ")
+                .find(
+                    row =>
+                        row.startsWith(
+                            "csrftoken="
+                        )
+                );
+
+        if (!cookie) {
+            return "";
+        }
+
+        return decodeURIComponent(
+            cookie.split("=")[1]
+        );
+    }
+
+
+    // =====================================================
+    // REPLACE BUTTON
+    // =====================================================
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const button =
+                event.target.closest(
+                    ".btn-replace-question"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            event.preventDefault();
+
+
+            currentSectionId =
+                button.dataset.sectionId;
+
+
+            currentSlotIndex =
+                parseInt(
+                    button.dataset.slotIndex,
+                    10
+                );
+
+
+            currentQuestionId =
+                button.dataset.questionId || "";
+
+
+            console.log(
+                "========================================"
+            );
+
+            console.log(
+                "REPLACE BUTTON CLICKED"
+            );
+
+            console.log(
+                "Pattern ID:",
+                "{{ pattern.id }}"
+            );
+
+            console.log(
+                "Section ID:",
+                currentSectionId
+            );
+
+            console.log(
+                "Slot Index:",
+                currentSlotIndex
+            );
+
+            console.log(
+                "Current Question:",
+                currentQuestionId
+            );
+
+            console.log(
+                "========================================"
+            );
+
+
+            openReplaceModal();
+
+        }
+    );
+
+
+    // =====================================================
+    // OPEN MODAL
+    // =====================================================
+
+    function openReplaceModal() {
+
+        modalTitle.textContent =
+            "↻ Replace Question";
+
+
+        currentQuestionText.textContent =
+            "Loading...";
+
+
+        criteriaText.textContent =
+            "Loading questions...";
+
+
+        questionsContainer.innerHTML = `
+
+            <div class="text-center py-4">
+
+                <div
+                    class="spinner-border spinner-border-sm text-primary"
+                ></div>
+
+                <span class="ms-2">
+                    Loading questions...
+                </span>
+
+            </div>
+
+        `;
+
+
+        // Reset search
+        searchInput.value = "";
+
+
+        // Reset unit filter
+        unitFilter.value = "";
+
+
+        questionModal.show();
+
+
+        loadQuestions();
+
+    }
+
+
+    // =====================================================
+    // LOAD QUESTIONS
+    // =====================================================
+
+    function loadQuestions() {
+
+        const url =
+            `/papers/builder/{{ pattern.id }}/section/${currentSectionId}/questions/`;
+
+
+        console.log(
+            "Loading questions from:",
+            url
+        );
+
+
+        fetch(
+            url,
+            {
+                method: "GET",
+
+                headers: {
+                    "X-Requested-With":
+                        "XMLHttpRequest"
+                }
+            }
+        )
+
+        .then(
+            function (response) {
+
+                console.log(
+                    "Question API status:",
+                    response.status
+                );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Question API returned HTTP " +
+                        response.status
+                    );
+
+                }
+
+
+                return response.json();
+
+            }
+        )
+
+        .then(
+            function (data) {
+
+                console.log(
+                    "Question API response:",
+                    data
+                );
+
+
+                if (!data.success) {
+
+                    throw new Error(
+                        data.message ||
+                        "Unable to load questions."
+                    );
+
+                }
+
+
+                // =================================================
+                // NEW API FORMAT
+                // =================================================
+
+                if (
+                    Array.isArray(
+                        data.slots
+                    )
+                ) {
+
+                    slotsData =
+                        data.slots;
+
+                }
+
+                // =================================================
+                // OLD API FORMAT FALLBACK
+                // =================================================
+
+                else {
+
+                    slotsData = [];
+
+                    slotsData.push({
+
+                        slot_index:
+                            currentSlotIndex,
+
+                        letter:
+                            String.fromCharCode(
+                                97 +
+                                currentSlotIndex
+                            ),
+
+                        question_id:
+                            data.current_question
+                                ?.id ||
+                            currentQuestionId,
+
+                        question_text:
+                            data.current_question
+                                ?.question_text ||
+                            "",
+
+                        unit:
+                            "",
+
+                        marks:
+                            data.section
+                                ?.marks ||
+                            "",
+
+                        bloom_level:
+                            "",
+
+                        difficulty:
+                            "",
+
+                        question_type:
+                            data.section
+                                ?.question_type ||
+                            "",
+
+                        questions:
+                            data.questions ||
+                            []
+
+                    });
+
+                }
+
+
+                console.log(
+                    "Slots:",
+                    slotsData
+                );
+
+
+                currentSlot =
+                    slotsData.find(
+                        slot =>
+                            Number(
+                                slot.slot_index
+                            )
+                            ===
+                            Number(
+                                currentSlotIndex
+                            )
+                    );
+
+
+                if (!currentSlot) {
+
+                    throw new Error(
+                        "Could not find the selected question slot."
+                    );
+
+                }
+
+
+                renderCurrentSlot();
+
+            }
+        )
+
+        .catch(
+            function (error) {
+
+                console.error(
+                    "❌ Question loading error:",
+                    error
+                );
+
+
+                questionsContainer.innerHTML = `
+
+                    <div
+                        class="alert alert-danger"
+                    >
+
+                        <strong>
+                            Error:
+                        </strong>
+
+                        ${escapeHtml(
+                            error.message
+                        )}
+
+                    </div>
+
+                `;
+
+            }
+        );
+
+    }
+
+
+    // =====================================================
+    // RENDER CURRENT SLOT
+    // =====================================================
+
+    function renderCurrentSlot() {
+
+        if (!currentSlot) {
+            return;
+        }
+
+
+        // =================================================
+        // CURRENT QUESTION
+        // =================================================
+
+        currentQuestionText.textContent =
+            currentSlot.question_text ||
+            "No question currently assigned.";
+
+
+        // =================================================
+        // CRITERIA
+        // =================================================
+
+        const unitText =
+            currentSlot.unit
+                ? "Unit " +
+                  currentSlot.unit
+                : "All Units";
+
+
+        const bloomText =
+            currentSlot.bloom_level
+                ? getBloomLabel(
+                    currentSlot.bloom_level
+                )
+                : "Any";
+
+
+        const difficultyText =
+            currentSlot.difficulty ||
+            "Any";
+
+
+        const typeText =
+            formatQuestionType(
+                currentSlot.question_type
+            );
+
+
+        criteriaText.textContent =
+            `${unitText} | ` +
+            `${currentSlot.marks} Marks | ` +
+            `${bloomText} | ` +
+            `${difficultyText} | ` +
+            `${typeText}`;
+
+
+        // =================================================
+        // UNIT FILTER
+        // =================================================
+
+        unitFilter.value =
+            currentSlot.unit || "";
+
+
+        // =================================================
+        // QUESTIONS
+        // =================================================
+
+        renderQuestions();
+
+    }
+
+
+    // =====================================================
+    // UNIT FILTER BUTTON
+    // =====================================================
+
+    filterButton.addEventListener(
+        "click",
+        function () {
+
+            renderQuestions();
+
+        }
+    );
+
+
+    // =====================================================
+    // SEARCH
+    // =====================================================
+
+    searchInput.addEventListener(
+        "input",
+        function () {
+
+            renderQuestions();
+
+        }
+    );
+
+
+    // =====================================================
+    // RENDER QUESTIONS
+    // =====================================================
+
+    function renderQuestions() {
+
+        if (!currentSlot) {
+            return;
+        }
+
+
+        let questions =
+            currentSlot.questions ||
+            [];
+
+
+        // =================================================
+        // UNIT FILTER
+        // =================================================
+
+        const selectedUnit =
+            unitFilter.value;
+
+
+        if (selectedUnit) {
+
+            questions =
+                questions.filter(
+                    function (question) {
+
+                        return String(
+                            question.unit
+                        ).trim()
+                        ===
+                        String(
+                            selectedUnit
+                        ).trim();
+
+                    }
+                );
+
+        }
+
+
+        // =================================================
+        // SEARCH FILTER
+        // =================================================
+
+        const search =
+            searchInput.value
+                .trim()
+                .toLowerCase();
+
+
+        if (search) {
+
+            questions =
+                questions.filter(
+                    function (question) {
+
+                        return String(
+                            question.question_text
+                        )
+                        .toLowerCase()
+                        .includes(search);
+
+                    }
+                );
+
+        }
+
+
+        // =================================================
+        // NO QUESTIONS
+        // =================================================
+
+        if (
+            questions.length === 0
+        ) {
+
+            questionsContainer.innerHTML = `
+
+                <div
+                    class="alert alert-warning text-center"
+                >
+
+                    No eligible questions found.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // QUESTION HTML
+        // =================================================
+
+        let html = "";
+
+
+        questions.forEach(
+            function (question) {
+
+                const isCurrent =
+                    Boolean(
+                        question.is_current
+                    )
+                    ||
+                    String(
+                        question.id
+                    )
+                    ===
+                    String(
+                        currentQuestionId
+                    );
+
+
+                const isUsed =
+                    Boolean(
+                        question.is_used
+                    );
+
+
+                let buttonText =
+                    "Select";
+
+
+                let buttonClass =
+                    "btn-success";
+
+
+                let disabled = false;
+
+
+                let statusBadge = "";
+
+
+                // =========================================
+                // CURRENT
+                // =========================================
+
+                if (isCurrent) {
+
+                    buttonText =
+                        "Current";
+
+
+                    buttonClass =
+                        "btn-secondary";
+
+
+                    disabled = true;
+
+
+                    statusBadge = `
+
+                        <span
+                            class="badge bg-primary ms-2"
+                        >
+                            Current
+                        </span>
+
+                    `;
+
+                }
+
+
+                // =========================================
+                // USED
+                // =========================================
+
+                else if (isUsed) {
+
+                    buttonText =
+                        "Used";
+
+
+                    buttonClass =
+                        "btn-secondary";
+
+
+                    disabled = true;
+
+
+                    statusBadge = `
+
+                        <span
+                            class="badge bg-secondary ms-2"
+                        >
+                            Used in Paper
+                        </span>
+
+                    `;
+
+                }
+
+
+                // =========================================
+                // AVAILABLE
+                // =========================================
+
+                else {
+
+                    statusBadge = `
+
+                        <span
+                            class="badge bg-success ms-2"
+                        >
+                            Available
+                        </span>
+
+                    `;
+
+                }
+
+
+                html += `
+
+                    <div
+                        class="
+                            list-group-item
+                            question-item
+                            p-3
+                            mb-2
+                            border
+                            rounded
+                        "
+                    >
+
+                        <div
+                            class="
+                                d-flex
+                                justify-content-between
+                                align-items-start
+                                gap-3
+                            "
+                        >
+
+                            <div
+                                style="flex:1;"
+                            >
+
+                                <div
+                                    class="
+                                        fw-bold
+                                        mb-2
+                                    "
+                                >
+
+                                    ${escapeHtml(
+                                        question.question_text
+                                    )}
+
+                                </div>
+
+
+                                <div
+                                    class="
+                                        small
+                                        text-muted
+                                    "
+                                >
+
+                                    <span
+                                        class="me-3"
+                                    >
+                                        Unit:
+                                        ${escapeHtml(
+                                            String(
+                                                question.unit
+                                            )
+                                        )}
+                                    </span>
+
+
+                                    <span
+                                        class="me-3"
+                                    >
+                                        Marks:
+                                        ${escapeHtml(
+                                            String(
+                                                question.marks
+                                            )
+                                        )}
+                                    </span>
+
+
+                                    <span
+                                        class="me-3"
+                                    >
+                                        Bloom:
+                                        ${escapeHtml(
+                                            String(
+                                                question.bloom_level
+                                            )
+                                        )}
+                                    </span>
+
+
+                                    <span
+                                        class="me-3"
+                                    >
+                                        Difficulty:
+                                        ${escapeHtml(
+                                            String(
+                                                question.difficulty
+                                            )
+                                        )}
+                                    </span>
+
+
+                                    ${statusBadge}
+
+                                </div>
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                class="
+                                    btn
+                                    btn-sm
+                                    ${buttonClass}
+                                    select-question-btn
+                                "
+                                data-question-id="${
+                                    question.id
+                                }"
+                                ${disabled
+                                    ? "disabled"
+                                    : ""}
+                            >
+
+                                ${buttonText}
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            }
+        );
+
+
+        questionsContainer.innerHTML =
+            html;
+
+    }
+
+
+    // =====================================================
+    // SELECT QUESTION
+    // =====================================================
+
+    questionsContainer.addEventListener(
+        "click",
+        function (event) {
+
+            const button =
+                event.target.closest(
+                    ".select-question-btn"
+                );
+
+
+            if (
+                !button ||
+                button.disabled
+            ) {
+
+                return;
+            }
+
+
+            const questionId =
+                button.dataset.questionId;
+
+
+            if (!questionId) {
+
+                return;
+
+            }
+
+
+            console.log(
+                "Replacing with question:",
+                questionId
+            );
+
+
+            button.disabled = true;
+
+
+            button.innerHTML = `
+
+                <span
+                    class="
+                        spinner-border
+                        spinner-border-sm
+                    "
+                ></span>
+
+                Saving...
+
+            `;
+
+
+            fetch(
+                `/papers/builder/{{ pattern.id }}/assign-question/`,
+                {
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json",
+
+                        "X-CSRFToken":
+                            getCsrfToken(),
+
+                        "X-Requested-With":
+                            "XMLHttpRequest"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        section_id:
+                            currentSectionId,
+
+                        slot_index:
+                            currentSlotIndex,
+
+                        question_id:
+                            questionId
+
+                    })
+
+                }
+            )
+
+            .then(
+                function (response) {
+
+                    return response.json()
+                        .then(
+                            function (data) {
+
+                                if (
+                                    !response.ok
+                                    ||
+                                    !data.success
+                                ) {
+
+                                    throw new Error(
+                                        data.message ||
+                                        "Unable to replace question."
+                                    );
+
+                                }
+
+
+                                return data;
+
+                            }
+                        );
+
+                }
+            )
+
+            .then(
+                function (data) {
+
+                    console.log(
+                        "✅ Question replaced:",
+                        data
+                    );
+
+
+                    questionModal.hide();
+
+
+                    // Refresh preview
+                    window.location.reload();
+
+                }
+            )
+
+            .catch(
+                function (error) {
+
+                    console.error(
+                        "❌ Replace failed:",
+                        error
+                    );
+
+
+                    alert(
+                        error.message
+                    );
+
+
+                    button.disabled = false;
+
+
+                    button.textContent =
+                        "Select";
+
+                }
+            );
+
+        }
+    );
+
+
+    // =====================================================
+    // BLOOM LABEL
+    // =====================================================
+
+    function getBloomLabel(value) {
+
+        const bloom = {
+
+            "1": "Remember",
+
+            "2": "Understand",
+
+            "3": "Apply",
+
+            "4": "Analyze",
+
+            "5": "Evaluate",
+
+            "6": "Create"
+
+        };
+
+
+        return (
+            bloom[String(value)]
+            ||
+            value
+        );
+
+    }
+
+
+    // =====================================================
+    // QUESTION TYPE
+    // =====================================================
+
+    function formatQuestionType(type) {
+
+        if (!type) {
+            return "";
+        }
+
+
+        const value =
+            String(type)
+                .toLowerCase();
+
+
+        if (
+            value === "ftq"
+            ||
+            value ===
+                "following the questions"
+        ) {
+
+            return "Following the Questions";
+
+        }
+
+
+        if (
+            value === "mcq"
+            ||
+            value ===
+                "multiple choice questions"
+        ) {
+
+            return "Multiple Choice Questions";
+
+        }
+
+
+        if (
+            value === "casestudy"
+            ||
+            value === "case study"
+        ) {
+
+            return "Case Study";
+
+        }
+
+
+        return type;
+
+    }
+
+
+    // =====================================================
+    // HTML ESCAPE
+    // =====================================================
+
+    function escapeHtml(value) {
+
+        return String(value)
+
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+
+            .replace(
+                /</g,
+                "&lt;"
+            )
+
+            .replace(
+                />/g,
+                "&gt;"
+            )
+
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+
+    }
+
+});
+
+</script>
+{% endblock %}
 
 
 {% endblock %}

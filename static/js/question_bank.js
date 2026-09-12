@@ -15,10 +15,25 @@ const selected = document.getElementById("selected-values");
 // SELECTED FILTER VALUES
 // ======================================================
 
-const selectedLevel = selected ? selected.dataset.level : "";
-const selectedProgram = selected ? selected.dataset.program : "";
-const selectedSemester = selected ? selected.dataset.semester : "";
-const selectedSubject = selected ? selected.dataset.subject : "";
+const selectedLevel =
+    selected?.dataset.level && selected.dataset.level !== "None"
+        ? selected.dataset.level
+        : "";
+
+const selectedProgram =
+    selected?.dataset.program && selected.dataset.program !== "None"
+        ? selected.dataset.program
+        : "";
+
+const selectedSemester =
+    selected?.dataset.semester && selected.dataset.semester !== "None"
+        ? selected.dataset.semester
+        : "";
+
+const selectedSubject =
+    selected?.dataset.subject && selected.dataset.subject !== "None"
+        ? selected.dataset.subject
+        : "";
 
 // ======================================================
 // CSRF TOKEN
@@ -128,7 +143,17 @@ function loadSemesters(programValue, callback = null) {
 
     fetch(`/academic/ajax/semesters/?program=${programValue}`)
 
-        .then(response => response.json())
+        .then(response => {
+
+            if (!response.ok) {
+                throw new Error(
+                    `Semester API Error: ${response.status}`
+                );
+            }
+
+            return response.json();
+
+        })
 
         .then(data => {
 
@@ -137,7 +162,9 @@ function loadSemesters(programValue, callback = null) {
                 const option = document.createElement("option");
 
                 option.value = item.id;
-                option.textContent = `Semester ${item.number}`;
+
+                option.textContent =
+                    `Semester ${item.number}`;
 
                 semester.appendChild(option);
 

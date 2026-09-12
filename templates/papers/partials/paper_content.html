@@ -1,172 +1,421 @@
-<div class="text-center mb-4">
+<div class="paper-header-container">
 
-    <h2>Vidyalankar School Of Information Technology</h2>
+    <div class="header-top-row">
 
-    <h4>{{ pattern.get_exam_type_display }}</h4>
+        <div class="top-left">
+            Programme:
+            {{ pattern.program.name|default:"Information Technology" }}
+        </div>
 
-    <h3>{{ pattern.pattern_name }}</h3>
+        <div class="top-right">
+            Roll No. __________________
+        </div>
+
+    </div>
+
+
+    <div class="college-title">
+        VIDYALANKAR SCHOOL OF INFORMATION TECHNOLOGY
+    </div>
+
+
+    <div class="header-middle-row">
+
+        <div class="date-col">
+            Date:
+            <b>
+                {{ pattern.exam_date|date:"d/m/Y"|default:"13/10/2025" }}
+            </b>
+        </div>
+
+        <div class="exam-col">
+            {{ pattern.get_exam_type_display|default:"Regular End Semester Examination Oct 2025" }}
+        </div>
+
+        <div class="time-col">
+            Time:
+            {{ pattern.time_allowed|default:"1hr" }}
+        </div>
+
+    </div>
+
+
+    <div class="header-bottom-row">
+
+        <div class="course-col">
+
+            {% if pattern.program %}
+                F. Y. {{ pattern.program.name }}
+            {% else %}
+                F. Y. B.Sc. IT
+            {% endif %}
+
+            &nbsp;&nbsp;
+
+            {% if pattern.semester %}
+                SEM - {{ pattern.semester.number }}
+            {% else %}
+                SEM - I
+            {% endif %}
+
+        </div>
+
+
+        <div class="subject-col">
+
+            Subject:
+            {{ pattern.subject.name|default:"Database Management Systems" }}
+
+        </div>
+
+
+        <div class="marks-col">
+
+            Marks:
+            {{ pattern.total_marks|default:"25" }}
+
+        </div>
+
+    </div>
+
+
+    <div class="header-line"></div>
 
 </div>
 
-<hr>
 
-<table style="width:100%; margin-bottom:20px;">
+<table class="exam-table preview-table">
 
-    <tr>
+    <colgroup>
 
-        <td style="width:50%;">
+        <col class="col-bloom">
 
-            <strong>Programme :</strong>
-            {{ pattern.program.name }}
+        <col class="col-oc">
 
-        </td>
+        <col class="col-qno">
 
-        <td style="width:50%; text-align:right;">
+        <col class="col-question">
 
-            <strong>Semester :</strong>
-            {{ pattern.semester.number }}
+        <col class="col-marks">
 
-        </td>
+    </colgroup>
 
-    </tr>
-
-    <tr>
-
-        <td>
-
-            <strong>Subject :</strong>
-            {{ pattern.subject.name }}
-
-        </td>
-
-        <td style="text-align:right;">
-
-            <strong>Date :</strong>
-            {{ pattern.exam_date }}
-
-        </td>
-
-    </tr>
-
-    <tr>
-
-        <td>
-
-            <strong>Time :</strong>
-            {{ pattern.time_allowed }}
-
-        </td>
-
-        <td style="text-align:right;">
-
-            <strong>Maximum Marks :</strong>
-            {{ pattern.total_marks }}
-
-        </td>
-
-    </tr>
-
-</table>
-
-<hr>
-
-<h2 class="text-center mb-4">
-
-    QUESTION PAPER
-
-</h2>
-
-<table class="table table-bordered preview-table">
 
     <thead>
 
-        <tr>
+        <tr class="table-head">
 
-            <th style="width:8%">Bloom</th>
-            <th style="width:8%">CO</th>
-            <th style="width:10%">Q.No</th>
-            <th>Question</th>
-            <th style="width:10%">Marks</th>
+            <th class="bloom-head">
+                Bloom's<br>
+                Taxonomy<br>
+                Level
+            </th>
+
+            <th class="oc-head">
+                OC
+            </th>
+
+            <th class="qno-head">
+                Q.No.
+            </th>
+
+            <th class="question-head">
+            </th>
+
+            <th class="marks-head">
+                Marks
+            </th>
 
         </tr>
 
     </thead>
 
+
     <tbody>
+
 
     {% for row in sections %}
 
-        <!-- Main Question Row -->
 
-        <tr>
+        <!-- ==========================================
+             MAIN SECTION HEADER
+        =========================================== -->
 
-            <td rowspan="{{ row.subparts|length|add:1 }}">
+        <tr class="section-header-row">
 
-                {{ row.bloom_level }}
+            <td></td>
 
-            </td>
+            <td></td>
 
-            <td rowspan="{{ row.subparts|length|add:1 }}">
+            <td class="question-number">
 
-                {{ row.co }}
-
-            </td>
-
-            <td>
-
-                <strong>{{ row.question_number }}</strong>
+                <strong>
+                    {{ row.question_number }}
+                </strong>
 
             </td>
 
-            <td>
 
-                <strong>{{ row.get_attempt_rule_display }}</strong>
+            <td class="section-title">
 
-            </td>
+                <strong>
 
-            <td rowspan="{{ row.subparts|length|add:1 }}">
+                    {% if row.attempt_rule == 'custom' %}
 
-                <strong>{{ row.marks }}</strong>
+                        {{ row.custom_attempt_text }}
 
-            </td>
+                    {% else %}
 
-        </tr>
+                        {{ row.get_attempt_rule_display }}
 
-        <!-- Sub Questions -->
+                    {% endif %}
 
-        {% for letter in row.subparts %}
 
-        <tr>
+                    {% if row.question_type %}
 
-            <td>
+                        -
+                        {{ row.get_question_type_display_name }}
 
-                {{ letter }}
+                    {% endif %}
 
-            </td>
-
-            <td>
-
-                ________________________________________________
+                </strong>
 
             </td>
 
-        </tr>
 
-        {% empty %}
+            <td class="marks-cell">
 
-        <tr>
-
-            <td colspan="2">
-
-                ________________________________________________
+                <strong>
+                    {{ row.marks }}
+                </strong>
 
             </td>
 
         </tr>
 
-        {% endfor %}
+
+
+        <!-- ==========================================
+             SUBPART / QUESTION ROWS
+        =========================================== -->
+
+        {% if row.subparts_data %}
+
+
+            {% for sp in row.subparts_data %}
+
+
+            <tr
+                class="subpart-row"
+                data-section-id="{{ row.id }}"
+                data-slot-index="{{ forloop.counter0 }}"
+            >
+
+
+                <!-- Bloom -->
+
+                <td class="bloom-value">
+
+                    {% if sp.question %}
+
+                        {{ sp.question.get_bloom_level_display }}
+
+                    {% else %}
+
+                        {{ row.bloom_level }}
+
+                    {% endif %}
+
+                </td>
+
+
+
+                <!-- CO / OC -->
+
+                <td class="oc-value">
+
+                    {% if sp.question and sp.question.co %}
+
+                        {{ sp.question.co }}
+
+                    {% else %}
+
+                        {{ row.co }}
+
+                    {% endif %}
+
+                </td>
+
+
+
+                <!-- Question number -->
+
+                <td class="qno-value">
+
+                    <strong>
+                        {{ sp.letter }}
+                    </strong>
+
+                </td>
+
+
+
+                <!-- Question -->
+
+                <td class="question-text-cell">
+
+
+                    {% if sp.question %}
+
+
+                        <div class="question-with-action">
+
+
+                            <span class="question-text">
+
+                                {{ sp.question.question_text|safe|linebreaksbr }}
+
+                            </span>
+
+
+
+                            <!-- ==========================
+                                 REPLACE BUTTON
+                            =========================== -->
+
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary btn-replace-question no-print"
+                                data-section-id="{{ row.id }}"
+                                data-slot-index="{{ forloop.counter0 }}"
+                                data-question-id="{{ sp.question.id }}"
+                                data-question-num="{{ row.question_number }}"
+                            >
+
+                                ↻ Replace
+
+                            </button>
+
+
+                        </div>
+
+
+                    {% else %}
+
+    <div class="question-with-action">
+
+        <span class="text-muted">
+            No question generated.
+        </span>
+
+        <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary btn-replace-question no-print"
+            data-section-id="{{ row.id }}"
+            data-slot-index="{{ forloop.counter0 }}"
+            data-question-id=""
+            data-question-num="{{ row.question_number }}"
+        >
+            ↻ Replace
+        </button>
+
+    </div>
+
+{% endif %}
+
+
+                </td>
+
+
+                <!-- Marks -->
+
+                <td></td>
+
+
+            </tr>
+
+
+            {% endfor %}
+
+
+        {% else %}
+
+
+            <!-- ==========================================
+                 EMPTY SUBPARTS
+            =========================================== -->
+
+            {% for letter in row.subparts %}
+
+
+            <tr class="subpart-row">
+
+
+                <td class="bloom-value">
+
+                    {{ row.bloom_level }}
+
+                </td>
+
+
+                <td class="oc-value">
+
+                    {{ row.co }}
+
+                </td>
+
+
+                <td class="qno-value">
+
+                    <strong>
+                        {{ letter }}
+                    </strong>
+
+                </td>
+
+
+                <td class="question-text-cell">
+
+                    ________________________________________________
+
+                </td>
+
+
+                <td></td>
+
+
+            </tr>
+
+
+            {% endfor %}
+
+
+        {% endif %}
+
+
+    {% empty %}
+
+
+        <!-- ==========================================
+             NO SECTIONS
+        =========================================== -->
+
+        <tr>
+
+            <td
+                colspan="5"
+                class="text-center py-4 text-muted"
+            >
+
+                No question pattern sections defined yet.
+
+            </td>
+
+        </tr>
+
 
     {% endfor %}
+
 
     </tbody>
 

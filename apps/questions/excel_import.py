@@ -1,6 +1,35 @@
 import pandas as pd
-
+from .embedding_service import generate_embedding
 from .models import Question
+from .embedding_service import generate_embedding
+
+
+#---------------------------------------
+#Bloom Level Mapping
+#---------------------------------------
+
+BLOOM_MAP = {
+    "remember": "1",
+    "understand": "2",
+    "apply": "3",
+    "analyze": "4",
+    "evaluate": "5",
+    "create": "6",
+}
+
+QUESTION_TYPE_MAP = {
+    "mcq": "mcq",
+    "multiple choice": "mcq",
+    "multiple choice questions": "mcq",
+
+    "ftq": "ftq",
+    "following the questions": "ftq",
+
+    "case study": "casestudy",
+    "casestudy": "casestudy",
+    "case-study": "casestudy",
+}
+
 
 
 # ---------------------------------------
@@ -75,11 +104,8 @@ def normalize_column_name(column):
 def find_column(df, field):
 
     normalized_columns = {
-
         normalize_column_name(col): col
-
         for col in df.columns
-
     }
 
     for alias in COLUMN_ALIASES[field]:
@@ -87,7 +113,6 @@ def find_column(df, field):
         alias = normalize_column_name(alias)
 
         if alias in normalized_columns:
-
             return normalized_columns[alias]
 
     return None
@@ -114,7 +139,6 @@ class ExcelImporter:
         self.semester = semester
         self.subject = subject
         self.imported_count = 0
-
 
     def import_data(self):
 
@@ -183,21 +207,51 @@ class ExcelImporter:
             for _, row in df.iterrows():
 
                 question_text = str(
-
                     row[columns["question"]]
-
                 ).strip()
 
                 if question_text in ["", "nan", "None"]:
-
                     continue
 
-                # Read Module (for future use)
+                # ---------------------------------------
+                # Read Module
+                # ---------------------------------------
+
                 module = str(
-
                     row[columns["module"]]
-
                 ).strip()
+
+                # ---------------------------------------
+                # Generate AI Embedding
+                # ---------------------------------------
+
+                embedding = generate_embedding(
+                    question_text
+                )
+
+                # ---------------------------------------
+                # Create Question
+                # ---------------------------------------
+                bloom_value = str(
+                    row[columns["bloom"]]
+                ).strip().lower()
+
+                bloom_value = BLOOM_MAP.get(
+                    bloom_value,
+                    bloom_value
+                )
+
+
+                question_type_value = str(
+                    row[columns["question_type"]]
+                ).strip().lower()
+
+                question_type_value = QUESTION_TYPE_MAP.get(
+                    question_type_value,
+                    question_type_value
+                )
+                
+                
 
                 Question.objects.create(
 
@@ -210,42 +264,29 @@ class ExcelImporter:
                     subject=self.subject,
 
                     unit=str(
-
                         row[columns["unit"]]
-
                     ).strip(),
 
                     question_text=question_text,
 
-                    bloom_level=str(
+                    bloom_level=bloom_value,
 
-                        row[columns["bloom"]]
-
-                    ).strip().lower(),
 
                     difficulty=str(
-
                         row[columns["difficulty"]]
-
                     ).strip().lower(),
 
-                    question_type=str(
-
-                        row[columns["question_type"]]
-
-                    ).strip().lower(),
+                    question_type=question_type_value,
 
                     marks=int(
-
                         pd.to_numeric(
-
                             row[columns["mark"]],
-
                             errors="coerce"
-
                         ) or 0
+                    ),
 
-                    )
+                    # AI embedding
+                    embedding=embedding,
 
                 )
 

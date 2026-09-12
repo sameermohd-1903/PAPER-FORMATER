@@ -1,6 +1,6 @@
 from django import forms
 from .models import PaperPattern
-
+from academic.models import Program, Semester, Subject
 
 class PaperPatternForm(forms.ModelForm):
 
@@ -9,7 +9,6 @@ class PaperPatternForm(forms.ModelForm):
         model = PaperPattern
 
         fields = [
-
             "program",
             "semester",
             "subject",
@@ -18,9 +17,6 @@ class PaperPatternForm(forms.ModelForm):
             "exam_date",
             "time_allowed",
             "total_marks",
-            "paper_header",
-            "instructions",
-
         ]
 
         widgets = {
@@ -58,14 +54,58 @@ class PaperPatternForm(forms.ModelForm):
                 "class": "form-control"
             }),
 
-            "paper_header": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 3
-            }),
+            # "paper_header": forms.Textarea(attrs={
+            #     "class": "form-control",
+            #     "rows": 3
+            # }),
 
-            "instructions": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 4
-            }),
-
+            # "instructions": forms.Textarea(attrs={
+            #     "class": "form-control",
+            #     "rows": 4
+            # }),
         }
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        # -----------------------------------------
+        # PROGRAM
+        # -----------------------------------------
+        self.fields["program"].queryset = Program.objects.all()
+
+        # -----------------------------------------
+        # SEMESTER
+        # -----------------------------------------
+        self.fields["semester"].queryset = Semester.objects.none()
+
+        # -----------------------------------------
+        # SUBJECT
+        # -----------------------------------------
+        self.fields["subject"].queryset = Subject.objects.none()
+
+        # -----------------------------------------
+        # When form is submitted
+        # -----------------------------------------
+        if self.is_bound:
+
+            program_id = self.data.get("program")
+
+            semester_id = self.data.get("semester")
+
+            # Load only semesters belonging
+            # to selected program
+            if program_id:
+
+                self.fields["semester"].queryset = Semester.objects.filter(
+                    program_id=program_id
+                ).order_by("number")
+
+            # Load only subjects belonging
+            # to selected semester
+            if semester_id and program_id:
+
+                self.fields["subject"].queryset = Subject.objects.filter(
+                    semester_id=semester_id,
+                    program_id=program_id
+                ).order_by("name")

@@ -393,21 +393,19 @@ def delete_subject_ajax(request):
         })    
     
 def get_programs(request):
-    
     level = request.GET.get('level')
 
     programs = Program.objects.filter(level=level)
 
-    data = []
-
-    for program in programs:
-
-        data.append({
+    data = [
+        {
             'id': program.id,
-            'name': program.name
-        })
+            'name': program.name,
+        }
+        for program in programs
+    ]
 
-    return JsonResponse(list(programs), safe=False)  
+    return JsonResponse(data, safe=False)
 
 def get_semesters(request):
     
@@ -415,18 +413,18 @@ def get_semesters(request):
 
     semesters = Semester.objects.filter(
         program_id=program_id
-    )
+    ).order_by('number')
 
-    data = []
-
-    for semester in semesters:
-
-        data.append({
+    data = [
+        {
             'id': semester.id,
-            'number': semester.number
-        })
+            'number': semester.number,
+            'name': str(semester),
+        }
+        for semester in semesters
+    ]
 
-    return JsonResponse(data, safe=False) 
+    return JsonResponse(data, safe=False)
 
 def get_subjects(request):
     

@@ -102,11 +102,12 @@ class PaperPattern(models.Model):
 class PatternSection(models.Model):
 
     ATTEMPT_CHOICES = [
-        ("all", "Attempt All"),
+        ("select attempt rule ", "Select Attempt Rule"),
         ("1of2", "Attempt Any 1 out of 2"),
         ("2of3", "Attempt Any 2 out of 3"),
         ("3of4", "Attempt Any 3 out of 4"),
         ("4of5", "Attempt Any 4 out of 5"),
+        ("5of5", "Attempt every question"),
         ("custom", "Custom"),
     ]
 
@@ -125,7 +126,7 @@ class PatternSection(models.Model):
     attempt_rule = models.CharField(
         max_length=20,
         choices=ATTEMPT_CHOICES,
-        default="all"
+        default="select attempt rule "
     )
 
     custom_attempt_text = models.CharField(
@@ -133,8 +134,16 @@ class PatternSection(models.Model):
         blank=True
     )
 
+    QUESTION_TYPE_CHOICES = [
+        ("mcq", "Multiple choice questions"),
+        ("ftq", "Following the questions"),
+        ("cs", "Case Study"),
+    ]
+
     unit = models.CharField(
-        max_length=10
+        max_length=10,
+        blank=True,
+        default=""
     )
 
     bloom_level = models.CharField(
@@ -150,7 +159,9 @@ class PatternSection(models.Model):
     )
 
     question_type = models.CharField(
-        max_length=30
+        max_length=30,
+        choices=QUESTION_TYPE_CHOICES,
+        default="mcq"
     )
 
     marks = models.PositiveIntegerField()
@@ -162,8 +173,73 @@ class PatternSection(models.Model):
     class Meta:
         ordering = ["display_order"]
 
+    def get_question_type_display_name(self):
+        val = (self.question_type or "").lower()
+        if val in ["mcq", "multiple choice questions"]:
+            return "Multiple choice questions"
+        elif val in ["ftq", "following the questions"]:
+            return "Following the questions"
+        elif val in ["cs", "case study"]:
+            return "Case Study"
+        return self.get_question_type_display() if hasattr(self, "get_question_type_display") else self.question_type
+
     def __str__(self):
         return f"{self.pattern.pattern_name} - {self.question_number}"
+
+
+# ==========================================
+# PATTERN QUESTION SETTINGS
+# ==========================================
+
+# ==========================================
+# PATTERN QUESTION SETTINGS
+# ==========================================
+
+class PatternQuestionSetting(models.Model):
+    section = models.ForeignKey(
+        PatternSection,
+        on_delete=models.CASCADE,
+        related_name="question_settings"
+    )
+
+    slot_number = models.PositiveIntegerField()
+
+    unit = models.CharField(
+        max_length=10,
+        blank=True,
+        default=""
+    )
+
+    bloom_level = models.CharField(
+        max_length=30,
+        default="1"
+    )
+
+    co = models.CharField(
+        max_length=10,
+        default="CO1"
+    )
+
+    difficulty = models.CharField(
+        max_length=20,
+        default="Easy"
+    )
+
+    class Meta:
+        ordering = ["slot_number"]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["section", "slot_number"],
+                name="unique_section_slot"
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.section.question_number} "
+            f"- Question {self.slot_number}"
+        )
 
 
 # ==========================================

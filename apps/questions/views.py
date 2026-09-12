@@ -5,9 +5,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
-
 from .excel_import import ExcelImporter
-from .forms import ExcelUploadForm, SelectionForm
+from .forms import ExcelUploadForm, SelectionForm, QuestionForm
 from .models import Question
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -130,6 +129,136 @@ def question_list(request):
     )
 
 
+
+
+
+@require_POST
+@login_required
+def classify_question_ajax(request):
+
+    question_text = request.POST.get("question_text", "").strip()
+
+    if not question_text:
+
+        return JsonResponse({
+            "success": False,
+            "message": "Please enter a question first."
+        }, status=400)
+
+    try:
+
+        result = classify_question(question_text)
+
+        allowed_bloom = {
+            "1", "2", "3", "4", "5", "6"
+        }
+
+        allowed_difficulty = {
+            "easy", "medium", "hard"
+        }
+
+        allowed_question_type = {
+            "mcq", "ftq", "cs"
+        }
+
+        if result.get("bloom_level") not in allowed_bloom:
+
+            return JsonResponse({
+                "success": False,
+                "message": "AI returned an invalid Bloom level."
+            }, status=500)
+
+        if result.get("difficulty") not in allowed_difficulty:
+
+            return JsonResponse({
+                "success": False,
+                "message": "AI returned an invalid difficulty."
+            }, status=500)
+
+        if result.get("question_type") not in allowed_question_type:
+
+            return JsonResponse({
+                "success": False,
+                "message": "AI returned an invalid question type."
+            }, status=500)
+
+        return JsonResponse({
+            "success": True,
+            "bloom_level": result["bloom_level"],
+            "difficulty": result["difficulty"],
+            "question_type": result["question_type"],
+        })
+
+    except Exception as e:
+
+        return JsonResponse({
+            "success": False,
+            "message": str(e)
+        }, status=500)
+
+
+
+
+@require_POST
+@login_required
+def check_question_similarity_ajax(request):
+    question_text = request.POST.get("question_text", "").strip()
+    program_id = request.POST.get("program")
+    semester_id = request.POST.get("semester")
+    subject_id = request.POST.get("subject")
+
+    if not question_text:
+        return JsonResponse({
+            "success": False,
+            "message": "Question text cannot be empty."
+        }, status=400)
+
+    if not program_id or not semester_id or not subject_id:
+        return JsonResponse({
+            "success": False,
+            "message": "Please select Program, Semester and Subject first."
+        }, status=400)
+
+    try:
+        from .embedding_service import generate_embedding
+        from .similarity_service import find_similar_questions
+
+        # Generate embedding for the new question
+        new_embedding = generate_embedding(question_text)
+
+        # Compare only with questions from the same
+        # program + semester + subject + teacher
+        questions = Question.objects.filter(
+            teacher=request.user,
+            program_id=program_id,
+            semester_id=semester_id,
+            subject_id=subject_id,
+            embedding__isnull=False,
+        )
+
+        matches = find_similar_questions(
+            new_embedding,
+            questions,
+            threshold=0.70,
+            limit=5,
+        )
+
+        return JsonResponse({
+            "success": True,
+            "has_similar": bool(matches),
+            "matches": matches,
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "message": str(e),
+        }, status=500)
+
+
+
+
+
 @login_required
 def select_subject(request):
 
@@ -145,6 +274,77 @@ def select_subject(request):
         request,
         'questions/select_subject.html'
     )
+
+
+@login_required
+def question_add(request):
+
+    if request.method == "POST":
+
+        form = QuestionForm(request.POST)
+
+        if form.is_valid():
+
+            question = form.save(commit=False)
+
+            # ---------------------------------------------
+            # Set logged-in teacher
+            # ---------------------------------------------
+
+            question.teacher = request.user
+
+
+            # ---------------------------------------------
+            # Similarity approval
+            # ---------------------------------------------
+
+            similarity_approved = (
+                request.POST.get(
+                    "similarity_approved"
+                ) == "1"
+            )
+
+
+            # ---------------------------------------------
+            # Generate embedding
+            # ---------------------------------------------
+
+            from .embedding_service import generate_embedding
+
+            question.embedding = generate_embedding(
+                question.question_text
+            )
+
+
+            # ---------------------------------------------
+            # Save question
+            # ---------------------------------------------
+
+            question.save()
+
+            messages.success(
+                request,
+                "Question added successfully."
+            )
+
+            return redirect(
+                "questions:list"
+            )
+
+    else:
+
+        form = QuestionForm()
+
+    return render(
+        request,
+        "questions/add.html",
+        {
+            "form": form
+        }
+    )
+
+
+
 
 
 @login_required

@@ -51,5 +51,22 @@ urlpatterns = [
     views.paper_pdf,
     name="paper_pdf",
     ),
+    path(
+        "builder/<int:pattern_id>/section/<int:section_id>/questions/",
+        views.get_section_questions_api,
+        name="get_section_questions_api",
+    ),
+    
+    path(
+    'patterns/<int:pattern_id>/delete/',
+    views.delete_pattern,
+    name='delete_pattern'
+    ),
+    
+    path(
+        "builder/<int:pattern_id>/assign-question/",
+        views.assign_section_question_api,
+        name="assign_section_question_api",
+    ),
 
 ]

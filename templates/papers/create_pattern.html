@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
-
 {% load static %}
 
 {% block title %}
-Create Paper Pattern
+    Create Paper Pattern
 {% endblock %}
 
 {% block content %}
@@ -12,23 +11,26 @@ Create Paper Pattern
 
     <div class="card shadow">
 
+        <!-- ========================================== -->
+        <!-- PAGE HEADER -->
+        <!-- ========================================== -->
+
         <div class="card-header bg-primary text-white">
 
             <h3 class="mb-0">
-
                 <i class="fas fa-file-alt"></i>
-
                 Paper Pattern Builder
-
             </h3>
 
         </div>
+
 
         <div class="card-body">
 
             <form method="post" id="patternForm">
 
                 {% csrf_token %}
+
 
                 <!-- ====================================== -->
                 <!-- PAPER INFORMATION -->
@@ -37,88 +39,91 @@ Create Paper Pattern
                 <h5 class="mb-3">
 
                     <i class="fas fa-info-circle"></i>
-
                     Paper Information
 
                 </h5>
 
+
+                <!-- ====================================== -->
+                <!-- LEVEL / PROGRAM / SEMESTER / SUBJECT -->
+                <!-- ====================================== -->
+
                 <div class="row">
 
-                    <!-- Level -->
+                    <!-- LEVEL -->
 
                     <div class="col-md-3 mb-3">
 
-                        <label class="form-label">
-
+                        <label
+                            for="level"
+                            class="form-label"
+                        >
                             Level
-
                         </label>
 
                         <select
                             id="level"
-                            class="form-select">
+                            class="form-select"
+                        >
 
                             <option value="">
-
                                 --------
-
                             </option>
 
                             <option value="UG">
-
                                 Under Graduate
-
                             </option>
 
                             <option value="PG">
-
                                 Post Graduate
-
                             </option>
 
                         </select>
 
                     </div>
 
-                    <!-- Program -->
+
+                    <!-- PROGRAM -->
 
                     <div class="col-md-3 mb-3">
 
-                        <label class="form-label">
-
+                        <label
+                            for="id_program"
+                            class="form-label"
+                        >
                             Program
-
                         </label>
-                        
-                        
 
                         {{ form.program }}
-                        
 
                     </div>
 
-                    <!-- Semester -->
+
+                    <!-- SEMESTER -->
 
                     <div class="col-md-3 mb-3">
 
-                        <label class="form-label">
-
+                        <label
+                            for="id_semester"
+                            class="form-label"
+                        >
                             Semester
-
                         </label>
 
                         {{ form.semester }}
 
                     </div>
 
-                    <!-- Subject -->
+
+                    <!-- SUBJECT -->
 
                     <div class="col-md-3 mb-3">
 
-                        <label class="form-label">
-
+                        <label
+                            for="id_subject"
+                            class="form-label"
+                        >
                             Subject
-
                         </label>
 
                         {{ form.subject }}
@@ -127,26 +132,20 @@ Create Paper Pattern
 
                 </div>
 
+
+                <!-- ====================================== -->
+                <!-- EXAM TYPE -->
+                <!-- ====================================== -->
+
                 <div class="row">
 
                     <div class="col-md-6 mb-3">
 
-                        <label class="form-label">
-
-                            Pattern Name
-
-                        </label>
-
-                        {{ form.pattern_name }}
-
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-
-                        <label class="form-label">
-
+                        <label
+                            for="id_exam_type"
+                            class="form-label"
+                        >
                             Exam Type
-
                         </label>
 
                         {{ form.exam_type }}
@@ -155,88 +154,127 @@ Create Paper Pattern
 
                 </div>
 
+
+                <!-- ====================================== -->
+                <!-- EXAM DATE / TIME / TOTAL MARKS -->
+                <!-- ====================================== -->
+
                 <div class="row">
+
+                    <!-- EXAM DATE -->
 
                     <div class="col-md-4 mb-3">
 
-                        <label class="form-label">
-
+                        <label
+                            for="id_exam_date"
+                            class="form-label"
+                        >
                             Exam Date
-
                         </label>
 
                         {{ form.exam_date }}
 
                     </div>
 
+
+                    <!-- TIME ALLOWED -->
+
                     <div class="col-md-4 mb-3">
 
-                        <label class="form-label">
-
+                        <label
+                            for="id_time_allowed"
+                            class="form-label"
+                        >
                             Time Allowed
-
                         </label>
 
                         {{ form.time_allowed }}
 
                     </div>
 
-                    <div class="col-md-4 mb-3">
 
-                        <label class="form-label">
+                    <!-- TOTAL MARKS -->
 
-                            Total Marks
+      <div class="col-md-4 mb-3">
+    <label class="form-label">
+        Total Marks <span class="text-danger">*</span>
+    </label>
 
-                        </label>
+    {{ form.total_marks }}
 
-                        {{ form.total_marks }}
+    <small class="text-muted">
+        Enter the total marks of the complete paper.
+    </small>
 
-                    </div>
+    <div id="totalMarksValidation" class="mt-2"></div>
+</div>
 
                 </div>
+
+
+                <!-- ====================================== -->
+                <!-- PAPER HEADER - HIDDEN -->
+                <!-- ====================================== -->
+
+                {% comment %}
 
                 <div class="mb-3">
 
                     <label class="form-label">
-
                         Paper Header
-
                     </label>
 
                     {{ form.paper_header }}
 
                 </div>
 
+                {% endcomment %}
+<div class="col-md-6 mb-3">
+    <label class="form-label">Pattern Name</label>
+    {{ form.pattern_name }}
+</div>
+
+
+                <!-- ====================================== -->
+                <!-- INSTRUCTIONS - HIDDEN -->
+                <!-- ====================================== -->
+
+                {% comment %}
+
                 <div class="mb-4">
 
                     <label class="form-label">
-
                         Instructions
-
                     </label>
 
                     {{ form.instructions }}
 
                 </div>
 
+                {% endcomment %}
+
+
                 <hr>
 
+
                 <!-- ====================================== -->
-                <!-- PATTERN ROWS -->
+                <!-- PATTERN ROWS HEADER -->
                 <!-- ====================================== -->
 
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div
+                    class="d-flex justify-content-between align-items-center mb-3"
+                >
 
                     <h4 class="mb-0">
-
                         Pattern Rows
-
                     </h4>
+
 
                     <button
                         type="button"
                         class="btn btn-success"
-                        id="addRowBtn">
+                        id="addRowBtn"
+                    >
 
                         <i class="fas fa-plus"></i>
 
@@ -246,83 +284,71 @@ Create Paper Pattern
 
                 </div>
 
+
+                <!-- ====================================== -->
+                <!-- PATTERN TABLE -->
+                <!-- ====================================== -->
+
                 <div class="table-responsive">
 
                     <table
                         class="table table-bordered table-hover align-middle"
-                        id="patternTable">
+                        id="patternTable"
+                    >
 
                         <thead class="table-dark">
 
                             <tr>
 
+                                <!-- ORDER -->
+
                                 <th width="60">
-
                                     Order
-
                                 </th>
 
-                                <th>
 
-                                    Q.No
-
-                                </th>
+                                <!-- ATTEMPT RULE -->
 
                                 <th>
-
                                     Attempt Rule
-
                                 </th>
 
-                                <th>
 
-                                    Unit
-
-                                </th>
+                                <!-- QUESTION TYPE -->
 
                                 <th>
-
-                                    Bloom
-
-                                </th>
-
-                                <th>
-
-                                    Difficulty
-
-                                </th>
-
-                                <th>
-
                                     Question Type
-
                                 </th>
 
-                                <th>
 
-                                    Marks
-
-                                </th>
-
-                                <th>
-
-                                    No. Questions
-
-                                </th>
+                                <!-- MARKS -->
 
                                 <th width="120">
+                                    Marks/Q.
+                                </th>
 
+
+                                <!-- ACTION -->
+
+                                <th width="180">
                                     Action
+                                </th>
 
+
+                                <!-- APPLY -->
+
+                                <th width="120">
+                                    Apply
                                 </th>
 
                             </tr>
 
                         </thead>
 
+
                         <tbody id="patternBody">
 
-                            <!-- Dynamic Rows -->
+                            <!-- JavaScript will create rows here -->
 
                         </tbody>
 
@@ -330,11 +356,17 @@ Create Paper Pattern
 
                 </div>
 
+
+                <!-- ====================================== -->
+                <!-- SAVE BUTTON -->
+                <!-- ====================================== -->
+
                 <div class="text-end mt-4">
 
                     <button
                         type="submit"
-                        class="btn btn-primary btn-lg">
+                        class="btn btn-primary btn-lg"
+                    >
 
                         <i class="fas fa-save"></i>
 
@@ -352,36 +384,333 @@ Create Paper Pattern
 
 </div>
 
-<script src="{% static 'js/pattern_builder.js' %}"></script>
+
+<!-- ====================================================== -->
+<!-- PATTERN BUILDER JAVASCRIPT -->
+<!-- ====================================================== -->
+
+<script src="{% static 'js/create_pattern.js' %}?v=1"></script>
+
+<!-- ====================================================== -->
+<!-- CASCADING DROPDOWN JAVASCRIPT -->
+<!-- ====================================================== -->
+
 <script>
-document.getElementById("level").addEventListener("change", function () {
 
-    const level = this.value;
-    const programSelect = document.getElementById("id_program");
+document.addEventListener("DOMContentLoaded", function () {
 
-    programSelect.innerHTML =
-        '<option value="">---------</option>';
+    // ==================================================
+    // GET ELEMENTS
+    // ==================================================
 
-    if (!level) return;
+    const levelSelect =
+        document.getElementById("level");
 
-    fetch(`/academic/ajax/programs/?level=${level}`)
-        .then(response => response.json())
-        .then(data => {
+    const programSelect =
+        document.getElementById("id_program");
 
-            data.forEach(program => {
+    const semesterSelect =
+        document.getElementById("id_semester");
 
-                let option = document.createElement("option");
+    const subjectSelect =
+        document.getElementById("id_subject");
 
-                option.value = program.id;
-                option.textContent = program.name;
 
-                programSelect.appendChild(option);
+    // ==================================================
+    // SAFETY CHECK
+    // ==================================================
+
+    if (
+        !levelSelect ||
+        !programSelect ||
+        !semesterSelect ||
+        !subjectSelect
+    ) {
+
+        console.error(
+            "Cascading dropdown elements not found."
+        );
+
+        return;
+
+    }
+
+
+    // ==================================================
+    // RESET PROGRAM
+    // ==================================================
+
+    function resetProgram() {
+
+        programSelect.innerHTML =
+            '<option value="">---------</option>';
+
+    }
+
+
+    // ==================================================
+    // RESET SEMESTER
+    // ==================================================
+
+    function resetSemester() {
+
+        semesterSelect.innerHTML =
+            '<option value="">---------</option>';
+
+    }
+
+
+    // ==================================================
+    // RESET SUBJECT
+    // ==================================================
+
+    function resetSubject() {
+
+        subjectSelect.innerHTML =
+            '<option value="">---------</option>';
+
+    }
+
+
+    // ==================================================
+    // LEVEL → PROGRAM
+    // ==================================================
+
+    levelSelect.addEventListener(
+        "change",
+        function () {
+
+            const level =
+                this.value;
+
+
+            // Reset dependent dropdowns
+
+            resetProgram();
+            resetSemester();
+            resetSubject();
+
+
+            if (!level) {
+
+                return;
+
+            }
+
+
+            fetch(
+                `{% url 'academic:get_programs' %}?level=${encodeURIComponent(level)}`
+            )
+
+            .then(function (response) {
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Failed to load programs"
+                    );
+
+                }
+
+                return response.json();
+
+            })
+
+            .then(function (data) {
+
+                data.forEach(function (program) {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value =
+                        program.id;
+
+                    option.textContent =
+                        program.name;
+
+                    programSelect.appendChild(
+                        option
+                    );
+
+                });
+
+            })
+
+            .catch(function (error) {
+
+                console.error(
+                    "Program Error:",
+                    error
+                );
 
             });
 
-        });
+        }
+    );
+
+
+    // ==================================================
+    // PROGRAM → SEMESTER
+    // ==================================================
+
+    programSelect.addEventListener(
+        "change",
+        function () {
+
+            const programId =
+                this.value;
+
+
+            // Reset dependent dropdowns
+
+            resetSemester();
+            resetSubject();
+
+
+            if (!programId) {
+
+                return;
+
+            }
+
+
+            fetch(
+                `{% url 'academic:get_semesters' %}?program=${encodeURIComponent(programId)}`
+            )
+
+            .then(function (response) {
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Failed to load semesters"
+                    );
+
+                }
+
+                return response.json();
+
+            })
+
+            .then(function (data) {
+
+                data.forEach(function (semester) {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value =
+                        semester.id;
+
+                    option.textContent =
+                        semester.name;
+
+                    semesterSelect.appendChild(
+                        option
+                    );
+
+                });
+
+            })
+
+            .catch(function (error) {
+
+                console.error(
+                    "Semester Error:",
+                    error
+                );
+
+            });
+
+        }
+    );
+
+
+    // ==================================================
+    // SEMESTER → SUBJECT
+    // ==================================================
+
+    semesterSelect.addEventListener(
+        "change",
+        function () {
+
+            const semesterId =
+                this.value;
+
+            const programId =
+                programSelect.value;
+
+
+            // Reset subject
+
+            resetSubject();
+
+
+            if (
+                !programId ||
+                !semesterId
+            ) {
+
+                return;
+
+            }
+
+
+            fetch(
+                `{% url 'academic:get_subjects' %}?program=${encodeURIComponent(programId)}&semester=${encodeURIComponent(semesterId)}`
+            )
+
+            .then(function (response) {
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Failed to load subjects"
+                    );
+
+                }
+
+                return response.json();
+
+            })
+
+            .then(function (data) {
+
+                data.forEach(function (subject) {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value =
+                        subject.id;
+
+                    option.textContent =
+                        subject.name;
+
+                    subjectSelect.appendChild(
+                        option
+                    );
+
+                });
+
+            })
+
+            .catch(function (error) {
+
+                console.error(
+                    "Subject Error:",
+                    error
+                );
+
+            });
+
+        }
+    );
 
 });
+
 </script>
+
 
 {% endblock %}

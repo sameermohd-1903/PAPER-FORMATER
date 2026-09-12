@@ -1,741 +1,2158 @@
 "use strict";
 
-/* ==========================================================
-   Pattern Builder
-   Paper Formatter
-   ========================================================== */
+document.addEventListener("DOMContentLoaded", function () {
+
+    // =========================================================
+    // DOM ELEMENTS
+    // =========================================================
+
+    const patternBody =
+        document.getElementById("patternBody");
+
+    const addRowBtn =
+        document.getElementById("addRowBtn");
+
+    const savePatternBtn =
+        document.getElementById("savePattern");
+
+    const currentMarksElement =
+        document.getElementById("currentMarks");
+
+    const maxMarksElement =
+        document.getElementById("maxMarks");
+
+    const saveStatus =
+        document.getElementById("saveStatus");
+
+    const patternIdElement =
+        document.getElementById("pattern-id");
 
 
-/* ==========================================================
-   1. DOM ELEMENTS
-   ========================================================== */
+    if (!patternBody) {
 
-const addRowBtn = document.getElementById("addRowBtn");
-const savePatternBtn = document.getElementById("savePattern");
+        console.error(
+            "patternBody not found"
+        );
 
-const patternTable = document.getElementById("patternTable");
-const patternBody = document.getElementById("patternBody");
-
-const patternId = document.getElementById("pattern-id");
-
-const totalMarks = document.getElementById("paperTotalMarks");
-const currentMarks =document.getElementById("currentMarks");
-
-const maxMarks =document.getElementById("maxMarks");
-const saveStatus = document.getElementById("saveStatus");
-const alertBox = document.getElementById("alertBox");
-
-
-/* ==========================================================
-   2. GLOBAL VARIABLES
-   ========================================================== */
-
-let rowCount = 0;
-let patternChanged = false;
-
-
-/* ==========================================================
-   3. INITIALIZATION
-   ========================================================== */
-
-document.addEventListener("DOMContentLoaded", initializePatternBuilder);
-
-
-/* ==========================================================
-   4. INITIALIZE APPLICATION
-   ========================================================== */
-
-function initializePatternBuilder() {
-
-    console.log("Pattern Builder Initialized");
-
-    bindEvents();
-    loadSavedRows();
-    document.addEventListener("click", function(e){
-
-    if(e.target.classList.contains("delete-row")){
-
-        e.target.closest("tr").remove();
-
-        updateRowNumbers();
-
-        markPatternChanged();
+        return;
 
     }
 
-});
 
-}
+    // =========================================================
+    // PATTERN ID
+    // =========================================================
 
-
-function loadSavedRows(){
-
-    const patternId = getPatternId();
-
-    fetch(
-
-        `/papers/builder/${patternId}/rows/`
-
-    )
-
-    .then(response => response.json())
-
-    .then(data => {
-
-        data.rows.forEach(function(row){
-
-            createRow(row);
-            
-
-        });
-        updateTotalMarks();
-
-    })
-
-    .catch(function(error){
-
-        console.error(error);
-
-    });
-
-}
+    const patternId =
+        patternIdElement
+            ? patternIdElement.value
+            : null;
 
 
-/* ==========================================================
-   5. EVENT BINDINGS
-   ========================================================== */
+    // =========================================================
+    // ATTEMPT RULE INFORMATION
+    // =========================================================
 
-function bindEvents() {
+    const attemptRuleInfo = {
 
-    if (addRowBtn) {
+        "1of2": {
+            available: 2,
+            attempted: 1
+        },
 
-        addRowBtn.addEventListener("click", onAddRowClick);
+        "2of3": {
+            available: 3,
+            attempted: 2
+        },
 
-    }
+        "3of4": {
+            available: 4,
+            attempted: 3
+        },
 
-    if (savePatternBtn) {
+        "4of5": {
+            available: 5,
+            attempted: 4
+        },
 
-        savePatternBtn.addEventListener("click", onSavePatternClick);
+        "5of5": {
+            available: 5,
+            attempted: 5
+        }
 
-    }
+    };
 
-    document.addEventListener("change", function () {
 
-        markPatternChanged();
-        updateTotalMarks();
+    // =========================================================
+    // GET ATTEMPT INFORMATION
+    // =========================================================
 
-    });
-        document.addEventListener("click", handleTableButtons);
-        
-}
+    function getAttemptInfo(rule) {
 
-function handleTableButtons(e){
-
-    if(e.target.classList.contains("move-up")){
-
-        moveRowUp(e.target);
+        return (
+            attemptRuleInfo[rule] || {
+                available: 0,
+                attempted: 0
+            }
+        );
 
     }
 
-    if(e.target.classList.contains("move-down")){
 
-        moveRowDown(e.target);
+    // =========================================================
+    // UPDATE ROW NUMBERS
+    // =========================================================
+
+    function updateRowNumbers() {
+
+        const rows =
+            patternBody.querySelectorAll(
+                "tr.main-pattern-row"
+            );
+
+
+        rows.forEach(
+            function (row, index) {
+
+                const number =
+                    index + 1;
+
+
+                const order =
+                    row.querySelector(
+                        ".row-order"
+                    );
+
+
+                const questionNumber =
+                    row.querySelector(
+                        ".question-number"
+                    );
+
+
+                if (order) {
+
+                    order.textContent =
+                        number;
+
+                }
+
+
+                if (questionNumber) {
+
+                    questionNumber.value =
+                        "Q" + number;
+
+                }
+
+            }
+        );
 
     }
 
-    if(e.target.classList.contains("delete-row")){
 
-        deleteRow(e.target);
+    // =========================================================
+    // CALCULATE PAPER TOTAL
+    // =========================================================
+
+    function calculatePaperTotal() {
+
+        let currentMarks = 0;
+
+
+        const rows =
+            patternBody.querySelectorAll(
+                "tr.main-pattern-row"
+            );
+
+
+        rows.forEach(
+            function (row) {
+
+                const attemptRule =
+                    row.querySelector(
+                        ".attempt-rule"
+                    );
+
+
+                const marksInput =
+                    row.querySelector(
+                        ".marks-input"
+                    );
+
+
+                if (
+                    !attemptRule ||
+                    !marksInput
+                ) {
+
+                    return;
+
+                }
+
+
+                const rule =
+                    attemptRule.value;
+
+
+                const marks =
+                    parseInt(
+                        marksInput.value
+                    ) || 0;
+
+
+                const info =
+                    getAttemptInfo(rule);
+
+
+                currentMarks +=
+                    marks * info.attempted;
+
+            }
+        );
+
+
+        if (currentMarksElement) {
+
+            currentMarksElement.textContent =
+                currentMarks;
+
+        }
+
+
+        if (maxMarksElement) {
+
+            const maxMarks =
+                parseInt(
+                    maxMarksElement.textContent
+                ) || 0;
+
+
+            updateMarksMessage(
+                currentMarks,
+                maxMarks
+            );
+
+        }
 
     }
 
-}
 
-function moveRowUp(button){
+    // =========================================================
+    // MARKS MESSAGE
+    // =========================================================
 
-    const row = button.closest("tr");
+    function updateMarksMessage(
+        currentMarks,
+        maxMarks
+    ) {
 
-    const previous = row.previousElementSibling;
-
-    if(previous){
-
-        row.parentNode.insertBefore(row, previous);
-
-        updateRowNumbers();
-
-        updateQuestionNumbers();
-
-        markPatternChanged();
-
-    }
-
-}
-
-function moveRowDown(button){
-
-    const row = button.closest("tr");
-
-    const next = row.nextElementSibling;
-
-    if(next){
-
-        row.parentNode.insertBefore(next, row);
-
-        updateRowNumbers();
-
-        updateQuestionNumbers();
-
-        markPatternChanged();
-
-    }
-
-}
-
-function deleteRow(button){
-
-    button.closest("tr").remove();
-
-    updateRowNumbers();
-
-    updateQuestionNumbers();
-
-    markPatternChanged();
-    updateTotalMarks();
-
-}
+        let message =
+            document.getElementById(
+                "marksValidationMessage"
+            );
 
 
-/* ==========================================================
-   6. UTILITY FUNCTIONS
-   ========================================================== */
+        if (!message) {
 
-/**
- * Get Django CSRF Token
- */
-function getCookie(name) {
+            message =
+                document.createElement("div");
 
-    let cookieValue = null;
 
-    if (document.cookie && document.cookie !== "") {
+            message.id =
+                "marksValidationMessage";
 
-        const cookies = document.cookie.split(";");
 
-        for (let i = 0; i < cookies.length; i++) {
+            message.className =
+                "mt-3";
 
-            const cookie = cookies[i].trim();
 
-            if (cookie.startsWith(name + "=")) {
-
-                cookieValue = decodeURIComponent(
-                    cookie.substring(name.length + 1)
+            const table =
+                document.getElementById(
+                    "patternTable"
                 );
 
-                break;
+
+            if (table) {
+
+                table.parentElement.after(
+                    message
+                );
 
             }
 
         }
 
-    }
 
-    return cookieValue;
-
-}
-
-
-/**
- * Mark pattern as modified
- */
-function markPatternChanged() {
-
-    patternChanged = true;
-
-    if (saveStatus) {
-
-        saveStatus.classList.remove("d-none");
-        saveStatus.classList.remove("text-success");
-        saveStatus.classList.add("text-danger");
-
-        saveStatus.innerHTML = "● Unsaved Changes";
-
-    }
-
-}
+        if (!message) {
+            return;
+        }
 
 
-/**
- * Mark pattern as saved
- */
-function markPatternSaved() {
+        if (currentMarks === 0) {
 
-    patternChanged = false;
+            message.innerHTML = "";
 
-    if (saveStatus) {
+            return;
 
-        saveStatus.classList.remove("text-danger");
-        saveStatus.classList.add("text-success");
+        }
 
-        saveStatus.innerHTML = "✔ Saved";
 
-    }
+        if (currentMarks === maxMarks) {
 
-}
+            message.innerHTML = `
 
-function updateTotalMarks(){
+                <div class="alert alert-success py-2">
 
-    let total = 0;
+                    ✓ Current Marks:
+                    ${currentMarks} / ${maxMarks}
 
-    document
-    .querySelectorAll('[name="marks[]"]')
-    .forEach(function(input){
+                    <br>
 
-        total += Number(input.value) || 0;
+                    ✓ Total marks are correct.
 
-    });
+                </div>
 
-    currentMarks.innerText = total;
+            `;
 
-    if(total > Number(maxMarks.innerText)){
+        } else {
 
-        currentMarks.classList.remove("text-success");
+            message.innerHTML = `
 
-        currentMarks.classList.add("text-danger");
+                <div class="alert alert-warning py-2">
+
+                    ⚠ Current Marks:
+                    ${currentMarks} / ${maxMarks}
+
+                    <br>
+
+                    Please make Current Marks equal
+                    to Total Marks.
+
+                </div>
+
+            `;
+
+        }
 
     }
 
-    else{
 
-        currentMarks.classList.remove("text-danger");
+    // =========================================================
+    // CREATE NEW ROW
+    // =========================================================
 
-        currentMarks.classList.add("text-success");
+    function createRow(data = null) {
+
+        const rowNumber =
+            patternBody.querySelectorAll(
+                "tr.main-pattern-row"
+            ).length + 1;
+
+
+        const row =
+            document.createElement("tr");
+
+
+        row.className =
+            "main-pattern-row";
+
+
+        row.innerHTML = `
+
+            <!-- =================================================
+                 ORDER
+            ================================================== -->
+
+            <td>
+
+                <span class="row-order">
+                    ${rowNumber}
+                </span>
+
+
+                <input
+                    type="hidden"
+                    name="question_number[]"
+                    value="Q${rowNumber}"
+                    class="question-number"
+                >
+
+
+                <input
+                    type="hidden"
+                    name="question_settings[]"
+                    value="[]"
+                    class="question-settings"
+                >
+
+            </td>
+
+
+            <!-- =================================================
+                 ATTEMPT RULE
+            ================================================== -->
+
+            <td>
+
+                <select
+                    name="attempt_rule[]"
+                    class="form-select attempt-rule"
+                >
+
+                    <option value="">
+                        Select Attempt Rule
+                    </option>
+
+                    <option value="1of2">
+                        Attempt Any 1 out of 2
+                    </option>
+
+                    <option value="2of3">
+                        Attempt Any 2 out of 3
+                    </option>
+
+                    <option value="3of4">
+                        Attempt Any 3 out of 4
+                    </option>
+
+                    <option value="4of5">
+                        Attempt Any 4 out of 5
+                    </option>
+
+                    <option value="5of5">
+                        Attempt every question
+                    </option>
+
+                </select>
+
+            </td>
+
+
+            <!-- =================================================
+                 QUESTION TYPE
+            ================================================== -->
+
+            <td>
+
+                <select
+                    name="question_type[]"
+                    class="form-select question-type"
+                >
+
+                    <option value="mcq">
+                        MCQ
+                    </option>
+
+                    <option value="ftq">
+                        FTQ
+                    </option>
+
+                    <option value="casestudy">
+                        Case Study
+                    </option>
+
+                </select>
+
+            </td>
+
+
+            <!-- =================================================
+                 MARKS
+            ================================================== -->
+
+            <td>
+
+                <input
+                    type="number"
+                    name="marks[]"
+                    class="form-control marks-input"
+                    min="1"
+                    placeholder="Marks"
+                    required
+                >
+
+                <small>
+                    Per question
+                </small>
+
+            </td>
+
+
+            <!-- =================================================
+                 ACTION
+            ================================================== -->
+
+            <td>
+
+                <button
+                    type="button"
+                    class="btn btn-danger btn-sm delete-row"
+                >
+                    Delete
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn btn-secondary btn-sm move-up"
+                >
+                    ↑
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn btn-secondary btn-sm move-down"
+                >
+                    ↓
+                </button>
+
+            </td>
+
+
+            <!-- =================================================
+                 APPLY
+            ================================================== -->
+
+            <td>
+
+                <button
+                    type="button"
+                    class="btn btn-primary btn-sm apply-settings"
+                >
+                    Apply
+                </button>
+
+            </td>
+
+        `;
+
+
+        patternBody.appendChild(row);
+
+
+        // =====================================================
+        // LOAD EXISTING DATA
+        // =====================================================
+
+        if (data) {
+
+            const attemptRule =
+                row.querySelector(
+                    ".attempt-rule"
+                );
+
+
+            const questionType =
+                row.querySelector(
+                    ".question-type"
+                );
+
+
+            const marksInput =
+                row.querySelector(
+                    ".marks-input"
+                );
+
+
+            if (
+                attemptRule &&
+                data.attempt_rule
+            ) {
+
+                attemptRule.value =
+                    data.attempt_rule;
+
+            }
+
+
+            if (
+                questionType &&
+                data.question_type
+            ) {
+
+                questionType.value =
+                    data.question_type;
+
+            }
+
+
+            if (
+                marksInput &&
+                data.marks
+            ) {
+
+                marksInput.value =
+                    data.marks;
+
+            }
+
+        }
+
+
+        updateRowNumbers();
+
+        calculatePaperTotal();
 
     }
 
-}
 
+    // =========================================================
+    // ADD ROW
+    // =========================================================
 
-/**
- * Bootstrap Alert
- */
-function showAlert(message, type = "danger") {
+    if (addRowBtn) {
 
-    alertBox.className = `alert alert-${type} mb-3`;
+        addRowBtn.addEventListener(
+            "click",
+            function () {
 
-    alertBox.innerHTML = message;
+                console.log(
+                    "ADD ROW BUTTON WORKING"
+                );
 
-    alertBox.classList.remove("d-none");
 
-    setTimeout(function(){
+                createRow();
 
-        alertBox.classList.add("d-none");
+            }
+        );
 
-    },3000);
+    }
 
-}
 
+    // =========================================================
+    // TABLE BUTTONS
+    // =========================================================
 
-/**
- * Get Pattern ID
- */
-function getPatternId() {
+    patternBody.addEventListener(
+        "click",
+        function (event) {
 
-    if (!patternId)
-        return null;
 
-    return patternId.value;
+            // =================================================
+            // DELETE
+            // =================================================
 
-}
+            const deleteBtn =
+                event.target.closest(
+                    ".delete-row"
+                );
 
 
-/* ==========================================================
-   Create Table Row
-========================================================== */
+            if (deleteBtn) {
 
-function createRow(data = null) {
+                const row =
+                    deleteBtn.closest(
+                        "tr.main-pattern-row"
+                    );
 
-    rowCount++;
 
-    const row = document.createElement("tr");
+                if (row) {
 
-    row.innerHTML = `
+                    const settingsRow =
+                        row.nextElementSibling;
 
-        <td class="row-order">
-            ${rowCount}
-        </td>
 
-        <td>
-            <input
-                type="text"
-                class="form-control question-number"
-                name="question_number[]"
-                value="${data ? data.question_number : 'Q' + rowCount}"
-                readonly>
-        </td>
+                    if (
+                        settingsRow &&
+                        settingsRow.classList.contains(
+                            "settings-row"
+                        )
+                    ) {
 
-        <td>
-            <select
-                class="form-select"
-                name="attempt_rule[]">
+                        settingsRow.remove();
 
-                <option value="all">Attempt All</option>
-                <option value="1of2">Attempt Any 1 out of 2</option>
-                <option value="2of3">Attempt Any 2 out of 3</option>
-                <option value="3of4">Attempt Any 3 out of 4</option>
-                <option value="4of5">Attempt Any 4 out of 5</option>
-                <option value="custom">Custom</option>
+                    }
 
-            </select>
-        </td>
 
-        <td>
+                    row.remove();
 
-            <select
-                class="form-select"
-                name="unit[]">
+                }
 
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
 
-            </select>
+                updateRowNumbers();
 
-        </td>
+                calculatePaperTotal();
 
-        <td>
+                return;
 
-            <select
-                class="form-select"
-                name="bloom[]">
+            }
 
-                <option value="remember">Remember</option>
-                <option value="understand">Understand</option>
-                <option value="apply">Apply</option>
-                <option value="analyze">Analyze</option>
-                <option value="evaluate">Evaluate</option>
-                <option value="create">Create</option>
 
-            </select>
+            // =================================================
+            // MOVE UP
+            // =================================================
 
-        </td>
+            const moveUpBtn =
+                event.target.closest(
+                    ".move-up"
+                );
 
-        <td>
 
-        <select
-            class="form-select"
-            name="co[]">
+            if (moveUpBtn) {
 
-                <option value="CO1">CO1</option>
-                <option value="CO2">CO2</option>
-                <option value="CO3">CO3</option>
-                <option value="CO4">CO4</option>
-                <option value="CO5">CO5</option>
-                <option value="CO6">CO6</option>
+                const row =
+                    moveUpBtn.closest(
+                        "tr.main-pattern-row"
+                    );
 
-        </select>
 
-          </td>
+                if (
+                    row &&
+                    row.previousElementSibling
+                ) {
 
-        <td>
+                    const previousRow =
+                        row.previousElementSibling;
 
-            <select
-                class="form-select"
-                name="difficulty[]">
 
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
+                    if (
+                        previousRow.classList.contains(
+                            "settings-row"
+                        )
+                    ) {
 
-            </select>
+                        return;
 
-        </td>
+                    }
 
-        <td>
 
-            <select
-                class="form-select"
-                name="question_type[]">
+                    patternBody.insertBefore(
+                        row,
+                        previousRow
+                    );
 
-                <option value="mcq">MCQ</option>
-                <option value="very_short">Very Short</option>
-                <option value="short">Short</option>
-                <option value="long">Long</option>
-                <option value="case_study">Case Study</option>
-                <option value="programming">Programming</option>
+                }
 
-            </select>
 
-        </td>
+                updateRowNumbers();
 
-        <td>
+                return;
 
-            <input
-                type="number"
-                class="form-control"
-                name="marks[]"
-                min="1">
+            }
 
-        </td>
 
-        <td>
+            // =================================================
+            // MOVE DOWN
+            // =================================================
 
-            <input
-                type="number"
-                class="form-control"
-                name="number_of_questions[]"
-                value="1"
-                min="1">
+            const moveDownBtn =
+                event.target.closest(
+                    ".move-down"
+                );
 
-        </td>
 
-        <td>
+            if (moveDownBtn) {
 
-            <div class="btn-group">
+                const row =
+                    moveDownBtn.closest(
+                        "tr.main-pattern-row"
+                    );
 
-            <button
-            type="button"
-            class="btn btn-secondary btn-sm move-up">
 
-            ↑
+                if (!row) {
+                    return;
+                }
 
-            </button>
 
-            <button
-            type="button"
-            class="btn btn-secondary btn-sm move-down">
+                const nextRow =
+                    row.nextElementSibling;
 
-            ↓
 
-            </button>
+                if (
+                    nextRow &&
+                    nextRow.classList.contains(
+                        "settings-row"
+                    )
+                ) {
 
-            <button
-            type="button"
-            class="btn btn-danger btn-sm delete-row">
+                    const rowAfterSettings =
+                        nextRow.nextElementSibling;
 
-            Delete
 
-            </button>
+                    if (rowAfterSettings) {
+
+                        patternBody.insertBefore(
+                            rowAfterSettings,
+                            row
+                        );
+
+                    }
+
+                } else if (nextRow) {
+
+                    patternBody.insertBefore(
+                        nextRow,
+                        row
+                    );
+
+                }
+
+
+                updateRowNumbers();
+
+                return;
+
+            }
+
+
+            // =================================================
+            // APPLY
+            // =================================================
+
+            const applyBtn =
+                event.target.closest(
+                    ".apply-settings"
+                );
+
+
+            if (applyBtn) {
+
+                console.log(
+                    "APPLY BUTTON WORKING"
+                );
+
+
+                const row =
+                    applyBtn.closest(
+                        "tr.main-pattern-row"
+                    );
+
+
+                if (row) {
+
+                    openSettings(row);
+
+                }
+
+
+                return;
+
+            }
+
+        }
+    );
+
+
+    // =========================================================
+    // ATTEMPT RULE CHANGE
+    // =========================================================
+
+    patternBody.addEventListener(
+        "change",
+        function (event) {
+
+            if (
+                event.target.classList.contains(
+                    "attempt-rule"
+                )
+            ) {
+
+                calculatePaperTotal();
+
+            }
+
+        }
+    );
+
+
+    // =========================================================
+    // MARKS CHANGE
+    // =========================================================
+
+    patternBody.addEventListener(
+        "input",
+        function (event) {
+
+            if (
+                event.target.classList.contains(
+                    "marks-input"
+                )
+            ) {
+
+                calculatePaperTotal();
+
+            }
+
+        }
+    );
+
+
+    // =========================================================
+    // OPEN INLINE SETTINGS
+    // =========================================================
+
+    function openSettings(row) {
+
+        // -----------------------------------------------------
+        // REMOVE OLD SETTINGS
+        // -----------------------------------------------------
+
+        const oldSettings =
+            document.querySelector(
+                ".settings-row"
+            );
+
+
+        if (oldSettings) {
+
+            oldSettings.remove();
+
+        }
+
+
+        // -----------------------------------------------------
+        // GET ATTEMPT RULE
+        // -----------------------------------------------------
+
+        const attemptRule =
+            row.querySelector(
+                ".attempt-rule"
+            );
+
+
+        if (!attemptRule) {
+            return;
+        }
+
+
+        const rule =
+            attemptRule.value;
+
+
+        // -----------------------------------------------------
+        // CHECK ATTEMPT RULE
+        // -----------------------------------------------------
+
+        if (!rule) {
+
+            showInlineMessage(
+                row,
+                "Please select an Attempt Rule first."
+            );
+
+            return;
+
+        }
+
+
+        const info =
+            getAttemptInfo(rule);
+
+
+        if (info.available === 0) {
+            return;
+        }
+
+
+        // -----------------------------------------------------
+        // GET EXISTING SETTINGS
+        // -----------------------------------------------------
+
+        const hiddenInput =
+            row.querySelector(
+                ".question-settings"
+            );
+
+
+        let existingSettings = [];
+
+
+        if (hiddenInput) {
+
+            try {
+
+                existingSettings =
+                    JSON.parse(
+                        hiddenInput.value || "[]"
+                    );
+
+            } catch (error) {
+
+                console.error(
+                    "Invalid question settings JSON:",
+                    error
+                );
+
+
+                existingSettings = [];
+
+            }
+
+        }
+
+
+        // -----------------------------------------------------
+        // CREATE SETTINGS ROW
+        // -----------------------------------------------------
+
+        const settingsRow =
+            document.createElement("tr");
+
+
+        settingsRow.className =
+            "settings-row";
+
+
+        const settingsCell =
+            document.createElement("td");
+
+
+        settingsCell.colSpan = 6;
+
+
+        settingsCell.innerHTML = `
+
+            <div
+                class="border border-primary rounded p-3"
+                style="background:#f8f9fa;"
+            >
+
+                <h5 class="mb-3">
+                    ${info.available} Questions Settings
+                </h5>
+
+
+                <div
+                    class="row g-3 settings-container"
+                >
+                </div>
+
+
+                <div class="mt-3">
+
+                    <button
+                        type="button"
+                        class="btn btn-success save-inline-settings"
+                    >
+                        Save
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary cancel-inline-settings"
+                    >
+                        Cancel
+                    </button>
+
+                </div>
 
             </div>
 
-        </td>
+        `;
 
-    `;
 
-    patternBody.appendChild(row);
-    
-    if(data){
+        settingsRow.appendChild(
+            settingsCell
+        );
 
-    row.querySelector('[name="attempt_rule[]"]').value =
-        data.attempt_rule;
 
-    row.querySelector('[name="unit[]"]').value =
-        data.unit;
+        // -----------------------------------------------------
+        // INSERT SETTINGS BELOW ROW
+        // -----------------------------------------------------
 
-    row.querySelector('[name="bloom[]"]').value =
-        data.bloom_level;
+        row.after(
+            settingsRow
+        );
 
-    row.querySelector('[name="co[]"]').value =
-        data.co;    
 
-    row.querySelector('[name="difficulty[]"]').value =
-        data.difficulty;
+        const settingsContainer =
+            settingsRow.querySelector(
+                ".settings-container"
+            );
 
-    row.querySelector('[name="question_type[]"]').value =
-        data.question_type;
 
-    row.querySelector('[name="marks[]"]').value =
-        data.marks;
+        // =====================================================
+        // CREATE INDIVIDUAL QUESTION SETTINGS
+        // =====================================================
 
-    row.querySelector('[name="number_of_questions[]"]').value =
-        data.number_of_questions;
+        for (
+            let i = 1;
+            i <= info.available;
+            i++
+        ) {
+
+            const existing =
+                existingSettings.find(
+                    function (item) {
+
+                        return (
+                            parseInt(
+                                item.slot_number
+                            ) === i
+                        );
+
+                    }
+                );
+
+
+            // -------------------------------------------------
+            // EXISTING VALUES
+            // -------------------------------------------------
+
+            const unitValue =
+                existing &&
+                existing.unit !== undefined
+                    ? String(existing.unit)
+                    : "";
+
+
+            const bloomValue =
+                existing &&
+                existing.bloom_level !== undefined
+                    ? String(existing.bloom_level)
+                    : "1";
+
+
+            const coValue =
+                existing &&
+                existing.co
+                    ? existing.co
+                    : "CO1";
+
+
+            const difficultyValue =
+                existing &&
+                existing.difficulty
+                    ? String(
+                        existing.difficulty
+                    ).toLowerCase()
+                    : "easy";
+
+
+            // -------------------------------------------------
+            // QUESTION CARD
+            // -------------------------------------------------
+
+            const settingCol =
+                document.createElement("div");
+
+
+            settingCol.className =
+                "col-md-6";
+
+
+            settingCol.innerHTML = `
+
+                <div class="card h-100">
+
+                    <div class="card-body">
+
+                        <h6 class="card-title">
+                            Question ${i} Settings
+                        </h6>
+
+
+                        <!-- =================================
+                             UNIT
+                        ================================== -->
+
+                        <label class="form-label">
+                            Unit
+                        </label>
+
+
+                        <select
+                            class="form-select setting-unit mb-3"
+                            data-index="${i}"
+                        >
+
+                            <option
+                                value=""
+                                ${unitValue === ""
+                                    ? "selected"
+                                    : ""}
+                            >
+                                All Units
+                            </option>
+
+
+                            <option
+                                value="1"
+                                ${unitValue === "1"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Unit 1
+                            </option>
+
+
+                            <option
+                                value="2"
+                                ${unitValue === "2"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Unit 2
+                            </option>
+
+
+                            <option
+                                value="3"
+                                ${unitValue === "3"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Unit 3
+                            </option>
+
+
+                            <option
+                                value="4"
+                                ${unitValue === "4"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Unit 4
+                            </option>
+
+
+                            <option
+                                value="5"
+                                ${unitValue === "5"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Unit 5
+                            </option>
+
+
+                            <option
+                                value="6"
+                                ${unitValue === "6"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Unit 6
+                            </option>
+
+
+                            <option
+                                value="7"
+                                ${unitValue === "7"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Unit 7
+                            </option>
+
+
+                            <option
+                                value="8"
+                                ${unitValue === "8"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Unit 8
+                            </option>
+
+                        </select>
+
+
+                        <!-- =================================
+                             BLOOM LEVEL
+                        ================================== -->
+
+                        <label class="form-label">
+                            Bloom Level
+                        </label>
+
+
+                        <select
+                            class="form-select setting-bloom mb-3"
+                            data-index="${i}"
+                        >
+
+                            <option
+                                value="1"
+                                ${bloomValue === "1"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Remember
+                            </option>
+
+
+                            <option
+                                value="2"
+                                ${bloomValue === "2"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Understand
+                            </option>
+
+
+                            <option
+                                value="3"
+                                ${bloomValue === "3"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Apply
+                            </option>
+
+
+                            <option
+                                value="4"
+                                ${bloomValue === "4"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Analyze
+                            </option>
+
+
+                            <option
+                                value="5"
+                                ${bloomValue === "5"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Evaluate
+                            </option>
+
+
+                            <option
+                                value="6"
+                                ${bloomValue === "6"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Create
+                            </option>
+
+                        </select>
+
+
+                        <!-- =================================
+                             CO
+                        ================================== -->
+
+                        <label class="form-label">
+                            CO
+                        </label>
+
+
+                        <input
+                            type="text"
+                            class="form-control setting-co mb-3"
+                            data-index="${i}"
+                            value="${coValue}"
+                        >
+
+
+                        <!-- =================================
+                             DIFFICULTY
+                        ================================== -->
+
+                        <label class="form-label">
+                            Difficulty
+                        </label>
+
+
+                        <select
+                            class="form-select setting-difficulty"
+                            data-index="${i}"
+                        >
+
+                            <option
+                                value="easy"
+                                ${difficultyValue === "easy"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Easy
+                            </option>
+
+
+                            <option
+                                value="medium"
+                                ${difficultyValue === "medium"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Medium
+                            </option>
+
+
+                            <option
+                                value="hard"
+                                ${difficultyValue === "hard"
+                                    ? "selected"
+                                    : ""}
+                            >
+                                Hard
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            `;
+
+
+            settingsContainer.appendChild(
+                settingCol
+            );
+
+        }
+
+
+        // =====================================================
+        // SAVE INLINE SETTINGS
+        // =====================================================
+
+        settingsRow
+            .querySelector(
+                ".save-inline-settings"
+            )
+            .addEventListener(
+                "click",
+                function () {
+
+                    const settings = [];
+
+
+                    // -----------------------------------------
+                    // COLLECT EVERY QUESTION'S SETTINGS
+                    // -----------------------------------------
+
+                    for (
+                        let i = 1;
+                        i <= info.available;
+                        i++
+                    ) {
+
+                        const unit =
+                            settingsRow.querySelector(
+                                `.setting-unit[data-index="${i}"]`
+                            );
+
+
+                        const bloom =
+                            settingsRow.querySelector(
+                                `.setting-bloom[data-index="${i}"]`
+                            );
+
+
+                        const co =
+                            settingsRow.querySelector(
+                                `.setting-co[data-index="${i}"]`
+                            );
+
+
+                        const difficulty =
+                            settingsRow.querySelector(
+                                `.setting-difficulty[data-index="${i}"]`
+                            );
+
+
+                        settings.push({
+
+                            // -----------------------------
+                            // QUESTION SLOT
+                            // -----------------------------
+
+                            slot_number: i,
+
+
+                            // -----------------------------
+                            // INDIVIDUAL UNIT
+                            // -----------------------------
+
+                            unit:
+                                unit
+                                    ? unit.value
+                                    : "",
+
+
+                            // -----------------------------
+                            // BLOOM
+                            // -----------------------------
+
+                            bloom_level:
+                                bloom
+                                    ? bloom.value
+                                    : "1",
+
+
+                            // -----------------------------
+                            // CO
+                            // -----------------------------
+
+                            co:
+                                co
+                                    ? (
+                                        co.value.trim() ||
+                                        "CO1"
+                                    )
+                                    : "CO1",
+
+
+                            // -----------------------------
+                            // DIFFICULTY
+                            // -----------------------------
+
+                            difficulty:
+                                difficulty
+                                    ? difficulty.value
+                                    : "easy"
+
+                        });
+
+                    }
+
+
+                    // -----------------------------------------
+                    // SAVE JSON
+                    // -----------------------------------------
+
+                    if (hiddenInput) {
+
+                        hiddenInput.value =
+                            JSON.stringify(
+                                settings
+                            );
+
+                    }
+
+
+                    console.log(
+                        "Saved question settings:",
+                        settings
+                    );
+
+
+                    settingsRow.remove();
+
+                }
+            );
+
+
+        // =====================================================
+        // CANCEL
+        // =====================================================
+
+        settingsRow
+            .querySelector(
+                ".cancel-inline-settings"
+            )
+            .addEventListener(
+                "click",
+                function () {
+
+                    settingsRow.remove();
+
+                }
+            );
 
     }
 
-}   // <-- ADD THIS
 
+    // =========================================================
+    // INLINE MESSAGE
+    // =========================================================
 
+    function showInlineMessage(
+        row,
+        message
+    ) {
 
-/* ==========================================================
-   Update Row Numbers
-========================================================== */
-
-function updateRowNumbers() {
-
-    const rows = patternBody.querySelectorAll("tr");
-
-    rowCount = 0;
-
-    rows.forEach(function(row){
-
-        rowCount++;
-
-        row.querySelector(".row-order").innerText = rowCount;
-
-        row.querySelector(".question-number").value = "Q" + rowCount;
-
-    });
-
-}
-
-
-
-/* ==========================================================
-   7. PLACEHOLDER FUNCTIONS
-   ========================================================== */
-
-function onAddRowClick(){
-    createRow();
-    updateRowNumbers();
-    updateTotalMarks();
-    markPatternChanged();
-}
-
-function onSavePatternClick(){
-
-    const rows=[];
-
-    document
-    .querySelectorAll("#patternBody tr")
-    .forEach(function(row,index){
-
-        const marks =
-        row.querySelector('[name="marks[]"]').value;
-
-        const questions =
-        row.querySelector('[name="number_of_questions[]"]').value;
-
-        const unit =
-        row.querySelector('[name="unit[]"]').value;
-
-        const bloom =
-        row.querySelector('[name="bloom[]"]').value;
-        co:
-        row.querySelector('[name="co[]"]').value;
-
-        const difficulty =
-        row.querySelector('[name="difficulty[]"]').value;
-
-        const questionType =
-        row.querySelector('[name="question_type[]"]').value;
-
-        if(
-
-            marks==="" ||
-
-            questions==="" ||
-
-            unit==="" ||
-
-            bloom==="" ||
-
-            difficulty==="" ||
-
-            questionType===""
-
-        ){
-
-            showAlert(
-                "Please complete all fields in Row " +
-                (index + 1),
-                "danger"
+        const oldMessage =
+            document.querySelector(
+                ".inline-row-message"
             );
 
-            throw new Error("Validation Failed");
 
-      }
+        if (oldMessage) {
 
-        rows.push({
+            oldMessage.remove();
 
-            display_order:
-            row.querySelector(".row-order").innerText,
-
-            question_number:
-            row.querySelector('[name="question_number[]"]').value,
-
-            attempt_rule:
-            row.querySelector('[name="attempt_rule[]"]').value,
-
-            custom_attempt_text:"",
-
-            unit:
-            row.querySelector('[name="unit[]"]').value,
-
-            bloom_level:
-            row.querySelector('[name="bloom[]"]').value,
-
-            co:
-            row.querySelector('[name="co[]"]').value,
-
-            difficulty:
-            row.querySelector('[name="difficulty[]"]').value,
-
-            question_type:
-            row.querySelector('[name="question_type[]"]').value,
-
-            marks:
-            row.querySelector('[name="marks[]"]').value,
-
-            number_of_questions:
-            row.querySelector('[name="number_of_questions[]"]').value,
-        
-
-        });
-
-    });
+        }
 
 
+        const messageRow =
+            document.createElement("tr");
 
 
-    sendRows(rows);
+        messageRow.className =
+            "inline-row-message";
 
-}
+
+        messageRow.innerHTML = `
+
+            <td colspan="6">
+
+                <div class="alert alert-warning mb-0">
+
+                    ${message}
+
+                </div>
+
+            </td>
+
+        `;
 
 
-function sendRows(rows){
+        row.after(
+            messageRow
+        );
 
-    fetch(
 
-        `/papers/builder/${getPatternId()}/save/`,
+        setTimeout(
+            function () {
 
-        {
-            method:"POST",
+                messageRow.remove();
 
-            headers:{
-                "Content-Type":"application/json",
-                "X-CSRFToken":getCookie("csrftoken")
             },
+            2500
+        );
 
-            body:JSON.stringify({
-                rows:rows
-            })
+    }
+
+
+    // =========================================================
+    // SAVE PATTERN
+    // =========================================================
+
+    if (savePatternBtn) {
+
+        savePatternBtn.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "SAVE PATTERN BUTTON WORKING"
+                );
+
+
+                if (!patternId) {
+
+                    showSaveMessage(
+                        "Pattern ID not found.",
+                        "danger"
+                    );
+
+                    return;
+
+                }
+
+
+                const rows = [];
+
+
+                const tableRows =
+                    patternBody.querySelectorAll(
+                        "tr.main-pattern-row"
+                    );
+
+
+                tableRows.forEach(
+                    function (row, index) {
+
+                        const attemptRule =
+                            row.querySelector(
+                                ".attempt-rule"
+                            );
+
+
+                        const questionType =
+                            row.querySelector(
+                                ".question-type"
+                            );
+
+
+                        const marks =
+                            row.querySelector(
+                                ".marks-input"
+                            );
+
+
+                        const settingsInput =
+                            row.querySelector(
+                                ".question-settings"
+                            );
+
+
+                        let questionSettings = [];
+
+
+                        if (settingsInput) {
+
+                            try {
+
+                                questionSettings =
+                                    JSON.parse(
+                                        settingsInput.value ||
+                                        "[]"
+                                    );
+
+                            } catch (error) {
+
+                                console.error(
+                                    "Invalid settings:",
+                                    error
+                                );
+
+
+                                questionSettings = [];
+
+                            }
+
+                        }
+
+
+                        const rule =
+                            attemptRule
+                                ? attemptRule.value
+                                : "";
+
+
+                        const attemptInfo =
+                            getAttemptInfo(rule);
+
+
+                        rows.push({
+
+                            display_order:
+                                index + 1,
+
+
+                            question_number:
+                                "Q" +
+                                (index + 1),
+
+
+                            attempt_rule:
+                                rule,
+
+
+                            custom_attempt_text:
+                                "",
+
+
+                            // ---------------------------------
+                            // SECTION UNIT IS NOW EMPTY
+                            // ---------------------------------
+                            // Unit belongs to each question
+                            // inside question_settings.
+
+                            unit:
+                                "",
+
+
+                            bloom_level:
+                                "1",
+
+
+                            co:
+                                "CO1",
+
+
+                            difficulty:
+                                "easy",
+
+
+                            question_type:
+                                questionType
+                                    ? questionType.value
+                                    : "mcq",
+
+
+                            marks:
+                                marks
+                                    ? marks.value
+                                    : "",
+
+
+                            // ---------------------------------
+                            // NUMBER OF QUESTIONS
+                            // ---------------------------------
+
+                            number_of_questions:
+                                attemptInfo.available,
+
+
+                            // ---------------------------------
+                            // INDIVIDUAL SETTINGS
+                            // ---------------------------------
+
+                            question_settings:
+                                questionSettings
+
+                        });
+
+                    }
+                );
+
+
+                // =================================================
+                // VALIDATION
+                // =================================================
+
+                for (
+                    const row of rows
+                ) {
+
+                    if (!row.attempt_rule) {
+
+                        showSaveMessage(
+                            "Please select Attempt Rule for every row.",
+                            "warning"
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        !row.marks ||
+                        parseInt(row.marks) <= 0
+                    ) {
+
+                        showSaveMessage(
+                            "Please enter Marks for every row.",
+                            "warning"
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        !row.question_settings ||
+                        row.question_settings.length !==
+                        row.number_of_questions
+                    ) {
+
+                        showSaveMessage(
+                            `Please click Apply and save settings for ${row.question_number}.`,
+                            "warning"
+                        );
+
+                        return;
+
+                    }
+
+
+                    // -----------------------------------------
+                    // CHECK EVERY SETTING HAS SLOT NUMBER
+                    // -----------------------------------------
+
+                    const invalidSetting =
+                        row.question_settings.some(
+                            function (setting) {
+
+                                return (
+                                    !setting.slot_number
+                                );
+
+                            }
+                        );
+
+
+                    if (invalidSetting) {
+
+                        showSaveMessage(
+                            `Invalid question settings for ${row.question_number}.`,
+                            "warning"
+                        );
+
+                        return;
+
+                    }
+
+                }
+
+
+                // =================================================
+                // MARKS VALIDATION
+                // =================================================
+
+                const currentMarks =
+                    parseInt(
+                        currentMarksElement
+                            ? currentMarksElement.textContent
+                            : 0
+                    ) || 0;
+
+
+                const maxMarks =
+                    parseInt(
+                        maxMarksElement
+                            ? maxMarksElement.textContent
+                            : 0
+                    ) || 0;
+
+
+                if (
+                    currentMarks !== maxMarks
+                ) {
+
+                    showSaveMessage(
+                        `Current Marks (${currentMarks}) must equal Total Marks (${maxMarks}).`,
+                        "warning"
+                    );
+
+                    return;
+
+                }
+
+
+                // =================================================
+                // SEND TO DJANGO
+                // =================================================
+
+                fetch(
+                    `/papers/builder/${patternId}/save/`,
+                    {
+
+                        method: "POST",
+
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                            "X-CSRFToken":
+                                getCookie(
+                                    "csrftoken"
+                                )
+
+                        },
+
+
+                        body:
+                            JSON.stringify({
+                                rows: rows
+                            })
+
+                    }
+                )
+
+                .then(
+                    function (response) {
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                "Server returned " +
+                                response.status
+                            );
+
+                        }
+
+
+                        return response.json();
+
+                    }
+                )
+
+                .then(
+                    function (data) {
+
+                        if (data.success) {
+
+                            showSaveMessage(
+                                data.message ||
+                                "Pattern saved successfully.",
+                                "success"
+                            );
+
+                        } else {
+
+                            showSaveMessage(
+                                data.message ||
+                                "Unable to save pattern.",
+                                "danger"
+                            );
+
+                        }
+
+                    }
+                )
+
+                .catch(
+                    function (error) {
+
+                        console.error(
+                            "Save Pattern Error:",
+                            error
+                        );
+
+
+                        showSaveMessage(
+                            "Something went wrong while saving the pattern.",
+                            "danger"
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    // =========================================================
+    // SAVE MESSAGE
+    // =========================================================
+
+    function showSaveMessage(
+        message,
+        type
+    ) {
+
+        if (!saveStatus) {
+            return;
         }
 
-    )
 
-    .then(response=>response.json())
+        saveStatus.className =
+            `alert alert-${type} mt-3`;
 
-    .then(data=>{
 
-        if(data.success){
+        saveStatus.textContent =
+            message;
 
-            markPatternSaved();
 
-            showAlert(data.message);
+        saveStatus.classList.remove(
+            "d-none"
+        );
 
-        }else{
 
-            showAlert("Save Failed", "danger");
+        setTimeout(
+            function () {
+
+                saveStatus.classList.add(
+                    "d-none"
+                );
+
+            },
+            3000
+        );
+
+    }
+
+
+    // =========================================================
+    // CSRF
+    // =========================================================
+
+    function getCookie(name) {
+
+        let cookieValue = null;
+
+
+        if (document.cookie) {
+
+            const cookies =
+                document.cookie.split(";");
+
+
+            for (
+                let cookie of cookies
+            ) {
+
+                cookie =
+                    cookie.trim();
+
+
+                if (
+                    cookie.startsWith(
+                        name + "="
+                    )
+                ) {
+
+                    cookieValue =
+                        decodeURIComponent(
+                            cookie.substring(
+                                name.length + 1
+                            )
+                        );
+
+                    break;
+
+                }
+
+            }
 
         }
 
-    })
 
-    .catch(error=>{
+        return cookieValue;
 
-        console.error(error);
+    }
 
-    });
 
-}
+    // =========================================================
+    // INITIALIZE EXISTING ROWS
+    // =========================================================
+
+    const existingRows =
+        patternBody.querySelectorAll(
+            "tr.main-pattern-row"
+        );
+
+
+    existingRows.forEach(
+        function (row) {
+
+            // Do not convert arbitrary rows
+            // into main pattern rows.
+
+            if (
+                !row.classList.contains(
+                    "main-pattern-row"
+                )
+            ) {
+
+                return;
+
+            }
+
+        }
+    );
+
+
+    updateRowNumbers();
+
+    calculatePaperTotal();
+
+
+    // =========================================================
+    // DEBUG
+    // =========================================================
+
+    console.log(
+        "======================================"
+    );
+
+    console.log(
+        "PATTERN BUILDER JS LOADED"
+    );
+
+    console.log(
+        "Pattern ID:",
+        patternId
+    );
+
+    console.log(
+        "Unit is configured per question"
+    );
+
+    console.log(
+        "======================================"
+
+    );
+
+});

@@ -1,233 +1,1093 @@
 /* ==========================================
-   Page Background
+   Academic Paper Typography & Global Styles
 ========================================== */
 
-body {
-    background: #e9ecef;
+@page {
+    size: A4;
+    margin: 0;
 }
 
-@media print {
+* {
+    box-sizing: border-box;
+}
 
-    body * {
-        visibility: hidden;
-    }
-
-    .paper-preview,
-    .paper-preview * {
-        visibility: visible;
-    }
-
-    .paper-preview {
-
-        position: absolute;
-
-        left: 0;
-        top: 0;
-
-        width: 100%;
-
-        margin: 0;
-        padding: 0;
-
-        border: none;
-        box-shadow: none;
-
-    }
-
+body {
+    margin: 0;
+    padding: 0;
+    background: #eef2f5;
+    font-family: "Times New Roman", Times, serif;
+    color: #111111;
 }
 
 
 /* ==========================================
-   A4 Paper Preview
+   PAPER CONTAINER
 ========================================== */
 
-.paper-preview {
-
+.paper-preview,
+.paper {
     width: 210mm;
     min-height: 297mm;
 
-    margin: 30px auto;
+    /* Compact A4 margins */
+    padding: 12mm 11mm 8mm 11mm;
+
+    margin: 20px auto;
 
     background: #ffffff;
 
-    padding: 20mm;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
 
-    border: 1px solid #ddd;
+    border: 1px solid #c0c0c0;
 
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    font-family: "Times New Roman", Times, serif;
 
+    color: #111111;
 }
 
 
 /* ==========================================
-   Responsive View
+   HEADER
 ========================================== */
 
-@media (max-width: 1100px) {
+.paper-header-container {
+    width: 100%;
 
-    .paper-preview {
+    font-size: 14px;
 
-        width: 100%;
-
-        min-height: auto;
-
-        padding: 20px;
-
-        margin: 20px auto;
-
-    }
-
-}
-
-
-@media print {
-
-    .no-print {
-        display: none !important;
-    }
-
+    margin: 0;
+    padding: 0;
 }
 
 
 /* ==========================================
-   Question Table
+   TOP HEADER
 ========================================== */
 
-.preview-table {
+.header-top-row {
+    display: grid;
 
+    grid-template-columns: 1fr 1fr;
+
+    align-items: center;
+
+    margin: 0 0 1px 0;
+
+    padding: 0;
+
+    font-size: 14px;
+
+    line-height: 1.2;
+}
+
+
+.top-left {
+    text-align: left;
+
+    font-size: 14px;
+}
+
+
+.top-right {
+    text-align: right;
+
+    font-size: 14px;
+}
+
+
+/* ==========================================
+   COLLEGE TITLE
+========================================== */
+
+.college-title {
+    text-align: center;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    margin: 1px 0 4px 0;
+
+    padding: 0;
+
+    line-height: 1.2;
+}
+
+
+/* ==========================================
+   MIDDLE HEADER
+========================================== */
+
+.header-middle-row {
+    display: grid;
+
+    grid-template-columns: 1fr 1.55fr 0.7fr;
+
+    align-items: center;
+
+    font-size: 14px;
+
+    margin: 0 0 3px 0;
+
+    padding: 0;
+
+    line-height: 1.2;
+}
+
+
+.date-col {
+    text-align: left;
+}
+
+
+.exam-col {
+    text-align: center;
+
+    font-weight: bold;
+}
+
+
+.time-col {
+    text-align: right;
+
+    font-weight: bold;
+}
+
+
+/* ==========================================
+   BOTTOM HEADER
+========================================== */
+
+.header-bottom-row {
+    display: grid;
+
+    grid-template-columns: 1fr 1.55fr 0.7fr;
+
+    align-items: center;
+
+    font-size: 14px;
+
+    margin: 0 0 4px 0;
+
+    padding: 0;
+
+    line-height: 1.2;
+}
+
+
+.course-col {
+    text-align: left;
+
+    font-weight: bold;
+}
+
+
+.subject-col {
+    text-align: center;
+
+    font-weight: bold;
+}
+
+
+.marks-col {
+    text-align: right;
+
+    font-weight: bold;
+}
+
+
+/* ==========================================
+   HEADER LINE
+========================================== */
+
+.header-line {
+    width: 100%;
+
+    border-bottom: 1.5px solid #222222;
+
+    margin: 0 0 7px 0;
+
+    padding: 0;
+}
+
+
+/* ==========================================
+   MAIN EXAM TABLE
+========================================== */
+
+table.preview-table,
+table.exam-table {
     width: 100%;
 
     border-collapse: collapse;
 
+    border-spacing: 0;
+
+    table-layout: fixed;
+
+    font-size: 14px;
+
+    margin: 0;
+
+    padding: 0;
+
+    font-family: "Times New Roman", Times, serif;
 }
 
+
+/* ==========================================
+   TABLE CELLS
+========================================== */
+
+.preview-table td,
 .preview-table th,
-.preview-table td {
+.exam-table td,
+.exam-table th {
 
-    border: 1px solid #000;
+    border: 1px solid #777777 !important;
 
-    padding: 8px;
+    /*
+       Very small padding.
+       This is important for compact paper.
+    */
+    padding: 2px 5px;
+
+    margin: 0;
 
     vertical-align: top;
 
+    color: #111111;
+
+    line-height: 1.15;
 }
 
-.preview-table th {
+
+/* ==========================================
+   COLUMN WIDTHS
+========================================== */
+
+.col-bloom {
+    width: 10%;
+}
+
+
+.col-co,
+.col-oc {
+    width: 5%;
+}
+
+
+.col-qno {
+    width: 8%;
+}
+
+
+.col-question {
+    width: 70%;
+}
+
+
+.col-marks {
+    width: 7%;
+}
+
+
+/* ==========================================
+   TABLE HEADER
+========================================== */
+
+.table-head {
+
+    /*
+       DO NOT use a large fixed height.
+    */
+    height: auto;
+
+    vertical-align: middle !important;
+}
+
+
+.table-head th {
 
     background: #ffffff;
 
-    color: #000;
+    font-weight: bold;
+
+    padding: 4px 5px;
+
+    vertical-align: middle !important;
+
+    line-height: 1.15;
+}
+
+
+/* ==========================================
+   BLOOM HEADER
+========================================== */
+
+.table-head .bloom-head {
+
+    font-weight: bold;
+
+    text-align: left;
+
+    line-height: 1.15;
+
+    vertical-align: middle !important;
+}
+
+
+/* ==========================================
+   OC HEADER
+========================================== */
+
+.table-head .oc-head,
+.table-head .co-head {
+
+    text-align: center;
+
+    vertical-align: middle !important;
+
+    font-weight: bold;
+}
+
+
+/* ==========================================
+   QUESTION NUMBER HEADER
+========================================== */
+
+.table-head .qno-head {
+
+    text-align: center;
+
+    vertical-align: middle !important;
+
+    font-weight: bold;
+}
+
+
+/* ==========================================
+   QUESTION HEADER
+========================================== */
+
+.table-head .question-head {
+
+    vertical-align: middle !important;
+
+    text-align: left;
+}
+
+
+/* ==========================================
+   MARKS HEADER
+========================================== */
+
+.table-head .marks-head {
+
+    text-align: center;
+
+    vertical-align: middle !important;
+
+    font-weight: bold;
+}
+
+
+/* ==========================================
+   QUESTION SECTION HEADER
+========================================== */
+
+.section-header-row {
+
+    /*
+       IMPORTANT:
+       No fixed height.
+    */
+
+    height: auto;
+
+    font-weight: bold;
+}
+
+
+.section-header-row td {
+
+    vertical-align: middle !important;
+
+    background-color: #ffffff;
+
+    padding-top: 2px;
+
+    padding-bottom: 2px;
+
+    line-height: 1.15;
+}
+
+
+.section-title {
+
+    font-weight: bold;
+
+    text-align: left;
+}
+
+
+.question-number {
 
     text-align: center;
 
     font-weight: bold;
 
+    white-space: nowrap;
 }
 
-.preview-table td:nth-child(1),
-.preview-table td:nth-child(2),
-.preview-table td:nth-child(3),
-.preview-table td:nth-child(5) {
+
+.marks-cell {
 
     text-align: center;
 
+    vertical-align: middle !important;
+
+    font-weight: bold;
 }
 
-.preview-table td:nth-child(4) {
+
+/* ==========================================
+   QUESTION ROW
+========================================== */
+
+.subpart-row {
+
+    height: auto;
+
+    margin: 0;
+
+    padding: 0;
+}
+
+
+.subpart-row td {
+
+    background-color: #ffffff;
+
+    /*
+       Compact row.
+    */
+    padding-top: 2px;
+
+    padding-bottom: 2px;
+
+    line-height: 1.2;
+
+    vertical-align: top;
+}
+
+
+/* ==========================================
+   BLOOM / OC / Q.NO.
+========================================== */
+
+.bloom-value,
+.oc-value,
+.co-value,
+.qno-value {
+
+    text-align: center;
+
+    vertical-align: top !important;
+
+    padding-top: 2px !important;
+
+    padding-bottom: 2px !important;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================
+   QUESTION TEXT CELL
+========================================== */
+
+.question-text-cell {
 
     text-align: left;
 
+    padding: 2px 5px !important;
+
+    /*
+       IMPORTANT:
+       Do not give this a fixed height.
+    */
+
+    height: auto;
+
+    min-height: 0;
+
+    line-height: 1.2;
+
+    white-space: normal;
+
+    word-break: normal;
+
+    overflow-wrap: break-word;
 }
 
 
 /* ==========================================
-   Prevent Table Row Breaking
+   QUESTION TEXT
 ========================================== */
 
-.preview-table {
+.question-text {
 
-    page-break-inside: auto;
+    flex: 1;
 
-}
+    min-width: 0;
 
-.preview-table tr {
+    margin: 0;
 
-    page-break-inside: avoid;
+    padding: 0;
 
-    page-break-after: auto;
+    line-height: 1.2;
 
+    display: block;
+
+    word-break: normal;
+
+    overflow-wrap: break-word;
 }
 
 
 /* ==========================================
-   Print Mode
+   REMOVE DEFAULT PARAGRAPH SPACING
 ========================================== */
 
-@media print {
+.question-text-cell p,
+.question-text p {
 
-    body {
+    margin: 0 !important;
 
-        background: white !important;
+    padding: 0 !important;
 
-    }
+    line-height: 1.2;
+}
 
-    .sidebar,
-    .navbar,
-    .btn,
-    footer {
 
-        display: none !important;
+/* ==========================================
+   BULLET CONTENT
+========================================== */
 
-    }
+.question-text-cell .bullet {
 
-    .paper-preview {
+    margin-left: 20px;
+}
+
+
+.question-text-cell .bold {
+
+    font-weight: bold;
+}
+
+
+/* ==========================================
+   QUESTION + ACTION BUTTON
+========================================== */
+
+.question-with-action {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 5px;
+
+    width: 100%;
+
+    margin: 0;
+
+    padding: 0;
+
+    line-height: 1.2;
+}
+
+
+/* ==========================================
+   QUESTION INSIDE FLEX CONTAINER
+========================================== */
+
+.question-with-action .question-text {
+
+    flex: 1;
+
+    min-width: 0;
+
+    margin: 0;
+
+    padding: 0;
+
+    line-height: 1.2;
+
+    word-break: normal;
+
+    overflow-wrap: break-word;
+}
+
+
+/* ==========================================
+   REPLACE BUTTON
+========================================== */
+
+.question-with-action .btn {
+
+    flex-shrink: 0;
+
+    white-space: nowrap;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    font-size: 10px;
+
+    padding: 2px 6px;
+
+    line-height: 1.2;
+
+    margin: 0;
+
+    border-radius: 3px;
+}
+
+
+/* ==========================================
+   REPLACE BUTTON
+========================================== */
+
+.btn-replace-question {
+
+    border-radius: 3px;
+
+    margin: 0;
+}
+
+
+/* ==========================================
+   ADD BUTTON
+   Kept only for old HTML compatibility
+========================================== */
+
+.btn-add-question {
+
+    border-radius: 3px;
+
+    margin: 0;
+}
+
+
+/* ==========================================
+   BUTTON HOVER
+========================================== */
+
+.question-with-action .btn:hover {
+
+    cursor: pointer;
+}
+
+
+/* ==========================================
+   TEACHER ACTIONS
+========================================== */
+
+.teacher-actions-row td {
+
+    border-top: none !important;
+
+    border-left: 1px solid #777777 !important;
+
+    border-right: 1px solid #777777 !important;
+
+    border-bottom: 1px solid #777777 !important;
+
+    background-color: #f8f9fa !important;
+
+    padding: 4px 8px !important;
+}
+
+
+/* ==========================================
+   MODAL QUESTION LIST
+========================================== */
+
+.question-item {
+
+    transition: all 0.2s ease;
+}
+
+
+.question-item:hover {
+
+    background-color: #f8f9fa;
+}
+
+
+.badge-used {
+
+    background-color: #dc3545;
+
+    color: white;
+}
+
+
+.badge-current {
+
+    background-color: #ffc107;
+
+    color: #212529;
+}
+
+
+.badge-avail {
+
+    background-color: #198754;
+
+    color: white;
+}
+
+
+/* ==========================================
+   RESPONSIVE VIEW
+========================================== */
+
+@media (max-width: 1100px) {
+
+    .paper-preview,
+    .paper {
 
         width: 100%;
 
         min-height: auto;
 
+        padding: 12px;
+
+        margin: 10px auto;
+    }
+
+
+    .question-with-action {
+
+        gap: 5px;
+    }
+
+
+    .question-with-action .btn {
+
+        font-size: 10px;
+
+        padding: 2px 5px;
+    }
+}
+
+
+/* ==========================================
+   PRINT MEDIA
+========================================== */
+
+@media print {
+
+    @page {
+
+        size: A4;
+
+        margin: 0;
+    }
+
+
+    body {
+
         margin: 0;
 
         padding: 0;
+
+        background: #ffffff !important;
+
+        color: #111111 !important;
+
+        font-family: "Times New Roman", Times, serif !important;
+    }
+
+
+    /* ======================================
+       HIDE TEACHER CONTROLS
+    ====================================== */
+
+    .no-print,
+    .teacher-actions-row,
+    .sidebar,
+    .navbar,
+    footer,
+    header,
+    .btn,
+    .modal,
+    .modal-backdrop {
+
+        display: none !important;
+
+        visibility: hidden !important;
+    }
+
+
+    /* ======================================
+       PAPER
+    ====================================== */
+
+    .paper-preview,
+    .paper {
+
+        width: 210mm !important;
+
+        min-height: 297mm !important;
+
+        margin: 0 !important;
+
+        /*
+           Compact print margins.
+        */
+        padding: 12mm 11mm 8mm 11mm !important;
 
         border: none !important;
 
         box-shadow: none !important;
 
+        background: #ffffff !important;
     }
 
-    .print-card {
 
-        border: none;
+    /* ======================================
+       HEADER
+    ====================================== */
 
-        box-shadow: none;
+    .paper-header-container {
 
+        font-size: 14px !important;
+
+        margin: 0 !important;
+
+        padding: 0 !important;
     }
 
-}
 
-@media print {
+    .header-top-row {
 
-    .sidebar,
-    .navbar,
-    footer,
-    header {
+        margin-bottom: 1px !important;
+
+        line-height: 1.2 !important;
+    }
+
+
+    .college-title {
+
+        margin-top: 1px !important;
+
+        margin-bottom: 4px !important;
+
+        line-height: 1.2 !important;
+    }
+
+
+    .header-middle-row {
+
+        margin-bottom: 3px !important;
+
+        line-height: 1.2 !important;
+    }
+
+
+    .header-bottom-row {
+
+        margin-bottom: 4px !important;
+
+        line-height: 1.2 !important;
+    }
+
+
+    .header-line {
+
+        margin-bottom: 7px !important;
+
+        border-bottom: 1.5px solid #222222 !important;
+    }
+
+
+    /* ======================================
+       TABLE
+    ====================================== */
+
+    .preview-table,
+    .exam-table {
+
+        width: 100% !important;
+
+        border-collapse: collapse !important;
+
+        border-spacing: 0 !important;
+
+        table-layout: fixed !important;
+
+        font-size: 14px !important;
+
+        margin: 0 !important;
+
+        padding: 0 !important;
+    }
+
+
+    .preview-table th,
+    .preview-table td,
+    .exam-table th,
+    .exam-table td {
+
+        border: 1px solid #777777 !important;
+
+        color: #111111 !important;
+
+        padding: 2px 5px !important;
+
+        line-height: 1.2 !important;
+
+        vertical-align: top !important;
+    }
+
+
+    /* ======================================
+       TABLE HEADER
+    ====================================== */
+
+    .table-head {
+
+        height: auto !important;
+    }
+
+
+    .table-head th {
+
+        padding: 4px 5px !important;
+
+        vertical-align: middle !important;
+    }
+
+
+    /* ======================================
+       SECTION HEADER
+    ====================================== */
+
+    .section-header-row {
+
+        height: auto !important;
+    }
+
+
+    .section-header-row td {
+
+        padding-top: 2px !important;
+
+        padding-bottom: 2px !important;
+
+        vertical-align: middle !important;
+
+        line-height: 1.15 !important;
+    }
+
+
+    /* ======================================
+       QUESTION ROW
+    ====================================== */
+
+    .subpart-row {
+
+        height: auto !important;
+    }
+
+
+    .subpart-row td {
+
+        padding-top: 2px !important;
+
+        padding-bottom: 2px !important;
+
+        line-height: 1.2 !important;
+
+        vertical-align: top !important;
+    }
+
+
+    /* ======================================
+       QUESTION TEXT
+    ====================================== */
+
+    .question-text-cell {
+
+        padding: 2px 5px !important;
+
+        height: auto !important;
+
+        min-height: 0 !important;
+
+        line-height: 1.2 !important;
+
+        white-space: normal !important;
+
+        word-break: normal !important;
+
+        overflow-wrap: break-word !important;
+    }
+
+
+    .question-text-cell p,
+    .question-text p {
+
+        margin: 0 !important;
+
+        padding: 0 !important;
+
+        line-height: 1.2 !important;
+    }
+
+
+    /* ======================================
+       REMOVE FLEX IN PRINT
+    ====================================== */
+
+    .question-with-action {
+
+        display: block !important;
+
+        width: 100% !important;
+
+        margin: 0 !important;
+
+        padding: 0 !important;
+
+        line-height: 1.2 !important;
+    }
+
+
+    .question-text {
+
+        display: inline !important;
+
+        margin: 0 !important;
+
+        padding: 0 !important;
+
+        line-height: 1.2 !important;
+    }
+
+
+    /* ======================================
+       PREVENT EXTRA SPACE
+    ====================================== */
+
+    .question-with-action .btn {
 
         display: none !important;
-
     }
-
-}
-
-
-/* ==========================================
-   A4 Page Setup
-========================================== */
-
-@page {
-
-    size: A4 portrait;
-
-    margin: 15mm;
 
 }
