@@ -291,7 +291,7 @@ class GeneratedPaper(models.Model):
 # ==========================================
 
 class GeneratedQuestion(models.Model):
-
+    
     paper = models.ForeignKey(
         GeneratedPaper,
         on_delete=models.CASCADE,
@@ -309,6 +309,10 @@ class GeneratedQuestion(models.Model):
     )
 
     display_order = models.PositiveIntegerField()
+    
+    is_manual_replacement = models.BooleanField(
+        default=False
+    )
 
     class Meta:
         ordering = ["display_order"]

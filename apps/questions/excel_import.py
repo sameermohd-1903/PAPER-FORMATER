@@ -1,12 +1,13 @@
 import pandas as pd
+
 from .embedding_service import generate_embedding
+from .ai_service import classify_question
 from .models import Question
-from .embedding_service import generate_embedding
 
 
-#---------------------------------------
-#Bloom Level Mapping
-#---------------------------------------
+# ---------------------------------------
+# Bloom Level Mapping
+# ---------------------------------------
 
 BLOOM_MAP = {
     "remember": "1",
@@ -16,6 +17,11 @@ BLOOM_MAP = {
     "evaluate": "5",
     "create": "6",
 }
+
+
+# ---------------------------------------
+# Question Type Mapping
+# ---------------------------------------
 
 QUESTION_TYPE_MAP = {
     "mcq": "mcq",
@@ -28,8 +34,10 @@ QUESTION_TYPE_MAP = {
     "case study": "casestudy",
     "casestudy": "casestudy",
     "case-study": "casestudy",
-}
 
+    # AI may return "cs"
+    "cs": "casestudy",
+}
 
 
 # ---------------------------------------
@@ -144,82 +152,171 @@ class ExcelImporter:
 
         try:
 
+            # ---------------------------------------
+            # Read Excel
+            # ---------------------------------------
+
             df = pd.read_excel(self.file_path)
 
             df = df.dropna(how="all")
 
+            # ---------------------------------------
+            # Required Columns
+            # ---------------------------------------
+
+            # AI will generate:
+            # - Bloom Level
+            # - Difficulty
+            # - Question Type
+            #
+            # Therefore these three columns are
+            # no longer required from Excel.
+
             required_fields = [
-
                 "question",
-
-                "module",
-
                 "unit",
-
-                "bloom",
-
                 "mark",
-
-                "difficulty",
-
-                "question_type",
-
             ]
 
             columns = {
-
                 field: find_column(df, field)
-
                 for field in required_fields
-
             }
 
             missing = [
-
                 field
-
                 for field, column in columns.items()
-
                 if column is None
-
             ]
 
             if missing:
 
                 missing = [
-
                     m.replace("_", " ").title()
-
                     for m in missing
-
                 ]
 
                 return False, [
-
                     "Missing Required Columns:",
-
                     *missing
-
                 ]
 
             self.imported_count = 0
 
-            for _, row in df.iterrows():
+            # ---------------------------------------
+            # Process Each Question
+            # ---------------------------------------
+
+            for index, row in df.iterrows():
 
                 question_text = str(
                     row[columns["question"]]
                 ).strip()
 
+                # Ignore empty rows
                 if question_text in ["", "nan", "None"]:
                     continue
 
                 # ---------------------------------------
-                # Read Module
+                # Read Unit
                 # ---------------------------------------
 
-                module = str(
-                    row[columns["module"]]
+                unit = str(
+                    row[columns["unit"]]
                 ).strip()
+
+                # ---------------------------------------
+                # Read Marks
+                # ---------------------------------------
+
+                marks_value = pd.to_numeric(
+                    row[columns["mark"]],
+                    errors="coerce"
+                )
+
+                if pd.isna(marks_value):
+                    return False, [
+                        f"Invalid marks at Excel row {index + 2}."
+                    ]
+
+                marks = int(marks_value)
+
+                if marks <= 0:
+                    return False, [
+                        f"Marks must be greater than 0 at Excel row {index + 2}."
+                    ]
+
+                # ---------------------------------------
+                # 🤖 AI Classification
+                # ---------------------------------------
+
+                ai_result = classify_question(
+                    question_text
+                )
+
+                bloom_value = str(
+                    ai_result["bloom_level"]
+                ).strip()
+
+                difficulty_value = str(
+                    ai_result["difficulty"]
+                ).strip().lower()
+
+                question_type_value = str(
+                    ai_result["question_type"]
+                ).strip().lower()
+
+                # ---------------------------------------
+                # Normalize AI Question Type
+                # ---------------------------------------
+
+                question_type_value = QUESTION_TYPE_MAP.get(
+                    question_type_value,
+                    question_type_value
+                )
+
+                # ---------------------------------------
+                # Validate AI Result
+                # ---------------------------------------
+
+                if bloom_value not in {
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                }:
+
+                    return False, [
+                        f"Invalid Bloom level returned by AI "
+                        f"for Excel row {index + 2}: "
+                        f"{bloom_value}"
+                    ]
+
+                if difficulty_value not in {
+                    "easy",
+                    "medium",
+                    "hard",
+                }:
+
+                    return False, [
+                        f"Invalid difficulty returned by AI "
+                        f"for Excel row {index + 2}: "
+                        f"{difficulty_value}"
+                    ]
+
+                if question_type_value not in {
+                    "mcq",
+                    "ftq",
+                    "casestudy",
+                }:
+
+                    return False, [
+                        f"Invalid question type returned by AI "
+                        f"for Excel row {index + 2}: "
+                        f"{question_type_value}"
+                    ]
 
                 # ---------------------------------------
                 # Generate AI Embedding
@@ -232,26 +329,6 @@ class ExcelImporter:
                 # ---------------------------------------
                 # Create Question
                 # ---------------------------------------
-                bloom_value = str(
-                    row[columns["bloom"]]
-                ).strip().lower()
-
-                bloom_value = BLOOM_MAP.get(
-                    bloom_value,
-                    bloom_value
-                )
-
-
-                question_type_value = str(
-                    row[columns["question_type"]]
-                ).strip().lower()
-
-                question_type_value = QUESTION_TYPE_MAP.get(
-                    question_type_value,
-                    question_type_value
-                )
-                
-                
 
                 Question.objects.create(
 
@@ -263,39 +340,32 @@ class ExcelImporter:
 
                     subject=self.subject,
 
-                    unit=str(
-                        row[columns["unit"]]
-                    ).strip(),
+                    unit=unit,
 
                     question_text=question_text,
 
+                    # AI classification
                     bloom_level=bloom_value,
 
-
-                    difficulty=str(
-                        row[columns["difficulty"]]
-                    ).strip().lower(),
+                    difficulty=difficulty_value,
 
                     question_type=question_type_value,
 
-                    marks=int(
-                        pd.to_numeric(
-                            row[columns["mark"]],
-                            errors="coerce"
-                        ) or 0
-                    ),
+                    marks=marks,
 
                     # AI embedding
                     embedding=embedding,
-
                 )
 
                 self.imported_count += 1
 
+            # ---------------------------------------
+            # Import Completed
+            # ---------------------------------------
+
             return True, (
-
-                f"{self.imported_count} Questions Imported Successfully"
-
+                f"{self.imported_count} Questions "
+                f"Imported Successfully"
             )
 
         except Exception as e:

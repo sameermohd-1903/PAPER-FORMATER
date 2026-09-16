@@ -1,3 +1,7 @@
+import os
+import json
+
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -5,11 +9,13 @@ from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.db import transaction
 from django.views.decorators.http import require_POST
-
+from apps.questions.embedding_service import generate_embedding
+from django.views.decorators.http import require_POST
+from apps.questions.similarity_service import cosine_similarity
+from apps.questions.quality_service import check_paper_quality
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-import json
 
 from .models import (
     PaperPattern,
@@ -262,13 +268,6 @@ def create_pattern(request):
 
         # -------------------------------------------------
         # CALCULATE ACTUAL PAPER MARKS
-        #
-        # Example:
-        #
-        # 2 out of 3 × 5 marks = 10
-        # Every question × 5 marks = 5
-        #
-        # Total = 15
         # -------------------------------------------------
 
         calculated_total_marks = 0
@@ -320,9 +319,6 @@ def create_pattern(request):
         pattern = form.save(commit=False)
 
         pattern.teacher = request.user
-
-        # DO NOT calculate another total here.
-        # Keep the teacher-entered total.
 
         pattern.save()
 
@@ -385,6 +381,9 @@ def create_pattern(request):
                         "slot_number":
                             len(settings_data) + 1,
 
+                        "unit":
+                            "",
+
                         "bloom_level":
                             "1",
 
@@ -408,6 +407,7 @@ def create_pattern(request):
                 settings_data[0]
                 if settings_data
                 else {
+                    "unit": "",
                     "bloom_level": "1",
                     "co": "CO1",
                     "difficulty": "Easy",
@@ -471,28 +471,71 @@ def create_pattern(request):
                     slot_number - 1
                 ]
 
+                # -------------------------------------------------
+                # GET INDIVIDUAL UNIT
+                # -------------------------------------------------
+
+                unit = str(
+                    setting.get(
+                        "unit",
+                        ""
+                    )
+                    or ""
+                ).strip()
+
+                # -------------------------------------------------
+                # GET BLOOM
+                # -------------------------------------------------
+
+                bloom_level = str(
+                    setting.get(
+                        "bloom_level",
+                        "1"
+                    )
+                    or "1"
+                ).strip()
+
+                # -------------------------------------------------
+                # GET CO
+                # -------------------------------------------------
+
+                co = str(
+                    setting.get(
+                        "co",
+                        "CO1"
+                    )
+                    or "CO1"
+                ).strip()
+
+                # -------------------------------------------------
+                # GET DIFFICULTY
+                # -------------------------------------------------
+
+                difficulty = str(
+                    setting.get(
+                        "difficulty",
+                        "Easy"
+                    )
+                    or "Easy"
+                ).strip().lower()
+
+                # =================================================
+                # SAVE QUESTION SETTING
+                # =================================================
+
                 PatternQuestionSetting.objects.create(
 
                     section=section,
 
                     slot_number=slot_number,
 
-                    bloom_level=str(
-                        setting.get(
-                            "bloom_level",
-                            "1"
-                        )
-                    ),
+                    unit=unit,
 
-                    co=setting.get(
-                        "co",
-                        "CO1"
-                    ),
+                    bloom_level=bloom_level,
 
-                    difficulty=setting.get(
-                        "difficulty",
-                        "Easy"
-                    ),
+                    co=co,
+
+                    difficulty=difficulty,
                 )
 
         # =================================================
@@ -601,6 +644,17 @@ def save_pattern_rows(request, pattern_id):
                 row.get("question_settings")
                 or []
             )
+            question_settings = (
+                row.get("question_settings")
+                or []
+            )
+
+            print("\n====================================")
+            print("SAVE PATTERN DEBUG")
+            print("Question:", question_number)
+            print("Question Settings Received:")
+            print(question_settings)
+            print("====================================\n")
 
             # =================================================
             # VALIDATE BASIC VALUES
@@ -851,6 +905,8 @@ def load_pattern_rows(
                 {
                     "slot_number":
                         setting.slot_number,
+                    "unit":    
+                        setting.unit,
 
                     "bloom_level":
                         setting.bloom_level,
@@ -928,9 +984,8 @@ def get_pattern_rows(
 
 def _prepare_pattern_context(pattern, teacher):
     
-    import random
-
     from apps.questions.models import Question
+    from apps.questions.question_selection_service import select_best_question
 
     sections = list(
         pattern.sections
@@ -970,6 +1025,7 @@ def _prepare_pattern_context(pattern, teacher):
         (gq.section_id, gq.display_order): gq
         for gq in assigned_gqs
     }
+    validation_errors = []
 
     # =========================================================
     # PROCESS EVERY SECTION
@@ -988,7 +1044,7 @@ def _prepare_pattern_context(pattern, teacher):
         section.subparts = letters[:row_count]
 
         # -----------------------------------------------------
-        # Make sure settings exist
+        # MAKE SURE SETTINGS EXIST
         # -----------------------------------------------------
 
         if len(settings) < row_count:
@@ -1025,19 +1081,30 @@ def _prepare_pattern_context(pattern, teacher):
                 setting.difficulty or ""
             ).strip().lower()
 
+            bloom_level = str(
+                setting.bloom_level or ""
+            ).strip()
+
+            question_type = str(
+                section.question_type or ""
+            ).strip().lower()
+
             marks = section.marks
 
             # =================================================
             # BASE ELIGIBILITY
             #
             # HARD RULES:
-            #   SAME TEACHER
-            #   SAME PROGRAM
-            #   SAME SEMESTER
-            #   SAME SUBJECT
-            #   SAME MARKS
-            #   SAME DIFFICULTY
-            #   SAME UNIT (when selected)
+            #
+            # SAME TEACHER
+            # SAME PROGRAM
+            # SAME SEMESTER
+            # SAME SUBJECT
+            # SAME MARKS
+            # SAME DIFFICULTY
+            # SAME UNIT WHEN SPECIFIED
+            #
+            # BLOOM + QUESTION TYPE = RANKING PREFERENCE
             # =================================================
 
             queryset = Question.objects.filter(
@@ -1048,36 +1115,50 @@ def _prepare_pattern_context(pattern, teacher):
                 subject=pattern.subject,
                 marks=marks,
                 difficulty__iexact=difficulty,
+                question_type__iexact=question_type,
             )
 
-            # -------------------------------------------------
-            # INDIVIDUAL UNIT
-            # -------------------------------------------------
+            # =================================================
+            # UNIT FILTER
+            # =================================================
 
             if unit:
 
                 queryset = queryset.filter(
                     unit__iexact=unit
                 )
+                
+            if bloom_level:
+                queryset = queryset.filter(
+                    bloom_level__iexact=bloom_level
+                )    
 
             # =================================================
-            # BUILD USED QUESTION IDS
-            # EXCEPT THE CURRENT SLOT
+            # GET QUESTIONS ALREADY USED IN THIS PAPER
+            #
+            # Current slot is excluded because its existing
+            # question may remain in the same slot.
             # =================================================
 
             used_question_ids = set(
                 GeneratedQuestion.objects
                 .filter(paper=paper)
                 .exclude(
-                    pk=existing_gq.pk
-                    if existing_gq
-                    else None
+                    pk=(
+                        existing_gq.pk
+                        if existing_gq
+                        else None
+                    )
                 )
                 .values_list(
                     "question_id",
                     flat=True
                 )
             )
+
+            # =================================================
+            # REMOVE QUESTIONS ALREADY USED ELSEWHERE
+            # =================================================
 
             if used_question_ids:
 
@@ -1086,49 +1167,60 @@ def _prepare_pattern_context(pattern, teacher):
                 )
 
             # =================================================
-            # KEEP EXISTING QUESTION IF VALID
+            # CHECK EXISTING QUESTION
             # =================================================
 
             if existing_gq:
 
-                existing_question = (
-                    existing_gq.question
-                )
+                existing_question = existing_gq.question
+
+                # -------------------------------------------------
+                # NORMALIZE EXISTING VALUES
+                # -------------------------------------------------
+
+                existing_difficulty = str(
+                    existing_question.difficulty or ""
+                ).strip().lower()
+
+                existing_bloom = str(
+                    existing_question.bloom_level or ""
+                ).strip()
+
+                existing_type = str(
+                    existing_question.question_type or ""
+                ).strip().lower()
+
+                required_type = str(
+                    question_type or ""
+                ).strip().lower()
+
+                # -------------------------------------------------
+                # NORMALIZE LEGACY CASE STUDY VALUE
+                # -------------------------------------------------
+
+                if existing_type == "cs":
+                    existing_type = "casestudy"
+
+                if required_type == "cs":
+                    required_type = "casestudy"
+
+                # =================================================
+                # HARD CONSTRAINT VALIDATION
+                # =================================================
 
                 existing_valid = (
-
-                    existing_question.teacher_id
-                    == teacher.id
-
-                    and
-                    existing_question.is_active
-
-                    and
-                    existing_question.program_id
-                    == pattern.program_id
-
-                    and
-                    existing_question.semester_id
-                    == pattern.semester_id
-
-                    and
-                    existing_question.subject_id
-                    == pattern.subject_id
-
-                    and
-                    existing_question.marks
-                    == marks
-
-                    and
-                    str(
-                        existing_question.difficulty
-                    ).lower()
-                    == difficulty
+                    existing_question.teacher_id == teacher.id
+                    and existing_question.is_active
+                    and existing_question.program_id == pattern.program_id
+                    and existing_question.semester_id == pattern.semester_id
+                    and existing_question.subject_id == pattern.subject_id
+                    and existing_question.marks == marks
+                    and existing_difficulty == difficulty
                 )
 
-                # ---------------------------------------------
+                # =================================================
                 # CHECK UNIT
-                # ---------------------------------------------
+                # =================================================
 
                 if unit:
 
@@ -1136,29 +1228,82 @@ def _prepare_pattern_context(pattern, teacher):
                         existing_valid
                         and
                         str(
-                            existing_question.unit
+                            existing_question.unit or ""
                         ).strip().lower()
                         == unit.lower()
                     )
 
-                # ---------------------------------------------
-                # EXISTING QUESTION IS VALID
-                # ---------------------------------------------
+                # =================================================
+                # MANUAL REPLACEMENT CHECK
+                #
+                # If teacher manually selected this question,
+                # Bloom and Question Type are NOT checked.
+                #
+                # Only HARD constraints above are important.
+                # =================================================
 
-                if existing_valid:
+                if existing_gq.is_manual_replacement:
 
-                    continue
+                    if existing_valid:
 
-                # ---------------------------------------------
-                # EXISTING QUESTION IS INVALID
-                # ---------------------------------------------
+                        # Keep the teacher's selected question.
+                        continue
 
-                existing_gq.delete()
+                    # Manual replacement no longer satisfies
+                    # a hard constraint, so remove it.
 
-                assigned_map.pop(
-                    (section.id, display_order),
-                    None
-                )
+                    existing_gq.delete()
+
+                    assigned_map.pop(
+                        (section.id, display_order),
+                        None
+                    )
+
+                else:
+
+                    # =================================================
+                    # AUTOMATICALLY GENERATED QUESTION
+                    #
+                    # Bloom and Question Type are preferences.
+                    # If they don't match, regenerate.
+                    # =================================================
+
+                    if bloom_level:
+
+                        existing_valid = (
+                            existing_valid
+                            and
+                            existing_bloom
+                            == bloom_level
+                        )
+
+                    if required_type:
+
+                        existing_valid = (
+                            existing_valid
+                            and
+                            existing_type
+                            == required_type
+                        )
+
+                    # =================================================
+                    # EXISTING AUTOMATIC QUESTION IS VALID
+                    # =================================================
+
+                    if existing_valid:
+
+                        continue
+
+                    # =================================================
+                    # EXISTING AUTOMATIC QUESTION IS INVALID
+                    # =================================================
+
+                    existing_gq.delete()
+
+                    assigned_map.pop(
+                        (section.id, display_order),
+                        None
+                    )
 
             # =================================================
             # FIND AVAILABLE QUESTIONS
@@ -1170,26 +1315,126 @@ def _prepare_pattern_context(pattern, teacher):
 
             # =================================================
             # NO QUESTION AVAILABLE
-            #
-            # DO NOT CRASH THE WHOLE PREVIEW.
-            # Leave this slot empty so teacher can Replace.
             # =================================================
 
             if not available_questions:
+    
+                validation_errors.append({
+                    "section": section.question_number,
+                    "slot": setting.slot_number,
+                    "unit": unit if unit else "All Units",
+                    "marks": marks,
+                    "difficulty": difficulty,
+                    "bloom_level": bloom_level,
+                    "question_type": question_type,
+                    "message": (
+                        f"No matching question is available for "
+                        f"{section.question_number}, Question {setting.slot_number}."
+                    ),
+                })
 
                 continue
 
             # =================================================
-            # RANDOM SELECTION
+            # AI-ASSISTED QUESTION SELECTION
+            # =================================================
+            #
+            # Django already applied HARD constraints.
+            #
+            # Ranking considers:
+            #
+            # 1. Bloom match
+            # 2. Question type match
+            # 3. Semantic similarity when a reference exists
+            #
+            # For a new slot, reference_question=None.
+            # =================================================
+            
+            
+            # =================================================
+            # CREATE SEMANTIC REFERENCE
             # =================================================
 
-            selected_question = random.choice(
-                available_questions
+            reference_text = (
+                f"Subject: {pattern.subject.name}. "
+                f"Unit {unit if unit else 'All Units'}. "
+                f"Bloom level {bloom_level}. "
+                f"{difficulty} difficulty. "
+                f"{question_type} question."
             )
+
+            try:
+
+                reference_embedding = generate_embedding(
+                    reference_text
+                )
+
+            except Exception:
+
+                reference_embedding = None
+                
+                
+                
+                
+                
+            
+            
+            
+            
+
+            selection = select_best_question(
+                questions=available_questions,
+                required_bloom_level=bloom_level,
+                required_question_type=question_type,
+                reference_question=None,
+                reference_embedding=reference_embedding
+            )
+
+            # =================================================
+            # SAFETY CHECK
+            # =================================================
+
+            if not selection:
+                validation_errors.append({
+                    "section": section.question_number,
+                    "slot": setting.slot_number,
+                    "unit": unit if unit else "All Units",
+                    "marks": marks,
+                    "difficulty": difficulty,
+                    "bloom_level": bloom_level,
+                    "question_type": question_type,
+                    "message": (
+                        f"No matching question is available for "
+                        f"{section.question_number}, Question {setting.slot_number}."
+                    ),
+                })
+                continue
+
+            # =================================================
+            # GET SELECTED QUESTION
+            # =================================================
+
+            selected_question = selection["question"]
 
             # =================================================
             # CREATE GENERATED QUESTION
             # =================================================
+            
+            print(
+                f"""
+            ====================================
+            AI QUESTION SELECTION
+            Section: {section.question_number}
+            Slot: {setting.slot_number}
+
+            Selected Question ID: {selected_question.id}
+            Score: {selection['score']}
+            Similarity: {selection['similarity']}
+            Bloom Match: {selection['bloom_match']}
+            Type Match: {selection['type_match']}
+====================================
+            """
+            )
 
             new_gq = GeneratedQuestion.objects.create(
                 paper=paper,
@@ -1256,22 +1501,17 @@ def _prepare_pattern_context(pattern, teacher):
         "pattern": pattern,
         "sections": sections,
         "paper": paper,
+        "validation_errors": validation_errors,
     }
 
 
-# =========================================================
-# PAPER PREVIEW
-# =========================================================
 
 # =========================================================
 # PAPER PREVIEW - PATTERN
 # =========================================================
 
 @login_required
-def paper_preview_pattern(
-    request,
-    pattern_id
-):
+def paper_preview_pattern(request, pattern_id):
     """
     Preview a paper pattern.
 
@@ -1392,10 +1632,7 @@ def paper_print(
 # =========================================================
 
 @login_required
-def paper_pdf(
-    request,
-    pattern_id
-):
+def paper_pdf(request, pattern_id):
 
     pattern = get_object_or_404(
         PaperPattern,
@@ -1403,16 +1640,67 @@ def paper_pdf(
         teacher=request.user
     )
 
+    # Make sure all questions are generated/assigned
     context = _prepare_pattern_context(
         pattern,
         request.user
     )
+    
+    # =========================================================
+    # BLOCK PDF GENERATION IF QUESTIONS ARE MISSING
+    # =========================================================
 
-    return render(
-        request,
-        "papers/paper_print.html",
-        context
-    )
+    if context.get("validation_errors"):
+
+        messages.error(
+            request,
+            "Paper cannot be generated because some question "
+            "requirements do not have matching questions."
+        )
+
+        return redirect(
+            "papers:paper_preview_pattern",
+            pattern_id=pattern.id
+        )
+
+    from apps.formatter.pdf_generator import PDFGenerator
+
+    try:
+        pdf_path = PDFGenerator.generate_pattern_pdf(
+            pattern,
+            context
+        )
+
+        from django.http import FileResponse
+
+        full_path = os.path.join(
+            settings.MEDIA_ROOT,
+            pdf_path
+        )
+
+        response = FileResponse(
+            open(full_path, "rb"),
+            content_type="application/pdf"
+        )
+
+        response["Content-Disposition"] = (
+            f'attachment; filename="'
+            f'{pattern.pattern_name}.pdf"'
+        )
+
+        return response
+
+    except Exception as error:
+
+        messages.error(
+            request,
+            f"PDF generation failed: {error}"
+        )
+
+        return redirect(
+            "papers:paper_preview_pattern",
+            pattern_id=pattern.id
+        )
 
 
 # =========================================================
@@ -1423,6 +1711,12 @@ def paper_pdf(
 def get_section_questions_api(request, pattern_id, section_id):
 
     from apps.questions.models import Question
+    from apps.questions.question_selection_service import rank_questions
+    from apps.questions.similarity_service import cosine_similarity
+
+    # =========================================================
+    # GET PATTERN
+    # =========================================================
 
     pattern = get_object_or_404(
         PaperPattern,
@@ -1430,11 +1724,19 @@ def get_section_questions_api(request, pattern_id, section_id):
         teacher=request.user
     )
 
+    # =========================================================
+    # GET SECTION
+    # =========================================================
+
     section = get_object_or_404(
         PatternSection,
         id=section_id,
         pattern=pattern
     )
+
+    # =========================================================
+    # GET / CREATE GENERATED PAPER
+    # =========================================================
 
     paper, _ = GeneratedPaper.objects.get_or_create(
         pattern=pattern,
@@ -1451,18 +1753,27 @@ def get_section_questions_api(request, pattern_id, section_id):
     assigned_gqs = list(
         GeneratedQuestion.objects
         .filter(paper=paper)
-        .select_related("question", "section")
+        .select_related(
+            "question",
+            "section"
+        )
         .order_by("display_order")
     )
 
-    # All question IDs already used in this paper
+    # =========================================================
+    # ALL QUESTION IDS ALREADY USED IN PAPER
+    # =========================================================
+
     used_question_ids = {
         gq.question_id
         for gq in assigned_gqs
         if gq.question_id
     }
 
-    # Current section assignments
+    # =========================================================
+    # CURRENT SECTION ASSIGNMENTS
+    # =========================================================
+
     current_section_gqs = {
         gq.display_order: gq.question
         for gq in assigned_gqs
@@ -1486,21 +1797,38 @@ def get_section_questions_api(request, pattern_id, section_id):
 
     slots = []
 
+    # =========================================================
+    # PROCESS EVERY QUESTION SLOT
+    # =========================================================
+
     for index in range(section.number_of_questions):
 
         slot_number = index + 1
 
+        # -----------------------------------------------------
+        # FIND SETTING FOR THIS SLOT
+        # -----------------------------------------------------
+
         setting = next(
             (
-                s for s in settings
+                s
+                for s in settings
                 if s.slot_number == slot_number
             ),
             None
         )
 
+        # -----------------------------------------------------
+        # CURRENT QUESTION
+        # -----------------------------------------------------
+
         current_question = current_section_gqs.get(
             slot_number
         )
+
+        # -----------------------------------------------------
+        # SLOT SETTINGS
+        # -----------------------------------------------------
 
         if setting:
 
@@ -1514,64 +1842,75 @@ def get_section_questions_api(request, pattern_id, section_id):
 
             difficulty = str(
                 setting.difficulty or ""
-            ).strip()
+            ).strip().lower()
 
         else:
 
             unit = ""
-
             bloom_level = ""
-
             difficulty = ""
 
         # =====================================================
         # CANDIDATE QUESTIONS
         # =====================================================
+        #
+        # HARD RULES:
+        #
+        # SAME TEACHER
+        # SAME PROGRAM
+        # SAME SEMESTER
+        # SAME SUBJECT
+        # SAME MARKS
+        # SAME DIFFICULTY
+        #
+        # UNIT:
+        # SAME UNIT when a specific unit is selected
+        #
+        # BLOOM:
+        # NOT a hard filter
+        #
+        # QUESTION TYPE:
+        # NOT a hard filter
+        #
+        # =====================================================
 
         queryset = Question.objects.filter(
+
             teacher=request.user,
+
             is_active=True,
+
             program=pattern.program,
+
             semester=pattern.semester,
+
             subject=pattern.subject,
+
             marks=section.marks,
+
             difficulty__iexact=difficulty,
+            
+            # SAME QUESTION TYPE
+            question_type__iexact=section.question_type,
+
+            # SAME BLOOM LEVEL
+            bloom_level__iexact=bloom_level,
+
         )
 
-        # -----------------------------------------------------
-        # UNIT
-        # -----------------------------------------------------
+        # =====================================================
+        # UNIT FILTER
+        # =====================================================
 
         if unit:
+
             queryset = queryset.filter(
                 unit__iexact=unit
             )
 
-        # -----------------------------------------------------
-        # BLOOM
-        # -----------------------------------------------------
-
-        if bloom_level:
-            queryset = queryset.filter(
-                bloom_level__iexact=bloom_level
-            )
-
-        # -----------------------------------------------------
-        # QUESTION TYPE
-        # -----------------------------------------------------
-
-        if section.question_type:
-            queryset = queryset.filter(
-                question_type__iexact=section.question_type
-            )
-
-        # -----------------------------------------------------
-        # IMPORTANT:
-        # Don't offer questions already used in the paper.
-        #
-        # BUT allow the current question to remain visible.
-        # It will be disabled in the UI.
-        # -----------------------------------------------------
+        # =====================================================
+        # BUILD CANDIDATE IDS
+        # =====================================================
 
         candidate_ids = set(
             queryset.values_list(
@@ -1580,12 +1919,24 @@ def get_section_questions_api(request, pattern_id, section_id):
             )
         )
 
-        # Current question should be included even if it is used
+        # =====================================================
+        # CURRENT QUESTION
+        # =====================================================
+        #
+        # Keep current question visible in the modal.
+        # JavaScript will show it as "Current" and disable it.
+        #
+        # =====================================================
+
         if current_question:
 
             candidate_ids.add(
                 current_question.id
             )
+
+        # =====================================================
+        # GET QUESTIONS
+        # =====================================================
 
         all_questions = (
             Question.objects
@@ -1597,67 +1948,243 @@ def get_section_questions_api(request, pattern_id, section_id):
                 "semester",
                 "subject"
             )
-            .order_by("id")
+        )
+
+        # =====================================================
+        # CURRENT QUESTION EMBEDDING
+        # =====================================================
+
+        current_embedding = None
+
+        if (
+            current_question
+            and current_question.embedding
+        ):
+
+            current_embedding = (
+                current_question.embedding
+            )
+
+        # =====================================================
+        # QUESTION DATA
+        # =====================================================
+
+        # =====================================================
+        # AI RANKING
+        # =====================================================
+
+        ranked_questions = rank_questions(
+           questions=all_questions,
+            required_bloom_level=bloom_level,
+           required_question_type=section.question_type,
+           reference_question=current_question,
         )
 
         question_data = []
 
-        for question in all_questions:
+        for item in ranked_questions:
+
+            question = item["question"]
+
+            # -------------------------------------------------
+            # IS CURRENT QUESTION?
+            # -------------------------------------------------
 
             is_current = (
+
                 current_question is not None
-                and question.id == current_question.id
+
+                and
+
+                question.id
+                ==
+                current_question.id
+
             )
+
+            # -------------------------------------------------
+            # IS USED ELSEWHERE IN PAPER?
+            # -------------------------------------------------
 
             is_used = (
-                question.id in used_question_ids
-                and not is_current
+
+                question.id
+                in used_question_ids
+
+                and
+
+                not is_current
+
             )
 
+            # =================================================
+            # AI SIMILARITY
+            # =================================================
+
+            similarity = round(
+                item["similarity"] * 100,
+                2
+            )
+
+            # =================================================
+            # ADD QUESTION
+            # =================================================
+
             question_data.append({
-                "id": question.id,
-                "question_text": question.question_text,
-                "unit": question.unit,
-                "marks": question.marks,
-                "bloom_level": (
-                    question.get_bloom_level_display()
-                ),
-                "bloom_value": question.bloom_level,
-                "difficulty": (
-                    question.get_difficulty_display()
-                ),
-                "question_type": (
-                    question.get_question_type_display_name()
-                    if hasattr(
-                        question,
-                        "get_question_type_display_name"
-                    )
-                    else question.get_question_type_display()
-                ),
-                "is_current": is_current,
-                "is_used": is_used,
+
+                "id":
+                    question.id,
+
+                "question_text":
+                    question.question_text,
+
+                "unit":
+                    question.unit,
+
+                "marks":
+                    question.marks,
+
+                # -------------------------------------------------
+                # Bloom display
+                # -------------------------------------------------
+
+                "bloom_level":
+                    question.get_bloom_level_display(),
+
+                # -------------------------------------------------
+                # Bloom numeric value
+                # -------------------------------------------------
+
+                "bloom_value":
+                    question.bloom_level,
+
+                # -------------------------------------------------
+                # Difficulty display
+                # -------------------------------------------------
+
+                "difficulty":
+                    question.get_difficulty_display(),
+
+                # -------------------------------------------------
+                # Difficulty database value
+                # -------------------------------------------------
+
+                "difficulty_value":
+                    question.difficulty,
+
+                # -------------------------------------------------
+                # Question type
+                # -------------------------------------------------
+
+                "question_type":
+                    (
+                        question.get_question_type_display_name()
+
+                        if hasattr(
+                            question,
+                            "get_question_type_display_name"
+                        )
+
+                        else
+                        question.get_question_type_display()
+                    ),
+
+                # -------------------------------------------------
+                # Question type database value
+                # -------------------------------------------------
+
+                "question_type_value":
+                    question.question_type,
+
+                # -------------------------------------------------
+                # AI similarity percentage
+                # -------------------------------------------------
+
+                "similarity":
+                    similarity,
+                "score": item["score"],
+                "bloom_match":
+                    item["bloom_match"],
+                "type_match":
+                    item["type_match"],
+
+                # -------------------------------------------------
+                # Current question
+                # -------------------------------------------------
+
+                "is_current":
+                    is_current,
+
+                # -------------------------------------------------
+                # Already used in paper
+                # -------------------------------------------------
+
+                "is_used":
+                    is_used,
+
             })
 
+        # =====================================================
+        # SORT BY AI SIMILARITY
+        # =====================================================
+        #
+        # Highest similarity appears first.
+        #
+        # Current question is kept at the bottom.
+        #
+        # =====================================================
+
+       
+
+        
+
+        # =====================================================
+        # ADD SLOT
+        # =====================================================
+
         slots.append({
-            "slot_index": index,
-            "display_order": slot_number,
-            "letter": letters[index],
-            "question_id": (
-                current_question.id
-                if current_question
-                else None
-            ),
-            "question_text": (
-                current_question.question_text
-                if current_question
-                else None
-            ),
-            "unit": unit,
-            "bloom_level": bloom_level,
-            "difficulty": difficulty,
-            "marks": section.marks,
-            "question_type": section.question_type,
-            "questions": question_data,
+
+            "slot_index":
+                index,
+
+            "display_order":
+                slot_number,
+
+            "letter":
+                letters[index],
+
+            "question_id":
+                (
+                    current_question.id
+                    if current_question
+                    else None
+                ),
+
+            "question_text":
+                (
+                    current_question.question_text
+                    if current_question
+                    else None
+                ),
+
+            "unit":
+                unit,
+
+            "bloom_level":
+                bloom_level,
+
+            "difficulty":
+                difficulty,
+
+            "marks":
+                section.marks,
+
+            "question_type":
+                section.question_type,
+
+            "questions":
+                question_data,
+
         })
 
     # =========================================================
@@ -1665,17 +2192,32 @@ def get_section_questions_api(request, pattern_id, section_id):
     # =========================================================
 
     return JsonResponse({
-        "success": True,
+
+        "success":
+            True,
 
         "section": {
-            "id": section.id,
-            "question_number": section.question_number,
-            "marks": section.marks,
-            "question_type": section.question_type,
-            "number_of_questions": section.number_of_questions,
+
+            "id":
+                section.id,
+
+            "question_number":
+                section.question_number,
+
+            "marks":
+                section.marks,
+
+            "question_type":
+                section.question_type,
+
+            "number_of_questions":
+                section.number_of_questions,
+
         },
 
-        "slots": slots,
+        "slots":
+            slots,
+
     })
 
 
@@ -1683,12 +2225,16 @@ def get_section_questions_api(request, pattern_id, section_id):
 # ASSIGN QUESTION
 # =========================================================
 
-@require_POST
 @login_required
-def assign_section_question_api(
-    request,
-    pattern_id
-):
+@require_POST
+@transaction.atomic
+def assign_section_question_api(request, pattern_id):
+
+    from apps.questions.models import Question
+
+    # =========================================================
+    # GET PATTERN
+    # =========================================================
 
     pattern = get_object_or_404(
         PaperPattern,
@@ -1696,43 +2242,279 @@ def assign_section_question_api(
         teacher=request.user
     )
 
+    # =========================================================
+    # READ REQUEST
+    # =========================================================
+
     try:
+        data = json.loads(request.body)
 
-        data = json.loads(
-            request.body
-        )
+    except (json.JSONDecodeError, TypeError):
 
-    except (
-        json.JSONDecodeError,
-        TypeError
-    ):
+        return JsonResponse({
+            "success": False,
+            "message": "Invalid JSON."
+        }, status=400)
 
-        return JsonResponse(
-            {
-                "success": False,
-                "message": "Invalid JSON."
-            },
-            status=400
-        )
+    section_id = data.get("section_id")
+    slot_index = data.get("slot_index")
+    question_id = data.get("question_id")
 
-    section_id = data.get(
-        "section_id"
-    )
+    # =========================================================
+    # VALIDATE BASIC DATA
+    # =========================================================
 
-    slot_index = data.get(
-        "slot_index",
-        0
-    )
+    if section_id is None:
+        return JsonResponse({
+            "success": False,
+            "message": "Section ID is required."
+        }, status=400)
 
-    question_id = data.get(
-        "question_id"
-    )
+    if slot_index is None:
+        return JsonResponse({
+            "success": False,
+            "message": "Slot index is required."
+        }, status=400)
+
+    if question_id is None:
+        return JsonResponse({
+            "success": False,
+            "message": "Question ID is required."
+        }, status=400)
+
+    try:
+        slot_index = int(slot_index)
+        question_id = int(question_id)
+
+    except (ValueError, TypeError):
+
+        return JsonResponse({
+            "success": False,
+            "message": "Invalid section, slot or question ID."
+        }, status=400)
+
+    # =========================================================
+    # GET SECTION
+    # =========================================================
 
     section = get_object_or_404(
         PatternSection,
         id=section_id,
         pattern=pattern
     )
+
+    # =========================================================
+    # VALIDATE SLOT
+    # =========================================================
+
+    if slot_index < 0:
+        return JsonResponse({
+            "success": False,
+            "message": "Invalid slot."
+        }, status=400)
+
+    display_order = slot_index + 1
+
+    if display_order > section.number_of_questions:
+
+        return JsonResponse({
+            "success": False,
+            "message": "Invalid question slot."
+        }, status=400)
+
+    # =========================================================
+    # GET QUESTION
+    # =========================================================
+
+    question = get_object_or_404(
+        Question,
+        id=question_id,
+        teacher=request.user
+    )
+
+    # =========================================================
+    # GET SLOT SETTINGS
+    # =========================================================
+
+    setting = (
+        PatternQuestionSetting.objects
+        .filter(
+            section=section,
+            slot_number=display_order
+        )
+        .first()
+    )
+
+    if not setting:
+
+        return JsonResponse({
+            "success": False,
+            "message":
+                "Question settings for this slot were not found."
+        }, status=400)
+
+    # =========================================================
+    # SLOT UNIT
+    # =========================================================
+
+    required_unit = str(
+        getattr(setting, "unit", "") or ""
+    ).strip()
+
+    # =========================================================
+    # SLOT DIFFICULTY
+    # =========================================================
+
+    required_difficulty = str(
+        setting.difficulty or ""
+    ).strip().lower()
+    
+    required_bloom = str(
+        setting.bloom_level or ""
+    ).strip()
+
+    required_type = str(
+        section.question_type or ""
+    ).strip().lower()
+
+    if required_type == "cs":
+        required_type = "casestudy"
+
+    question_type = str(
+    question.question_type or ""
+    ).strip().lower()
+
+    if question_type == "cs":
+        question_type = "casestudy"
+
+    # =========================================================
+    # RULE 1 — SAME PROGRAM
+    # =========================================================
+
+    if question.program_id != pattern.program_id:
+
+        return JsonResponse({
+            "success": False,
+            "message":
+                "Replacement question must belong to the same program."
+        }, status=400)
+
+    # =========================================================
+    # RULE 2 — SAME SEMESTER
+    # =========================================================
+
+    if question.semester_id != pattern.semester_id:
+
+        return JsonResponse({
+            "success": False,
+            "message":
+                "Replacement question must belong to the same semester."
+        }, status=400)
+
+    # =========================================================
+    # RULE 3 — SAME SUBJECT
+    # =========================================================
+
+    if question.subject_id != pattern.subject_id:
+
+        return JsonResponse({
+            "success": False,
+            "message":
+                "Replacement question must belong to the same subject."
+        }, status=400)
+
+    # =========================================================
+    # RULE 4 — SAME MARKS
+    # =========================================================
+
+    if question.marks != section.marks:
+
+        return JsonResponse({
+            "success": False,
+            "message":
+                "Replacement question must have the same marks."
+        }, status=400)
+
+    # =========================================================
+    # RULE 5 — SAME DIFFICULTY
+    # =========================================================
+
+    if (
+        str(question.difficulty or "").strip().lower()
+        != required_difficulty
+    ):
+
+        return JsonResponse({
+            "success": False,
+            "message":
+                "Replacement question must have the same difficulty."
+        }, status=400)
+        
+    # =========================================================
+    # RULE 6 — SAME BLOOM LEVEL
+    # =========================================================
+
+    if required_bloom:
+
+        question_bloom = str(
+            question.bloom_level or ""
+        ).strip()
+
+        if question_bloom != required_bloom:
+
+            return JsonResponse({
+                "success": False,
+                "message":
+                    "Replacement question must have the same Bloom level."
+            }, status=400)    
+    
+    
+    # =========================================================
+    # RULE 7 — SAME QUESTION TYPE
+    # =========================================================
+
+    if required_type:
+
+        if question_type != required_type:
+
+            return JsonResponse({
+                "success": False,
+                "message":
+                    "Replacement question must have the same question type."
+            }, status=400)
+    
+        
+        
+
+    # =========================================================
+    # RULE 6 — SAME UNIT
+    # =========================================================
+    #
+    # If the slot has a specific unit:
+    # replacement MUST have that unit.
+    #
+    # If slot unit is empty:
+    # any unit is allowed.
+    #
+    # =========================================================
+
+    if required_unit:
+
+        question_unit = str(
+            question.unit or ""
+        ).strip()
+
+        if question_unit.lower() != required_unit.lower():
+
+            return JsonResponse({
+                "success": False,
+                "message":
+                    "Replacement question must belong to the same unit."
+            }, status=400)
+
+    # =========================================================
+    # GET / CREATE GENERATED PAPER
+    # =========================================================
 
     paper, _ = GeneratedPaper.objects.get_or_create(
 
@@ -1746,54 +2528,120 @@ def assign_section_question_api(
         }
     )
 
-    display_order = (
-        int(slot_index) + 1
+    # =========================================================
+    # CURRENT QUESTION IN THIS SLOT
+    # =========================================================
+
+    current_gq = (
+        GeneratedQuestion.objects
+        .filter(
+            paper=paper,
+            section=section,
+            display_order=display_order
+        )
+        .first()
     )
 
-    from apps.questions.models import Question
+    # =========================================================
+    # DON'T SELECT THE SAME QUESTION
+    # =========================================================
 
-    if question_id:
+    if (
+        current_gq
+        and
+        current_gq.question_id == question.id
+    ):
 
-        question = get_object_or_404(
-            Question,
-            id=question_id,
-            teacher=request.user
-        )
-
-        GeneratedQuestion.objects.update_or_create(
-
-            paper=paper,
-
-            section=section,
-
-            display_order=display_order,
-
-            defaults={
-                "question":
-                    question
-            }
-        )
-
-    else:
-
-        GeneratedQuestion.objects.filter(
-
-            paper=paper,
-
-            section=section,
-
-            display_order=display_order
-
-        ).delete()
-
-    return JsonResponse(
-        {
-            "success": True,
-
+        return JsonResponse({
+            "success": False,
             "message":
-                "Question updated successfully."
+                "This question is already assigned to this slot."
+        }, status=400)
+
+    # =========================================================
+    # RULE 7 — QUESTION MUST NOT ALREADY BE USED
+    # =========================================================
+    #
+    # Exclude the current slot because its question is allowed
+    # to be replaced.
+    #
+    # =========================================================
+
+    already_used = (
+        GeneratedQuestion.objects
+        .filter(
+            paper=paper,
+            question_id=question.id
+        )
+        .exclude(
+            section=section,
+            display_order=display_order
+        )
+        .exists()
+    )
+
+    if already_used:
+
+        return JsonResponse({
+            "success": False,
+            "message":
+                "This question is already used elsewhere in the paper."
+        }, status=400)
+
+    # =========================================================
+    # CREATE / UPDATE ASSIGNMENT
+    # =========================================================
+
+    GeneratedQuestion.objects.update_or_create(
+
+        paper=paper,
+
+        section=section,
+
+        display_order=display_order,
+
+        defaults={
+            "question": question,
+            "is_manual_replacement": True,
         }
     )
+
+    # =========================================================
+    # SUCCESS
+    # =========================================================
+
+    return JsonResponse({
+
+        "success": True,
+
+        "message":
+            "Question replaced successfully.",
+
+        "question": {
+
+            "id":
+                question.id,
+
+            "question_text":
+                question.question_text,
+
+            "unit":
+                question.unit,
+
+            "marks":
+                question.marks,
+
+            "difficulty":
+                question.difficulty,
+
+            "bloom_level":
+                question.bloom_level,
+
+            "question_type":
+                question.question_type,
+        }
+
+    })
 
 
 # =========================================================
@@ -1913,7 +2761,7 @@ def generate_paper(
             )
 
             return redirect(
-                "papers:paper_preview",
+                "papers:paper_preview_pattern",
                 paper_id=paper.id
             )
 
@@ -1939,29 +2787,104 @@ def generate_paper(
 
 
 # =========================================================
-# PAPER PREVIEW
+# PAPER QUALITY CHECK
 # =========================================================
 
 @login_required
-def paper_preview(
-    request,
-    paper_id
-):
+@require_POST
+def paper_quality_api(request):
 
-    paper = get_object_or_404(
-        GeneratedPaper,
-        id=paper_id,
+    from .models import PaperPattern, GeneratedPaper
+
+    # --------------------------------------------------------
+    # Read JSON request
+    # --------------------------------------------------------
+
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, TypeError):
+        return JsonResponse({
+            "success": False,
+            "message": "Invalid JSON request."
+        }, status=400)
+
+    # --------------------------------------------------------
+    # Get pattern ID
+    # --------------------------------------------------------
+
+    pattern_id = data.get("pattern_id")
+
+    if not pattern_id:
+        return JsonResponse({
+            "success": False,
+            "message": "Pattern ID is required."
+        }, status=400)
+
+    try:
+        pattern_id = int(pattern_id)
+    except (ValueError, TypeError):
+        return JsonResponse({
+            "success": False,
+            "message": "Invalid pattern ID."
+        }, status=400)
+
+    # --------------------------------------------------------
+    # Verify pattern belongs to logged-in teacher
+    # --------------------------------------------------------
+
+    pattern = get_object_or_404(
+        PaperPattern,
+        id=pattern_id,
         teacher=request.user
     )
 
-    return render(
-        request,
-        "papers/paper_preview.html",
-        {
-            "paper":
-                paper
-        }
+    # --------------------------------------------------------
+    # Find generated paper
+    # --------------------------------------------------------
+
+    paper = (
+        GeneratedPaper.objects
+        .filter(
+            pattern=pattern,
+            teacher=request.user
+        )
+        .first()
     )
+
+    if not paper:
+        return JsonResponse({
+            "success": False,
+            "message": "No generated paper was found for this pattern."
+        }, status=404)
+
+    # --------------------------------------------------------
+    # Run quality checker
+    # --------------------------------------------------------
+
+    try:
+
+        result = check_paper_quality(
+            paper
+        )
+
+        return JsonResponse(
+            result,
+            status=200
+        )
+
+    except Exception as exc:
+
+        return JsonResponse({
+            "success": False,
+            "message": (
+                "Unable to analyze the paper."
+            ),
+            "error": str(exc),
+        }, status=500)
+
+
+
+
 
 
 # =========================================================
@@ -2031,7 +2954,7 @@ def download_paper(
     )
 
     return redirect(
-        "papers:paper_preview",
+        "papers:paper_preview_pattern",
         paper_id=paper.id
     )
 

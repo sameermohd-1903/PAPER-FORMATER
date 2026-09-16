@@ -153,9 +153,84 @@ Add Question - Paper Formatter
                 </div>
 
 
-                <!-- ================= AI BUTTON ================= -->
+<!-- ================= AI CLASSIFICATION ================= -->
 
-                <!-- ================= AI BUTTONS ================= -->
+<div class="mb-4">
+
+    <button
+        type="button"
+        id="classifyQuestionBtn"
+        class="btn btn-info text-white">
+
+        🤖 Analyze with AI
+
+    </button>
+
+    <span
+        id="aiLoading"
+        class="ms-2 d-none text-muted">
+
+        AI is analyzing the question...
+
+    </span>
+
+</div>
+
+
+<!-- ================= AI RESULT ================= -->
+
+<div
+    id="aiResult"
+    class="alert alert-info d-none">
+
+    <h6 class="fw-bold">
+        🤖 AI Suggested Classification
+    </h6>
+
+    <div class="row">
+
+        <div class="col-md-4">
+
+            <strong>
+                Bloom Level:
+            </strong>
+
+            <span id="aiBloom">
+            </span>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <strong>
+                Difficulty:
+            </strong>
+
+            <span id="aiDifficulty">
+            </span>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <strong>
+                Question Type:
+            </strong>
+
+            <span id="aiQuestionType">
+            </span>
+
+        </div>
+
+    </div>
+
+    <hr>
+
+    <small class="text-muted">
+        You can change these values before saving.
+    </small>
+
+</div>
 
 <!-- ================= SIMILARITY CHECK ================= -->
 
@@ -342,9 +417,229 @@ const subjectsUrl =
 const similarityUrl =
     "{% url 'questions:check_similarity_ajax' %}";
 
+const aiClassifyUrl =
+    "{% url 'questions:ai_classify' %}";
+
+const classifyUrl =
+    "{% url 'questions:ai_classify' %}";
+
 </script>
 
 <script src="{% static 'js/question_add.js' %}?v=2"></script>
+<script>
 
+document.addEventListener("DOMContentLoaded", function () {
+
+    const classifyBtn =
+        document.getElementById("classifyQuestionBtn");
+
+    const questionText =
+        document.getElementById("id_question_text");
+
+    const aiLoading =
+        document.getElementById("aiLoading");
+
+    const aiResult =
+        document.getElementById("aiResult");
+
+    const aiBloom =
+        document.getElementById("aiBloom");
+
+    const aiDifficulty =
+        document.getElementById("aiDifficulty");
+
+    const aiQuestionType =
+        document.getElementById("aiQuestionType");
+
+    const bloomSelect =
+        document.getElementById("id_bloom_level");
+
+    const difficultySelect =
+        document.getElementById("id_difficulty");
+
+    const questionTypeSelect =
+        document.getElementById("id_question_type");
+
+
+    if (!classifyBtn) {
+        return;
+    }
+
+
+    classifyBtn.addEventListener(
+        "click",
+        async function () {
+
+            const text =
+                questionText.value.trim();
+
+
+            if (!text) {
+
+                alert(
+                    "Please enter the question first."
+                );
+
+                questionText.focus();
+
+                return;
+            }
+
+
+            classifyBtn.disabled = true;
+
+            aiLoading.classList.remove(
+                "d-none"
+            );
+
+            aiResult.classList.add(
+                "d-none"
+            );
+
+
+            const formData =
+                new FormData();
+
+            formData.append(
+                "question_text",
+                text
+            );
+
+
+            const csrfToken =
+                document.querySelector(
+                    "[name=csrfmiddlewaretoken]"
+                ).value;
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        classifyUrl,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "X-CSRFToken":
+                                    csrfToken
+                            },
+
+                            body: formData
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok ||
+                    !data.success) {
+
+                    throw new Error(
+                        data.message ||
+                        "AI classification failed."
+                    );
+                }
+
+
+                // -----------------------------
+                // Set dropdown values
+                // -----------------------------
+
+                bloomSelect.value =
+                    data.bloom_level;
+
+                difficultySelect.value =
+                    data.difficulty;
+
+                questionTypeSelect.value =
+                    data.question_type;
+
+
+                // -----------------------------
+                // Display readable labels
+                // -----------------------------
+
+                const bloomLabels = {
+                    "1": "Remember",
+                    "2": "Understand",
+                    "3": "Apply",
+                    "4": "Analyze",
+                    "5": "Evaluate",
+                    "6": "Create"
+                };
+
+
+                const difficultyLabels = {
+                    "easy": "Easy",
+                    "medium": "Medium",
+                    "hard": "Hard"
+                };
+
+
+                const questionTypeLabels = {
+                    "mcq":
+                        "Multiple Choice Questions",
+
+                    "ftq":
+                        "Following the Questions",
+
+                    "casestudy":
+                        "Case Study"
+                };
+
+
+                aiBloom.textContent =
+                    bloomLabels[
+                        data.bloom_level
+                    ] ||
+                    data.bloom_level;
+
+
+                aiDifficulty.textContent =
+                    difficultyLabels[
+                        data.difficulty
+                    ] ||
+                    data.difficulty;
+
+
+                aiQuestionType.textContent =
+                    questionTypeLabels[
+                        data.question_type
+                    ] ||
+                    data.question_type;
+
+
+                aiResult.classList.remove(
+                    "d-none"
+                );
+
+            }
+            catch (error) {
+
+                alert(
+                    "AI Classification Error:\n" +
+                    error.message
+                );
+
+            }
+            finally {
+
+                classifyBtn.disabled = false;
+
+                aiLoading.classList.add(
+                    "d-none"
+                );
+
+            }
+
+        }
+    );
+
+});
+
+</script>
 
 {% endblock %}

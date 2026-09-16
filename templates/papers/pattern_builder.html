@@ -253,21 +253,12 @@
                             <td>
 
                                 <select
-                                    name="attempt_rule[]"
-                                    class="form-select attempt-rule"
-                                    data-current-value="{{ section.attempt_rule }}"
-                                >
-
-                                    <!--
-                                        Attempt Rules will be inserted
-                                        by JavaScript from Django data.
-                                    -->
-
-                                    <option value="">
-                                        Loading...
-                                    </option>
-
-                                </select>
+    name="attempt_rule[]"
+    class="form-select attempt-rule"
+    data-current-value="{{ section.attempt_rule }}"
+    required
+>
+</select>
 
                             </td>
 
@@ -434,7 +425,6 @@
 <!-- PATTERN BUILDER JAVASCRIPT -->
 <!-- ========================================================= -->
 
-<script src="{% static 'js/pattern_builder.js' %}?v=3"></script>
-
+<script src="{% static 'js/pattern_builder.js' %}?v=4"></script>
 
 {% endblock %}

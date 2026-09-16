@@ -20,3 +20,4 @@ ua-parser-builtins==202606
 openai==3.11.0
 
 python -m pip install whitenoise
+pip install requests

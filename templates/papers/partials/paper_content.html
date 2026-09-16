@@ -12,13 +12,13 @@
         </div>
 
     </div>
-
+<br>
 
     <div class="college-title">
         VIDYALANKAR SCHOOL OF INFORMATION TECHNOLOGY
     </div>
 
-
+<br>
     <div class="header-middle-row">
 
         <div class="date-col">
@@ -218,7 +218,7 @@
 
                     {% if sp.question %}
 
-                        {{ sp.question.get_bloom_level_display }}
+                        {{ sp.question.bloom_level }}
 
                     {% else %}
 
@@ -273,7 +273,7 @@
 
                             <span class="question-text">
 
-                                {{ sp.question.question_text|safe|linebreaksbr }}
+                                {{ sp.question.question_text|linebreaksbr }}
 
                             </span>
 

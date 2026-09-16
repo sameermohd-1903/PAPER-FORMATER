@@ -4,7 +4,7 @@
 {% block extra_css %}
 
 <link rel="stylesheet"
-      href="{% static 'css/paper_preview.css' %}">
+      href="{% static 'css/paper_preview_pattern.css' %}">
 
 <style>
 
@@ -140,7 +140,73 @@
 
 
 {% block content %}
+{% if validation_errors %}
+<div class="container mt-4">
 
+    <div class="alert alert-danger shadow-sm">
+
+        <h5 class="alert-heading">
+            ⚠️ Some questions could not be generated
+        </h5>
+
+        <p>
+            The following pattern requirements do not have
+            matching questions in your question bank.
+        </p>
+
+        <hr>
+
+        {% for error in validation_errors %}
+
+        <div class="mb-3">
+
+            <strong>
+                {{ error.section }} — Question {{ error.slot }}
+            </strong>
+
+            <br>
+
+            <span>
+                {{ error.message }}
+            </span>
+
+            <br>
+
+            <small class="text-muted">
+
+                Requirement:
+
+                {{ error.marks }} Marks |
+
+                Unit {{ error.unit }} |
+
+                Bloom {{ error.bloom_level }} |
+
+                {{ error.difficulty }} |
+
+                {{ error.question_type }}
+
+            </small>
+
+        </div>
+
+        {% endfor %}
+
+        <hr>
+
+        <strong>
+            💡 What to do?
+        </strong>
+
+        <p class="mb-0">
+            Add questions matching these requirements to your
+            question bank, or change the pattern settings.
+        </p>
+
+    </div>
+
+</div>
+{% endif %}
 <div class="container-fluid py-4">
 
 
@@ -173,26 +239,24 @@
         </div>
 
 
-        <div>
+<div class="d-flex gap-2 align-items-center">
 
-            <a
-                href="{% url 'papers:paper_print' pattern.id %}"
-                target="_blank"
-                class="btn btn-primary btn-sm me-2"
-            >
-                🖨 Print Preview
-            </a>
+    <a
+        href="{% url 'papers:paper_pdf' pattern.id %}"
+        class="btn btn-success btn-sm"
+    >
+        📄 Download PDF
+    </a>
 
+    <button
+        type="button"
+        id="checkPaperQualityBtn"
+        class="btn btn-primary btn-sm"
+    >
+        🧠 Check Paper Quality
+    </button>
 
-            <a
-                href="{% url 'papers:paper_pdf' pattern.id %}"
-                target="_blank"
-                class="btn btn-success btn-sm"
-            >
-                📄 Download PDF
-            </a>
-
-        </div>
+</div>
 
     </div>
 
@@ -394,11 +458,11 @@
                 <div class="mb-3">
 
                     <input
-                        type="text"
-                        id="questionSearchInput"
-                        class="form-control form-control-sm"
-                        placeholder="Search questions..."
-                    >
+                            type="text"
+                            id="replaceQuestionSearch"
+                            class="form-control form-control-sm"
+                            placeholder="Search questions..."
+                        >
 
                 </div>
 
@@ -408,7 +472,7 @@
                      QUESTION LIST
                      ================================================= -->
 
-                <div id="questionsListContainer">
+                <div id="replaceQuestionList">
 
                     <div class="text-center py-4">
 
@@ -457,124 +521,527 @@
 
 
 {% block extra_js %}
+<!-- =========================================================
+     AI PAPER QUALITY MODAL
+========================================================= -->
 
+<div
+    class="modal fade"
+    id="paperQualityModal"
+    tabindex="-1"
+    aria-labelledby="paperQualityModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header bg-primary text-white">
+
+                <h5
+                    class="modal-title"
+                    id="paperQualityModalLabel"
+                >
+                    🧠 AI Paper Quality Report
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+
+            </div>
+
+
+            <!-- BODY -->
+            <div class="modal-body">
+
+                <!-- LOADING -->
+                <div
+                    id="qualityLoading"
+                    class="text-center py-5"
+                    style="display: none;"
+                >
+
+                    <div
+                        class="spinner-border text-primary"
+                        role="status"
+                    ></div>
+
+                    <div class="mt-3 fw-semibold">
+                        Analyzing your paper...
+                    </div>
+
+                    <div class="text-muted small mt-1">
+                        Checking marks, Bloom's Taxonomy,
+                        difficulty, units, similarity and AI quality.
+                    </div>
+
+                </div>
+
+
+                <!-- ERROR -->
+                <div
+                    id="qualityError"
+                    class="alert alert-danger"
+                    style="display: none;"
+                ></div>
+
+
+                <!-- REPORT -->
+                <div
+                    id="qualityReport"
+                    style="display: none;"
+                >
+
+                    <!-- =====================================
+                         SCORE
+                    ====================================== -->
+
+                    <div class="text-center mb-4">
+
+                        <div
+                            id="qualityScore"
+                            class="display-3 fw-bold text-primary"
+                        >
+                            0
+                        </div>
+
+                        <div class="text-muted">
+                            Overall Paper Quality Score
+                        </div>
+
+                        <div class="progress mt-3 mx-auto"
+                             style="max-width: 500px; height: 12px;">
+
+                            <div
+                                id="qualityScoreBar"
+                                class="progress-bar"
+                                role="progressbar"
+                                style="width: 0%;"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         PAPER STATISTICS
+                    ====================================== -->
+
+                    <div class="card mb-3">
+
+                        <div class="card-header fw-bold">
+                            📊 Paper Statistics
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="row text-center">
+
+                                <div class="col-md-4 mb-3">
+
+                                    <div class="text-muted small">
+                                        Questions
+                                    </div>
+
+                                    <div
+                                        id="metricQuestionCount"
+                                        class="fs-4 fw-bold"
+                                    >
+                                        -
+                                    </div>
+
+                                    <div
+                                        id="metricQuestionStatus"
+                                        class="small"
+                                    ></div>
+
+                                </div>
+
+
+                                <div class="col-md-4 mb-3">
+
+                                    <div class="text-muted small">
+                                        Total Marks
+                                    </div>
+
+                                    <div
+                                        id="metricTotalMarks"
+                                        class="fs-4 fw-bold"
+                                    >
+                                        -
+                                    </div>
+
+                                    <div
+                                        id="metricMarksStatus"
+                                        class="small"
+                                    ></div>
+
+                                </div>
+
+
+                                <div class="col-md-4 mb-3">
+
+                                    <div class="text-muted small">
+                                        AI Analysis
+                                    </div>
+
+                                    <div
+                                        id="metricAiStatus"
+                                        class="fs-4 fw-bold"
+                                    >
+                                        -
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         DISTRIBUTIONS
+                    ====================================== -->
+
+                    <div class="row">
+
+                        <!-- UNIT -->
+                        <div class="col-md-6">
+
+                            <div class="card mb-3">
+
+                                <div class="card-header fw-bold">
+                                    📚 Unit Coverage
+                                </div>
+
+                                <div
+                                    id="unitDistribution"
+                                    class="card-body"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- DIFFICULTY -->
+                        <div class="col-md-6">
+
+                            <div class="card mb-3">
+
+                                <div class="card-header fw-bold">
+                                    🎯 Difficulty Distribution
+                                </div>
+
+                                <div
+                                    id="difficultyDistribution"
+                                    class="card-body"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- BLOOM -->
+                        <div class="col-md-6">
+
+                            <div class="card mb-3">
+
+                                <div class="card-header fw-bold">
+                                    🧠 Bloom's Taxonomy
+                                </div>
+
+                                <div
+                                    id="bloomDistribution"
+                                    class="card-body"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- QUESTION TYPE -->
+                        <div class="col-md-6">
+
+                            <div class="card mb-3">
+
+                                <div class="card-header fw-bold">
+                                    📝 Question Types
+                                </div>
+
+                                <div
+                                    id="questionTypeDistribution"
+                                    class="card-body"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         ISSUES / WARNINGS / PASSED
+                    ====================================== -->
+
+                    <div class="card mb-3">
+
+                        <div class="card-header fw-bold">
+                            🔍 Rule Check Results
+                        </div>
+
+                        <div class="card-body">
+
+                            <div
+                                id="qualityIssues"
+                                class="mb-3"
+                            ></div>
+
+                            <div
+                                id="qualityWarnings"
+                                class="mb-3"
+                            ></div>
+
+                            <div
+                                id="qualityPassed"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         SIMILAR QUESTIONS
+                    ====================================== -->
+
+                    <div
+                        id="similarQuestionsCard"
+                        class="card mb-3"
+                        style="display: none;"
+                    >
+
+                        <div class="card-header fw-bold">
+                            🔄 Similar / Duplicate Questions
+                        </div>
+
+                        <div
+                            id="similarQuestions"
+                            class="card-body"
+                        ></div>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         AI ANALYSIS
+                    ====================================== -->
+
+                    <div class="card mb-3">
+
+                        <div class="card-header fw-bold">
+                            🤖 AI Analysis
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="mb-4">
+
+                                <h6 class="fw-bold">
+                                    Overall Assessment
+                                </h6>
+
+                                <p
+                                    id="aiOverallComment"
+                                    class="mb-0"
+                                ></p>
+
+                            </div>
+
+
+                            <div
+                                id="aiStrengthsSection"
+                                class="mb-4"
+                            >
+
+                                <h6 class="fw-bold text-success">
+                                    ✅ Strengths
+                                </h6>
+
+                                <ul
+                                    id="aiStrengths"
+                                    class="mb-0"
+                                ></ul>
+
+                            </div>
+
+
+                            <div
+                                id="aiConcernsSection"
+                                class="mb-4"
+                            >
+
+                                <h6 class="fw-bold text-warning">
+                                    ⚠️ Concerns
+                                </h6>
+
+                                <ul
+                                    id="aiConcerns"
+                                    class="mb-0"
+                                ></ul>
+
+                            </div>
+
+
+                            <div
+                                id="aiSuggestionsSection"
+                            >
+
+                                <h6 class="fw-bold text-primary">
+                                    💡 Suggestions
+                                </h6>
+
+                                <ul
+                                    id="aiSuggestions"
+                                    class="mb-0"
+                                ></ul>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOTER -->
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Close
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
 <script>
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    console.log("========================================");
-    console.log("PAPER PREVIEW REPLACE JS LOADED");
-    console.log("========================================");
+    console.log("=================================");
+    console.log("PAPER PREVIEW JS LOADED");
+    console.log("=================================");
 
 
-    // =====================================================
-    // BASIC ELEMENTS
-    // =====================================================
-
-    const modalElement =
-        document.getElementById("questionModal");
-
-    const modalTitle =
-        document.getElementById("questionModalLabel");
-
-    const currentQuestionText =
-        document.getElementById("currentQuestionText");
-
-    const criteriaText =
-        document.getElementById("criteriaText");
-
-    const unitFilter =
-        document.getElementById("replaceUnitFilter");
-
-    const filterButton =
-        document.getElementById("filterQuestionsBtn");
-
-    const searchInput =
-        document.getElementById("questionSearchInput");
-
-    const questionsContainer =
-        document.getElementById("questionsListContainer");
-
-
-    // =====================================================
-    // CHECK MODAL
-    // =====================================================
-
-    if (!modalElement) {
-
-        console.error(
-            "❌ questionModal not found."
-        );
-
-        return;
-    }
-
-
-    if (typeof bootstrap === "undefined") {
-
-        console.error(
-            "❌ Bootstrap is not loaded."
-        );
-
-        return;
-    }
-
-
-    const questionModal =
-        new bootstrap.Modal(
-            modalElement
-        );
-
-
-    console.log(
-        "✅ Replace modal initialized."
-    );
-
-
-    // =====================================================
-    // CURRENT REPLACEMENT DATA
-    // =====================================================
+    // ========================================================
+    // VARIABLES
+    // ========================================================
 
     let currentSectionId = null;
-
     let currentSlotIndex = null;
-
     let currentQuestionId = null;
 
-    let slotsData = [];
 
-    let currentSlot = null;
+    // ========================================================
+    // REPLACE MODAL
+    // ========================================================
+
+    const replaceModalElement =
+        document.getElementById("questionModal");
 
 
-    // =====================================================
-    // CSRF
-    // =====================================================
+    if (!replaceModalElement) {
+
+        console.error(
+            "Replace modal #questionModal not found."
+        );
+
+        return;
+    }
+
+
+    const replaceModal =
+        bootstrap.Modal.getOrCreateInstance(
+            replaceModalElement
+        );
+
+
+    // ========================================================
+    // CSRF TOKEN
+    // ========================================================
 
     function getCsrfToken() {
+
+        const csrfInput =
+            document.querySelector(
+                "[name=csrfmiddlewaretoken]"
+            );
+
+
+        if (csrfInput) {
+
+            return csrfInput.value;
+
+        }
+
 
         const cookie =
             document.cookie
                 .split("; ")
                 .find(
                     row =>
-                        row.startsWith(
-                            "csrftoken="
-                        )
+                        row.startsWith("csrftoken=")
                 );
 
-        if (!cookie) {
-            return "";
-        }
 
-        return decodeURIComponent(
-            cookie.split("=")[1]
-        );
+        return cookie
+            ? decodeURIComponent(
+                cookie.split("=")[1]
+            )
+            : "";
     }
 
 
-    // =====================================================
-    // REPLACE BUTTON
-    // =====================================================
+    // ========================================================
+    // ESCAPE HTML
+    // ========================================================
+
+    function escapeHtml(value) {
+
+        const div =
+            document.createElement("div");
+
+        div.textContent =
+            value ?? "";
+
+        return div.innerHTML;
+    }
+
+
+    // ========================================================
+    // REPLACE BUTTON CLICK
+    // ========================================================
 
     document.addEventListener(
         "click",
@@ -595,40 +1062,45 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             currentSectionId =
-                button.dataset.sectionId;
+                Number(
+                    button.dataset.sectionId
+                );
 
 
             currentSlotIndex =
-                parseInt(
-                    button.dataset.slotIndex,
-                    10
+                Number(
+                    button.dataset.slotIndex
                 );
 
 
             currentQuestionId =
-                button.dataset.questionId || "";
+                button.dataset.questionId
+                    ? Number(
+                        button.dataset.questionId
+                    )
+                    : null;
 
 
             console.log(
-                "========================================"
+                "================================="
             );
 
             console.log(
-                "REPLACE BUTTON CLICKED"
+                "REPLACE CLICKED"
             );
 
             console.log(
-                "Pattern ID:",
-                "{{ pattern.id }}"
+                "Pattern:",
+                {{ pattern.id }}
             );
 
             console.log(
-                "Section ID:",
+                "Section:",
                 currentSectionId
             );
 
             console.log(
-                "Slot Index:",
+                "Slot:",
                 currentSlotIndex
             );
 
@@ -638,100 +1110,144 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
             console.log(
-                "========================================"
+                "================================="
             );
 
 
-            openReplaceModal();
+            // ------------------------------------------------
+            // Open modal
+            // ------------------------------------------------
+
+            replaceModal.show();
+
+
+            // ------------------------------------------------
+            // Load questions
+            // ------------------------------------------------
+
+            loadReplacementQuestions();
 
         }
     );
 
 
-    // =====================================================
-    // OPEN MODAL
-    // =====================================================
+    // ========================================================
+    // LOAD REPLACEMENT QUESTIONS
+    // ========================================================
 
-    function openReplaceModal() {
+    function loadReplacementQuestions() {
 
-        modalTitle.textContent =
-            "↻ Replace Question";
+        if (
+            currentSectionId === null ||
+            currentSlotIndex === null
+        ) {
+
+            console.error(
+                "Section or slot is missing."
+            );
+
+            return;
+        }
 
 
-        currentQuestionText.textContent =
-            "Loading...";
+        // ----------------------------------------------------
+        // Question list
+        // ----------------------------------------------------
+
+        const questionList =
+            document.getElementById(
+                "replaceQuestionList"
+            );
 
 
-        criteriaText.textContent =
-            "Loading questions...";
+        if (!questionList) {
+
+            console.error(
+                "#replaceQuestionList not found."
+            );
+
+            return;
+        }
 
 
-        questionsContainer.innerHTML = `
+        // ----------------------------------------------------
+        // Loading
+        // ----------------------------------------------------
+
+        questionList.innerHTML = `
 
             <div class="text-center py-4">
 
                 <div
-                    class="spinner-border spinner-border-sm text-primary"
+                    class="spinner-border text-primary"
+                    role="status"
                 ></div>
 
-                <span class="ms-2">
-                    Loading questions...
-                </span>
+                <div class="mt-2 text-muted">
+                    Finding replacement questions...
+                </div>
 
             </div>
 
         `;
 
 
-        // Reset search
-        searchInput.value = "";
+        // ----------------------------------------------------
+        // Filters
+        // ----------------------------------------------------
+
+        const unitFilter =
+            document.getElementById(
+                "replaceUnitFilter"
+            );
 
 
-        // Reset unit filter
-        unitFilter.value = "";
+        const searchInput =
+            document.getElementById(
+                "replaceQuestionSearch"
+            );
 
 
-        questionModal.show();
+        const unit =
+            unitFilter
+                ? unitFilter.value
+                : "";
 
 
-        loadQuestions();
+        const search =
+            searchInput
+                ? searchInput.value.trim()
+                : "";
 
-    }
 
-
-    // =====================================================
-    // LOAD QUESTIONS
-    // =====================================================
-
-    function loadQuestions() {
+        // ----------------------------------------------------
+        // API URL
+        // ----------------------------------------------------
 
         const url =
-            `/papers/builder/{{ pattern.id }}/section/${currentSectionId}/questions/`;
+            "{% url 'papers:get_section_questions_api' pattern.id 999999 %}"
+                .replace(
+                    "999999",
+                    currentSectionId
+                );
 
 
         console.log(
-            "Loading questions from:",
+            "API URL:",
             url
         );
 
 
-        fetch(
-            url,
-            {
-                method: "GET",
+        // ----------------------------------------------------
+        // FETCH
+        // ----------------------------------------------------
 
-                headers: {
-                    "X-Requested-With":
-                        "XMLHttpRequest"
-                }
-            }
-        )
+        fetch(url)
 
-        .then(
-            function (response) {
+            .then(response => {
 
                 console.log(
-                    "Question API status:",
+                    "API STATUS:",
                     response.status
                 );
 
@@ -739,8 +1255,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (!response.ok) {
 
                     throw new Error(
-                        "Question API returned HTTP " +
-                        response.status
+                        "Unable to load replacement questions."
                     );
 
                 }
@@ -748,14 +1263,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 return response.json();
 
-            }
-        )
+            })
 
-        .then(
-            function (data) {
+
+            .then(data => {
 
                 console.log(
-                    "Question API response:",
+                    "REPLACEMENT API RESULT:",
                     data
                 );
 
@@ -770,89 +1284,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
 
-                // =================================================
-                // NEW API FORMAT
-                // =================================================
-
-                if (
-                    Array.isArray(
-                        data.slots
-                    )
-                ) {
-
-                    slotsData =
-                        data.slots;
-
-                }
-
-                // =================================================
-                // OLD API FORMAT FALLBACK
-                // =================================================
-
-                else {
-
-                    slotsData = [];
-
-                    slotsData.push({
-
-                        slot_index:
-                            currentSlotIndex,
-
-                        letter:
-                            String.fromCharCode(
-                                97 +
-                                currentSlotIndex
-                            ),
-
-                        question_id:
-                            data.current_question
-                                ?.id ||
-                            currentQuestionId,
-
-                        question_text:
-                            data.current_question
-                                ?.question_text ||
-                            "",
-
-                        unit:
-                            "",
-
-                        marks:
-                            data.section
-                                ?.marks ||
-                            "",
-
-                        bloom_level:
-                            "",
-
-                        difficulty:
-                            "",
-
-                        question_type:
-                            data.section
-                                ?.question_type ||
-                            "",
-
-                        questions:
-                            data.questions ||
-                            []
-
-                    });
-
-                }
-
-
-                console.log(
-                    "Slots:",
-                    slotsData
-                );
-
-
-                currentSlot =
-                    slotsData.find(
-                        slot =>
+                const slot =
+                    data.slots.find(
+                        item =>
                             Number(
-                                slot.slot_index
+                                item.slot_index
                             )
                             ===
                             Number(
@@ -861,38 +1297,92 @@ document.addEventListener("DOMContentLoaded", function () {
                     );
 
 
-                if (!currentSlot) {
+                if (!slot) {
 
                     throw new Error(
-                        "Could not find the selected question slot."
+                        "Question slot not found."
                     );
 
                 }
 
 
-                renderCurrentSlot();
+                // ------------------------------------------------
+                // Update current question
+                // ------------------------------------------------
 
-            }
-        )
+                const currentQuestionText =
+                    document.getElementById(
+                        "currentQuestionText"
+                    );
 
-        .catch(
-            function (error) {
+
+                if (currentQuestionText) {
+
+                    currentQuestionText.textContent =
+                        currentQuestionId
+                            ? (
+                                buttonQuestionText(
+                                    currentQuestionId,
+                                    slot.questions
+                                )
+                                ||
+                                "Current question"
+                            )
+                            : "No question currently assigned.";
+
+                }
+
+
+                // ------------------------------------------------
+                // Criteria
+                // ------------------------------------------------
+
+                const criteriaText =
+                    document.getElementById(
+                        "criteriaText"
+                    );
+
+
+                if (criteriaText) {
+
+                    criteriaText.textContent =
+                        `Unit: ${
+                            slot.unit || "All Units"
+                        } | Marks: ${
+                            slot.marks
+                        } | Difficulty: ${
+                            formatLabel(
+                                slot.difficulty
+                            )
+                        }`;
+
+                }
+
+
+                // ------------------------------------------------
+                // Render
+                // ------------------------------------------------
+
+                renderReplacementQuestions(
+                    slot.questions || [],
+                    unit,
+                    search
+                );
+
+            })
+
+
+            .catch(error => {
 
                 console.error(
-                    "❌ Question loading error:",
+                    "Replacement question error:",
                     error
                 );
 
 
-                questionsContainer.innerHTML = `
+                questionList.innerHTML = `
 
-                    <div
-                        class="alert alert-danger"
-                    >
-
-                        <strong>
-                            Error:
-                        </strong>
+                    <div class="alert alert-danger">
 
                         ${escapeHtml(
                             error.message
@@ -902,202 +1392,193 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 `;
 
-            }
-        );
+            });
 
     }
 
 
-    // =====================================================
-    // RENDER CURRENT SLOT
-    // =====================================================
+    // ========================================================
+    // FIND CURRENT QUESTION TEXT
+    // ========================================================
 
-    function renderCurrentSlot() {
+    function buttonQuestionText(
+        questionId,
+        questions
+    ) {
 
-        if (!currentSlot) {
-            return;
-        }
-
-
-        // =================================================
-        // CURRENT QUESTION
-        // =================================================
-
-        currentQuestionText.textContent =
-            currentSlot.question_text ||
-            "No question currently assigned.";
-
-
-        // =================================================
-        // CRITERIA
-        // =================================================
-
-        const unitText =
-            currentSlot.unit
-                ? "Unit " +
-                  currentSlot.unit
-                : "All Units";
-
-
-        const bloomText =
-            currentSlot.bloom_level
-                ? getBloomLabel(
-                    currentSlot.bloom_level
-                )
-                : "Any";
-
-
-        const difficultyText =
-            currentSlot.difficulty ||
-            "Any";
-
-
-        const typeText =
-            formatQuestionType(
-                currentSlot.question_type
+        const question =
+            questions.find(
+                item =>
+                    Number(item.id)
+                    ===
+                    Number(questionId)
             );
 
 
-        criteriaText.textContent =
-            `${unitText} | ` +
-            `${currentSlot.marks} Marks | ` +
-            `${bloomText} | ` +
-            `${difficultyText} | ` +
-            `${typeText}`;
-
-
-        // =================================================
-        // UNIT FILTER
-        // =================================================
-
-        unitFilter.value =
-            currentSlot.unit || "";
-
-
-        // =================================================
-        // QUESTIONS
-        // =================================================
-
-        renderQuestions();
+        return question
+            ? question.question_text
+            : "";
 
     }
 
 
-    // =====================================================
-    // UNIT FILTER BUTTON
-    // =====================================================
+    // ========================================================
+    // FORMAT LABEL
+    // ========================================================
 
-    filterButton.addEventListener(
-        "click",
-        function () {
+    function formatLabel(value) {
 
-            renderQuestions();
-
+        if (!value) {
+            return "-";
         }
-    );
 
 
-    // =====================================================
-    // SEARCH
-    // =====================================================
+        return String(value)
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, char =>
+                char.toUpperCase()
+            );
 
-    searchInput.addEventListener(
-        "input",
-        function () {
-
-            renderQuestions();
-
-        }
-    );
+    }
 
 
-    // =====================================================
-    // RENDER QUESTIONS
-    // =====================================================
+    // ========================================================
+    // RENDER REPLACEMENT QUESTIONS
+    // ========================================================
 
-    function renderQuestions() {
+    function renderReplacementQuestions(
+        questions,
+        unit,
+        search
+    ) {
 
-        if (!currentSlot) {
+        const questionList =
+            document.getElementById(
+                "replaceQuestionList"
+            );
+
+
+        if (!questionList) {
             return;
         }
 
 
-        let questions =
-            currentSlot.questions ||
-            [];
+        // ----------------------------------------------------
+        // FILTER
+        // ----------------------------------------------------
 
+        let filtered =
+            questions.filter(
+                question => {
 
-        // =================================================
-        // UNIT FILTER
-        // =================================================
+                    // ----------------------------------------
+                    // Current question
+                    // ----------------------------------------
 
-        const selectedUnit =
-            unitFilter.value;
-
-
-        if (selectedUnit) {
-
-            questions =
-                questions.filter(
-                    function (question) {
-
-                        return String(
-                            question.unit
-                        ).trim()
+                    if (
+                        Number(question.id)
                         ===
+                        Number(currentQuestionId)
+                    ) {
+
+                        return false;
+
+                    }
+
+
+                    // ----------------------------------------
+                    // Used question
+                    // ----------------------------------------
+
+                    if (
+                        question.is_used
+                    ) {
+
+                        return false;
+
+                    }
+
+
+                    // ----------------------------------------
+                    // Unit
+                    // ----------------------------------------
+
+                    if (
+                        unit &&
+                        unit !== "All" &&
                         String(
-                            selectedUnit
-                        ).trim();
+                            question.unit
+                        ).toLowerCase()
+                        !==
+                        String(unit).toLowerCase()
+                    ) {
+
+                        return false;
 
                     }
-                );
-
-        }
 
 
-        // =================================================
-        // SEARCH FILTER
-        // =================================================
+                    // ----------------------------------------
+                    // Search
+                    // ----------------------------------------
 
-        const search =
-            searchInput.value
-                .trim()
-                .toLowerCase();
+                    if (search) {
+
+                        const text =
+                            String(
+                                question.question_text
+                            ).toLowerCase();
 
 
-        if (search) {
+                        if (
+                            !text.includes(
+                                search.toLowerCase()
+                            )
+                        ) {
 
-            questions =
-                questions.filter(
-                    function (question) {
+                            return false;
 
-                        return String(
-                            question.question_text
-                        )
-                        .toLowerCase()
-                        .includes(search);
+                        }
 
                     }
-                );
-
-        }
 
 
-        // =================================================
-        // NO QUESTIONS
-        // =================================================
+                    return true;
 
-        if (
-            questions.length === 0
-        ) {
+                }
+            );
 
-            questionsContainer.innerHTML = `
 
-                <div
-                    class="alert alert-warning text-center"
-                >
+        // ----------------------------------------------------
+        // AI RANKING
+        // ----------------------------------------------------
 
-                    No eligible questions found.
+        filtered.sort(
+            (a, b) =>
+
+                Number(
+                    b.similarity || 0
+                )
+
+                -
+
+                Number(
+                    a.similarity || 0
+                )
+        );
+
+
+        // ----------------------------------------------------
+        // EMPTY
+        // ----------------------------------------------------
+
+        if (!filtered.length) {
+
+            questionList.innerHTML = `
+
+                <div class="alert alert-warning">
+
+                    No valid replacement questions found.
 
                 </div>
 
@@ -1108,160 +1589,31 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
-        // =================================================
-        // QUESTION HTML
-        // =================================================
+        // ----------------------------------------------------
+        // QUESTIONS
+        // ----------------------------------------------------
 
-        let html = "";
+        questionList.innerHTML =
 
+            filtered.map(
+                question => {
 
-        questions.forEach(
-            function (question) {
-
-                const isCurrent =
-                    Boolean(
-                        question.is_current
-                    )
-                    ||
-                    String(
-                        question.id
-                    )
-                    ===
-                    String(
-                        currentQuestionId
-                    );
-
-
-                const isUsed =
-                    Boolean(
-                        question.is_used
-                    );
-
-
-                let buttonText =
-                    "Select";
-
-
-                let buttonClass =
-                    "btn-success";
-
-
-                let disabled = false;
-
-
-                let statusBadge = "";
-
-
-                // =========================================
-                // CURRENT
-                // =========================================
-
-                if (isCurrent) {
-
-                    buttonText =
-                        "Current";
-
-
-                    buttonClass =
-                        "btn-secondary";
-
-
-                    disabled = true;
-
-
-                    statusBadge = `
-
-                        <span
-                            class="badge bg-primary ms-2"
-                        >
-                            Current
-                        </span>
-
-                    `;
-
-                }
-
-
-                // =========================================
-                // USED
-                // =========================================
-
-                else if (isUsed) {
-
-                    buttonText =
-                        "Used";
-
-
-                    buttonClass =
-                        "btn-secondary";
-
-
-                    disabled = true;
-
-
-                    statusBadge = `
-
-                        <span
-                            class="badge bg-secondary ms-2"
-                        >
-                            Used in Paper
-                        </span>
-
-                    `;
-
-                }
-
-
-                // =========================================
-                // AVAILABLE
-                // =========================================
-
-                else {
-
-                    statusBadge = `
-
-                        <span
-                            class="badge bg-success ms-2"
-                        >
-                            Available
-                        </span>
-
-                    `;
-
-                }
-
-
-                html += `
-
-                    <div
-                        class="
-                            list-group-item
-                            question-item
-                            p-3
-                            mb-2
-                            border
-                            rounded
-                        "
-                    >
+                    return `
 
                         <div
-                            class="
-                                d-flex
-                                justify-content-between
-                                align-items-start
-                                gap-3
-                            "
+                            class="question-item border rounded p-3"
                         >
 
                             <div
-                                style="flex:1;"
+                                class="
+                                    d-flex
+                                    justify-content-between
+                                    align-items-start
+                                "
                             >
 
                                 <div
-                                    class="
-                                        fw-bold
-                                        mb-2
-                                    "
+                                    class="fw-semibold pe-3"
                                 >
 
                                     ${escapeHtml(
@@ -1271,123 +1623,115 @@ document.addEventListener("DOMContentLoaded", function () {
                                 </div>
 
 
-                                <div
+                                <button
+                                    type="button"
                                     class="
-                                        small
-                                        text-muted
+                                        btn
+                                        btn-success
+                                        btn-sm
+                                        select-replacement
                                     "
+                                    data-question-id="${
+                                        question.id
+                                    }"
                                 >
 
-                                    <span
-                                        class="me-3"
-                                    >
-                                        Unit:
-                                        ${escapeHtml(
-                                            String(
-                                                question.unit
-                                            )
-                                        )}
-                                    </span>
+                                    Select
 
-
-                                    <span
-                                        class="me-3"
-                                    >
-                                        Marks:
-                                        ${escapeHtml(
-                                            String(
-                                                question.marks
-                                            )
-                                        )}
-                                    </span>
-
-
-                                    <span
-                                        class="me-3"
-                                    >
-                                        Bloom:
-                                        ${escapeHtml(
-                                            String(
-                                                question.bloom_level
-                                            )
-                                        )}
-                                    </span>
-
-
-                                    <span
-                                        class="me-3"
-                                    >
-                                        Difficulty:
-                                        ${escapeHtml(
-                                            String(
-                                                question.difficulty
-                                            )
-                                        )}
-                                    </span>
-
-
-                                    ${statusBadge}
-
-                                </div>
+                                </button>
 
                             </div>
 
 
-                            <button
-                                type="button"
-                                class="
-                                    btn
-                                    btn-sm
-                                    ${buttonClass}
-                                    select-question-btn
-                                "
-                                data-question-id="${
-                                    question.id
-                                }"
-                                ${disabled
-                                    ? "disabled"
-                                    : ""}
+                            <div
+                                class="small text-muted mt-2"
                             >
 
-                                ${buttonText}
+                                <span class="me-3">
 
-                            </button>
+                                    Unit:
+                                    ${escapeHtml(
+                                        String(
+                                            question.unit
+                                        )
+                                    )}
+
+                                </span>
+
+
+                                <span class="me-3">
+
+                                    Marks:
+                                    ${escapeHtml(
+                                        String(
+                                            question.marks
+                                        )
+                                    )}
+
+                                </span>
+
+
+                                <span class="me-3">
+
+                                    Bloom:
+                                    ${escapeHtml(
+                                        question.bloom_level
+                                    )}
+
+                                </span>
+
+
+                                <span class="me-3">
+
+                                    Difficulty:
+                                    ${escapeHtml(
+                                        question.difficulty
+                                    )}
+
+                                </span>
+
+
+                                <span>
+
+                                    AI Similarity:
+
+                                    <strong>
+                                        ${escapeHtml(
+                                            String(
+                                                question.similarity || 0
+                                            )
+                                        )}%
+                                    </strong>
+
+                                </span>
+
+                            </div>
 
                         </div>
 
-                    </div>
+                    `;
 
-                `;
-
-            }
-        );
-
-
-        questionsContainer.innerHTML =
-            html;
+                }
+            ).join("");
 
     }
 
 
-    // =====================================================
-    // SELECT QUESTION
-    // =====================================================
+    // ========================================================
+    // SELECT REPLACEMENT
+    // ========================================================
 
-    questionsContainer.addEventListener(
+    document.addEventListener(
         "click",
         function (event) {
 
             const button =
                 event.target.closest(
-                    ".select-question-btn"
+                    ".select-replacement"
                 );
 
 
-            if (
-                !button ||
-                button.disabled
-            ) {
-
+            if (!button) {
                 return;
             }
 
@@ -1397,38 +1741,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             if (!questionId) {
-
                 return;
-
             }
-
-
-            console.log(
-                "Replacing with question:",
-                questionId
-            );
 
 
             button.disabled = true;
 
-
-            button.innerHTML = `
-
-                <span
-                    class="
-                        spinner-border
-                        spinner-border-sm
-                    "
-                ></span>
-
-                Saving...
-
-            `;
+            button.textContent =
+                "Replacing...";
 
 
             fetch(
-                `/papers/builder/{{ pattern.id }}/assign-question/`,
+                "{% url 'papers:assign_section_question_api' pattern.id %}",
                 {
+
                     method: "POST",
 
                     headers: {
@@ -1437,10 +1763,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             "application/json",
 
                         "X-CSRFToken":
-                            getCsrfToken(),
-
-                        "X-Requested-With":
-                            "XMLHttpRequest"
+                            getCsrfToken()
 
                     },
 
@@ -1453,209 +1776,1319 @@ document.addEventListener("DOMContentLoaded", function () {
                             currentSlotIndex,
 
                         question_id:
-                            questionId
+                            Number(questionId)
 
                     })
 
                 }
             )
 
-            .then(
-                function (response) {
 
-                    return response.json()
-                        .then(
-                            function (data) {
+            .then(response => {
 
-                                if (
-                                    !response.ok
-                                    ||
-                                    !data.success
-                                ) {
+                return response.json()
+                    .then(data => ({
 
-                                    throw new Error(
-                                        data.message ||
-                                        "Unable to replace question."
-                                    );
+                        ok:
+                            response.ok,
 
-                                }
+                        data:
+                            data
+
+                    }));
+
+            })
 
 
-                                return data;
+            .then(result => {
 
-                            }
-                        );
+                if (
+                    !result.ok ||
+                    !result.data.success
+                ) {
 
-                }
-            )
-
-            .then(
-                function (data) {
-
-                    console.log(
-                        "✅ Question replaced:",
-                        data
+                    throw new Error(
+                        result.data.message ||
+                        "Unable to replace question."
                     );
 
-
-                    questionModal.hide();
-
-
-                    // Refresh preview
-                    window.location.reload();
-
                 }
-            )
-
-            .catch(
-                function (error) {
-
-                    console.error(
-                        "❌ Replace failed:",
-                        error
-                    );
 
 
-                    alert(
-                        error.message
-                    );
+                console.log(
+                    "Question replaced successfully."
+                );
 
 
-                    button.disabled = false;
+                replaceModal.hide();
 
 
-                    button.textContent =
-                        "Select";
+                window.location.reload();
 
-                }
-            );
+            })
+
+
+            .catch(error => {
+
+                console.error(
+                    "Replacement failed:",
+                    error
+                );
+
+
+                alert(
+                    error.message
+                );
+
+
+                button.disabled = false;
+
+                button.textContent =
+                    "Select";
+
+            });
 
         }
     );
 
 
-    // =====================================================
-    // BLOOM LABEL
-    // =====================================================
+    // ========================================================
+    // UNIT FILTER
+    // ========================================================
 
-    function getBloomLabel(value) {
-
-        const bloom = {
-
-            "1": "Remember",
-
-            "2": "Understand",
-
-            "3": "Apply",
-
-            "4": "Analyze",
-
-            "5": "Evaluate",
-
-            "6": "Create"
-
-        };
+    const unitFilter =
+        document.getElementById(
+            "replaceUnitFilter"
+        );
 
 
-        return (
-            bloom[String(value)]
-            ||
-            value
+    if (unitFilter) {
+
+        unitFilter.addEventListener(
+            "change",
+            function () {
+
+                loadReplacementQuestions();
+
+            }
         );
 
     }
 
 
-    // =====================================================
-    // QUESTION TYPE
-    // =====================================================
+    // ========================================================
+    // SEARCH
+    // ========================================================
 
-    function formatQuestionType(type) {
-
-        if (!type) {
-            return "";
-        }
-
-
-        const value =
-            String(type)
-                .toLowerCase();
+    const searchInput =
+        document.getElementById(
+            "replaceQuestionSearch"
+        );
 
 
-        if (
-            value === "ftq"
-            ||
-            value ===
-                "following the questions"
-        ) {
+    if (searchInput) {
 
-            return "Following the Questions";
+        searchInput.addEventListener(
+            "input",
+            function () {
 
-        }
+                loadReplacementQuestions();
 
-
-        if (
-            value === "mcq"
-            ||
-            value ===
-                "multiple choice questions"
-        ) {
-
-            return "Multiple Choice Questions";
-
-        }
-
-
-        if (
-            value === "casestudy"
-            ||
-            value === "case study"
-        ) {
-
-            return "Case Study";
-
-        }
-
-
-        return type;
+            }
+        );
 
     }
 
 
-    // =====================================================
-    // HTML ESCAPE
-    // =====================================================
+    // ========================================================
+    // ========================================================
+    // AI PAPER QUALITY CHECKER
+    // ========================================================
+    // ========================================================
 
-    function escapeHtml(value) {
 
-        return String(value)
+    const qualityButton =
+        document.getElementById(
+            "checkPaperQualityBtn"
+        );
 
-            .replace(
-                /&/g,
-                "&amp;"
-            )
 
-            .replace(
-                /</g,
-                "&lt;"
-            )
+    const qualityModalElement =
+        document.getElementById(
+            "paperQualityModal"
+        );
 
-            .replace(
-                />/g,
-                "&gt;"
-            )
 
-            .replace(
-                /"/g,
-                "&quot;"
-            )
+    if (
+        !qualityButton ||
+        !qualityModalElement
+    ) {
 
-            .replace(
-                /'/g,
-                "&#039;"
+        console.error(
+            "Paper Quality button or modal not found."
+        );
+
+    }
+
+
+    let qualityModal = null;
+
+
+    if (qualityModalElement) {
+
+        qualityModal =
+            bootstrap.Modal.getOrCreateInstance(
+                qualityModalElement
             );
 
     }
+
+
+    // ========================================================
+    // QUALITY BUTTON
+    // ========================================================
+
+    if (qualityButton) {
+
+        qualityButton.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "================================="
+                );
+
+                console.log(
+                    "PAPER QUALITY BUTTON CLICKED"
+                );
+
+                console.log(
+                    "Pattern:",
+                    {{ pattern.id }}
+                );
+
+                console.log(
+                    "================================="
+                );
+
+
+                if (!qualityModal) {
+
+                    console.error(
+                        "Quality modal is not available."
+                    );
+
+                    return;
+
+                }
+
+
+                // ------------------------------------------------
+                // Reset UI
+                // ------------------------------------------------
+
+                resetQualityReport();
+
+
+                // ------------------------------------------------
+                // Show modal
+                // ------------------------------------------------
+
+                qualityModal.show();
+
+
+                // ------------------------------------------------
+                // Start analysis
+                // ------------------------------------------------
+
+                runPaperQualityCheck();
+
+            }
+        );
+
+    }
+
+
+    // ========================================================
+    // RESET QUALITY REPORT
+    // ========================================================
+
+    function resetQualityReport() {
+
+        const loading =
+            document.getElementById(
+                "qualityLoading"
+            );
+
+
+        const error =
+            document.getElementById(
+                "qualityError"
+            );
+
+
+        const report =
+            document.getElementById(
+                "qualityReport"
+            );
+
+
+        if (loading) {
+
+            loading.style.display =
+                "block";
+
+        }
+
+
+        if (error) {
+
+            error.style.display =
+                "none";
+
+            error.textContent =
+                "";
+
+        }
+
+
+        if (report) {
+
+            report.style.display =
+                "none";
+
+        }
+
+    }
+
+
+    // ========================================================
+    // RUN QUALITY CHECK
+    // ========================================================
+
+    function runPaperQualityCheck() {
+
+        const url =
+            "{% url 'papers:paper_quality_api' %}";
+
+
+        console.log(
+            "QUALITY API:",
+            url
+        );
+
+
+        fetch(
+            url,
+            {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json",
+
+                    "X-CSRFToken":
+                        getCsrfToken()
+
+                },
+
+                body: JSON.stringify({
+
+                    pattern_id:
+                        {{ pattern.id }}
+
+                })
+
+            }
+        )
+
+
+        .then(response => {
+
+            console.log(
+                "QUALITY API STATUS:",
+                response.status
+            );
+
+
+            return response.json()
+                .then(data => ({
+
+                    ok:
+                        response.ok,
+
+                    data:
+                        data
+
+                }));
+
+        })
+
+
+        .then(result => {
+
+            console.log(
+                "QUALITY REPORT:",
+                result.data
+            );
+
+
+            if (
+                !result.ok ||
+                !result.data.success
+            ) {
+
+                throw new Error(
+                    result.data.message ||
+                    "Unable to analyze the paper."
+                );
+
+            }
+
+
+            renderQualityReport(
+                result.data
+            );
+
+        })
+
+
+        .catch(error => {
+
+            console.error(
+                "QUALITY CHECK ERROR:",
+                error
+            );
+
+
+            const loading =
+                document.getElementById(
+                    "qualityLoading"
+                );
+
+
+            const errorBox =
+                document.getElementById(
+                    "qualityError"
+                );
+
+
+            if (loading) {
+
+                loading.style.display =
+                    "none";
+
+            }
+
+
+            if (errorBox) {
+
+                errorBox.textContent =
+                    error.message;
+
+                errorBox.style.display =
+                    "block";
+
+            }
+
+        });
+
+    }
+
+
+    // ========================================================
+    // RENDER QUALITY REPORT
+    // ========================================================
+
+    function renderQualityReport(data) {
+
+        const loading =
+            document.getElementById(
+                "qualityLoading"
+            );
+
+
+        const report =
+            document.getElementById(
+                "qualityReport"
+            );
+
+
+        if (loading) {
+
+            loading.style.display =
+                "none";
+
+        }
+
+
+        if (report) {
+
+            report.style.display =
+                "block";
+
+        }
+
+
+        // ----------------------------------------------------
+        // SCORE
+        // ----------------------------------------------------
+
+        const score =
+            Number(
+                data.quality_score || 0
+            );
+
+
+        const scoreElement =
+            document.getElementById(
+                "qualityScore"
+            );
+
+
+        const scoreBar =
+            document.getElementById(
+                "qualityScoreBar"
+            );
+
+
+        if (scoreElement) {
+
+            scoreElement.textContent =
+                `${score} / 100`;
+
+        }
+
+
+        if (scoreBar) {
+
+            scoreBar.style.width =
+                `${Math.max(
+                    0,
+                    Math.min(
+                        100,
+                        score
+                    )
+                )}%`;
+
+        }
+
+
+        // ----------------------------------------------------
+        // METRICS
+        // ----------------------------------------------------
+
+        const metrics =
+            data.metrics || {};
+
+
+        const displayedCount =
+            Number(
+                metrics.displayed_question_count
+                ??
+                metrics.question_count
+                ??
+                0
+            );
+
+
+        const requiredCount =
+            Number(
+                metrics.required_question_count
+                ??
+                0
+            );
+
+
+        const displayedMarks =
+            Number(
+                metrics.displayed_marks
+                ??
+                metrics.total_marks
+                ??
+                0
+            );
+
+
+        const attemptableMarks =
+            Number(
+                metrics.attemptable_marks
+                ??
+                displayedMarks
+            );
+
+
+        const requiredMarks =
+            metrics.required_marks;
+
+
+        const questionCountElement =
+            document.getElementById(
+                "metricQuestionCount"
+            );
+
+
+        const questionStatusElement =
+            document.getElementById(
+                "metricQuestionStatus"
+            );
+
+
+        const marksElement =
+            document.getElementById(
+                "metricTotalMarks"
+            );
+
+
+        const marksStatusElement =
+            document.getElementById(
+                "metricMarksStatus"
+            );
+
+
+        if (questionCountElement) {
+
+            questionCountElement.textContent =
+                displayedCount;
+
+        }
+
+
+        if (questionStatusElement) {
+
+            questionStatusElement.innerHTML =
+                statusBadge(
+                    metrics.question_count_status,
+                    requiredCount
+                        ? `Required: ${requiredCount}`
+                        : ""
+                );
+
+        }
+
+
+        if (marksElement) {
+
+            if (
+                requiredMarks !== null &&
+                requiredMarks !== undefined
+            ) {
+
+                marksElement.textContent =
+                    `${attemptableMarks} / ${requiredMarks}`;
+
+            } else {
+
+                marksElement.textContent =
+                    attemptableMarks;
+
+            }
+
+        }
+
+
+        if (marksStatusElement) {
+
+            marksStatusElement.innerHTML =
+                statusBadge(
+                    metrics.marks_status
+                );
+
+        }
+
+
+        // ----------------------------------------------------
+        // AI STATUS
+        // ----------------------------------------------------
+
+        const aiStatus =
+            document.getElementById(
+                "metricAiStatus"
+            );
+
+
+        if (aiStatus) {
+
+            aiStatus.innerHTML =
+                data.ai_available
+                    ? `<span class="badge bg-success">
+                           Available
+                       </span>`
+                    : `<span class="badge bg-secondary">
+                           Unavailable
+                       </span>`;
+
+        }
+
+
+        // ----------------------------------------------------
+        // DISTRIBUTIONS
+        // ----------------------------------------------------
+
+        renderDistribution(
+            "unitDistribution",
+            metrics.unit_distribution || {},
+            false
+        );
+
+
+        renderDistribution(
+            "difficultyDistribution",
+            metrics.difficulty_distribution || {},
+            true
+        );
+
+
+        renderDistribution(
+            "bloomDistribution",
+            metrics.bloom_distribution || {},
+            true
+        );
+
+
+        renderDistribution(
+            "questionTypeDistribution",
+            metrics.question_type_distribution || {},
+            true
+        );
+
+
+        // ----------------------------------------------------
+        // RULE RESULTS
+        // ----------------------------------------------------
+
+        const rules =
+            data.rule_results || {};
+
+
+        renderRuleResults(
+            "qualityIssues",
+            rules.issues || [],
+            "error",
+            "No critical issues detected."
+        );
+
+
+        renderRuleResults(
+            "qualityWarnings",
+            rules.warnings || [],
+            "warning",
+            "No warnings detected."
+        );
+
+
+        renderRuleResults(
+            "qualityPassed",
+            rules.passed || [],
+            "success",
+            "All checks passed."
+        );
+
+
+        // ----------------------------------------------------
+        // SIMILAR QUESTIONS
+        // ----------------------------------------------------
+
+        renderSimilarQuestions(
+            data.similar_questions || []
+        );
+
+
+        // ----------------------------------------------------
+        // AI ANALYSIS
+        // ----------------------------------------------------
+
+        renderAiAnalysis(
+            data.ai_analysis || {}
+        );
+
+    }
+
+
+    // ========================================================
+    // STATUS BADGE
+    // ========================================================
+
+    function statusBadge(
+        status,
+        extraText = ""
+    ) {
+
+        let badgeClass =
+            "bg-secondary";
+
+
+        let label =
+            "Unknown";
+
+
+        if (status === "correct") {
+
+            badgeClass =
+                "bg-success";
+
+            label =
+                "Correct";
+
+        }
+
+
+        else if (
+            status === "below_required"
+        ) {
+
+            badgeClass =
+                "bg-danger";
+
+            label =
+                "Below Required";
+
+        }
+
+
+        else if (
+            status === "above_required"
+        ) {
+
+            badgeClass =
+                "bg-danger";
+
+            label =
+                "Above Required";
+
+        }
+
+
+        else if (
+            status === "unknown"
+        ) {
+
+            badgeClass =
+                "bg-secondary";
+
+            label =
+                "Unknown";
+
+        }
+
+
+        return `
+
+            <span class="badge ${badgeClass}">
+                ${label}
+            </span>
+
+            ${
+                extraText
+                    ? `
+                        <span
+                            class="text-muted ms-1"
+                        >
+                            ${escapeHtml(
+                                extraText
+                            )}
+                        </span>
+                      `
+                    : ""
+            }
+
+        `;
+
+    }
+
+
+    // ========================================================
+    // DISTRIBUTION
+    // ========================================================
+
+    function renderDistribution(
+        elementId,
+        distribution,
+        capitalize
+    ) {
+
+        const container =
+            document.getElementById(
+                elementId
+            );
+
+
+        if (!container) {
+            return;
+        }
+
+
+        const entries =
+            Object.entries(
+                distribution
+            );
+
+
+        if (!entries.length) {
+
+            container.innerHTML = `
+
+                <div class="text-muted">
+                    No data available.
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+
+            entries.map(
+                ([key, value]) => {
+
+                    let label =
+                        key;
+
+
+                    if (capitalize) {
+
+                        label =
+                            formatLabel(key);
+
+                    }
+
+
+                    return `
+
+                        <div
+                            class="
+                                d-flex
+                                justify-content-between
+                                align-items-center
+                                border-bottom
+                                py-2
+                            "
+                        >
+
+                            <span>
+                                ${escapeHtml(label)}
+                            </span>
+
+                            <span
+                                class="badge bg-secondary"
+                            >
+                                ${escapeHtml(
+                                    String(value)
+                                )}
+                            </span>
+
+                        </div>
+
+                    `;
+
+                }
+            ).join("");
+
+    }
+
+
+    // ========================================================
+    // RULE RESULTS
+    // ========================================================
+
+    function renderRuleResults(
+        elementId,
+        items,
+        type,
+        emptyMessage
+    ) {
+
+        const container =
+            document.getElementById(
+                elementId
+            );
+
+
+        if (!container) {
+            return;
+        }
+
+
+        if (!items.length) {
+
+            container.innerHTML = `
+
+                <div class="text-muted small">
+                    ${escapeHtml(
+                        emptyMessage
+                    )}
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        const heading =
+            type === "error"
+                ? "❌ Issues"
+                : type === "warning"
+                    ? "⚠️ Warnings"
+                    : "✅ Passed";
+
+
+        const alertClass =
+            type === "error"
+                ? "alert-danger"
+                : type === "warning"
+                    ? "alert-warning"
+                    : "alert-success";
+
+
+        container.innerHTML = `
+
+            <h6 class="fw-bold">
+                ${heading}
+            </h6>
+
+            ${
+
+                items.map(
+                    item => `
+
+                        <div
+                            class="
+                                alert
+                                ${alertClass}
+                                py-2
+                                mb-2
+                            "
+                        >
+
+                            <strong>
+                                ${escapeHtml(
+                                    item.category ||
+                                    ""
+                                )}
+                            </strong>
+
+                            <div class="small mt-1">
+
+                                ${escapeHtml(
+                                    item.message ||
+                                    ""
+                                )}
+
+                            </div>
+
+                        </div>
+
+                    `
+                ).join("")
+
+            }
+
+        `;
+
+    }
+
+
+    // ========================================================
+    // SIMILAR QUESTIONS
+    // ========================================================
+
+    function renderSimilarQuestions(
+        similarQuestions
+    ) {
+
+        const card =
+            document.getElementById(
+                "similarQuestionsCard"
+            );
+
+
+        const container =
+            document.getElementById(
+                "similarQuestions"
+            );
+
+
+        if (!card || !container) {
+            return;
+        }
+
+
+        if (!similarQuestions.length) {
+
+            card.style.display =
+                "none";
+
+            return;
+
+        }
+
+
+        card.style.display =
+            "block";
+
+
+        container.innerHTML =
+
+            similarQuestions.map(
+                item => {
+
+                    const similarity =
+                        Number(
+                            item.similarity
+                            ??
+                            item.score
+                            ??
+                            0
+                        );
+
+
+                    const status =
+                        formatLabel(
+                            item.status ||
+                            "similar"
+                        );
+
+
+                    const questionA =
+                        item.question_a
+                        ??
+                        item.question_a_text
+                        ??
+                        item.text_a
+                        ??
+                        `Question ${item.question_a_id ?? ""}`;
+
+
+                    const questionB =
+                        item.question_b
+                        ??
+                        item.question_b_text
+                        ??
+                        item.text_b
+                        ??
+                        `Question ${item.question_b_id ?? ""}`;
+
+
+                    return `
+
+                        <div
+                            class="border rounded p-3 mb-2"
+                        >
+
+                            <div class="fw-bold mb-2">
+
+                                ${escapeHtml(
+                                    status
+                                )}
+
+                                <span
+                                    class="
+                                        badge
+                                        bg-warning
+                                        text-dark
+                                        ms-2
+                                    "
+                                >
+                                    ${escapeHtml(
+                                        String(
+                                            similarity
+                                        )
+                                    )}%
+                                </span>
+
+                            </div>
+
+
+                            <div class="small mb-1">
+
+                                <strong>
+                                    Question A:
+                                </strong>
+
+                                ${escapeHtml(
+                                    String(
+                                        questionA
+                                    )
+                                )}
+
+                            </div>
+
+
+                            <div class="small">
+
+                                <strong>
+                                    Question B:
+                                </strong>
+
+                                ${escapeHtml(
+                                    String(
+                                        questionB
+                                    )
+                                )}
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            ).join("");
+
+    }
+
+
+    // ========================================================
+    // AI ANALYSIS
+    // ========================================================
+
+    function renderAiAnalysis(
+        analysis
+    ) {
+
+        const overall =
+            document.getElementById(
+                "aiOverallComment"
+            );
+
+
+        const strengths =
+            document.getElementById(
+                "aiStrengths"
+            );
+
+
+        const concerns =
+            document.getElementById(
+                "aiConcerns"
+            );
+
+
+        const suggestions =
+            document.getElementById(
+                "aiSuggestions"
+            );
+
+
+        const strengthsSection =
+            document.getElementById(
+                "aiStrengthsSection"
+            );
+
+
+        const concernsSection =
+            document.getElementById(
+                "aiConcernsSection"
+            );
+
+
+        const suggestionsSection =
+            document.getElementById(
+                "aiSuggestionsSection"
+            );
+
+
+        if (overall) {
+
+            overall.textContent =
+                analysis.overall_comment
+                ??
+                analysis.overall_assessment
+                ??
+                "No AI assessment available.";
+
+        }
+
+
+        renderAiList(
+            strengths,
+            analysis.strengths,
+            strengthsSection
+        );
+
+
+        renderAiList(
+            concerns,
+            analysis.concerns,
+            concernsSection
+        );
+
+
+        renderAiList(
+            suggestions,
+            analysis.suggestions,
+            suggestionsSection
+        );
+
+    }
+
+
+    // ========================================================
+    // AI LIST
+    // ========================================================
+
+    function renderAiList(
+        element,
+        values,
+        section
+    ) {
+
+        if (!element) {
+            return;
+        }
+
+
+        const list =
+            Array.isArray(values)
+                ? values
+                : [];
+
+
+        if (!list.length) {
+
+            if (section) {
+
+                section.style.display =
+                    "none";
+
+            }
+
+            return;
+
+        }
+
+
+        if (section) {
+
+            section.style.display =
+                "block";
+
+        }
+
+
+        element.innerHTML =
+
+            list.map(
+                item => `
+
+                    <li>
+                        ${escapeHtml(
+                            String(item)
+                        )}
+                    </li>
+
+                `
+            ).join("");
+
+    }
+
 
 });
 

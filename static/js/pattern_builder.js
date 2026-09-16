@@ -538,6 +538,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (data) {
 
+            // -------------------------------------------------
+            // GET FORM ELEMENTS
+            // -------------------------------------------------
+
             const attemptRule =
                 row.querySelector(
                     ".attempt-rule"
@@ -556,31 +560,135 @@ document.addEventListener("DOMContentLoaded", function () {
                 );
 
 
+            const settingsInput =
+                row.querySelector(
+                    ".question-settings"
+                );
+
+
+            // =================================================
+            // LOAD ATTEMPT RULE
+            // =================================================
+
             if (
                 attemptRule &&
                 data.attempt_rule
             ) {
 
+                let savedAttemptRule =
+                    String(
+                        data.attempt_rule
+                    )
+                    .trim()
+                    .toLowerCase();
+
+
+                const attemptRuleMap = {
+
+                    "attempt any 1 out of 2":
+                        "1of2",
+
+                    "attempt any 2 out of 3":
+                        "2of3",
+
+                    "attempt any 3 out of 4":
+                        "3of4",
+
+                    "attempt any 4 out of 5":
+                        "4of5",
+
+                    "attempt every question":
+                        "5of5",
+
+                    "1of2":
+                        "1of2",
+
+                    "2of3":
+                        "2of3",
+
+                    "3of4":
+                        "3of4",
+
+                    "4of5":
+                        "4of5",
+
+                    "5of5":
+                        "5of5"
+
+                };
+
+
+                savedAttemptRule =
+                    attemptRuleMap[
+                        savedAttemptRule
+                    ] ||
+                    savedAttemptRule;
+
+
                 attemptRule.value =
-                    data.attempt_rule;
+                    savedAttemptRule;
+
+
+                console.log(
+                    "Loaded Attempt Rule:",
+                    data.attempt_rule,
+                    "→",
+                    attemptRule.value
+                );
 
             }
 
+
+            // =================================================
+            // LOAD QUESTION TYPE
+            // =================================================
 
             if (
                 questionType &&
                 data.question_type
             ) {
 
+                let savedQuestionType =
+                    String(
+                        data.question_type
+                    )
+                    .trim()
+                    .toLowerCase();
+
+
+                // Convert old CS value
+                // to current Case Study value.
+
+                if (
+                    savedQuestionType === "cs"
+                ) {
+
+                    savedQuestionType =
+                        "casestudy";
+
+                }
+
+
                 questionType.value =
-                    data.question_type;
+                    savedQuestionType;
+
+
+                console.log(
+                    "Loaded Question Type:",
+                    savedQuestionType
+                );
 
             }
 
 
+            // =================================================
+            // LOAD MARKS
+            // =================================================
+
             if (
                 marksInput &&
-                data.marks
+                data.marks !== undefined &&
+                data.marks !== null
             ) {
 
                 marksInput.value =
@@ -588,12 +696,55 @@ document.addEventListener("DOMContentLoaded", function () {
 
             }
 
+
+            // =================================================
+            // LOAD SAVED QUESTION SETTINGS
+            // =================================================
+
+            if (settingsInput) {
+
+                let savedSettings =
+                    data.question_settings;
+
+
+                // ---------------------------------------------
+                // Make sure settings are an array
+                // ---------------------------------------------
+
+                if (
+                    !Array.isArray(
+                        savedSettings
+                    )
+                ) {
+
+                    savedSettings = [];
+
+                }
+
+
+                // ---------------------------------------------
+                // SAVE THEM INTO HIDDEN INPUT
+                //
+                // THIS IS THE IMPORTANT FIX.
+                // ---------------------------------------------
+
+                settingsInput.value =
+                    JSON.stringify(
+                        savedSettings
+                    );
+
+
+                console.log(
+                    "Loaded Question Settings:",
+                    savedSettings
+                );
+
+            }
+
         }
 
 
         updateRowNumbers();
-
-        calculatePaperTotal();
 
     }
 
@@ -628,7 +779,6 @@ document.addEventListener("DOMContentLoaded", function () {
     patternBody.addEventListener(
         "click",
         function (event) {
-
 
             // =================================================
             // DELETE
@@ -968,6 +1118,17 @@ document.addEventListener("DOMContentLoaded", function () {
                         hiddenInput.value || "[]"
                     );
 
+
+                if (
+                    !Array.isArray(
+                        existingSettings
+                    )
+                ) {
+
+                    existingSettings = [];
+
+                }
+
             } catch (error) {
 
                 console.error(
@@ -981,6 +1142,12 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
         }
+
+
+        console.log(
+            "Opening saved settings:",
+            existingSettings
+        );
 
 
         // -----------------------------------------------------
@@ -1095,21 +1262,27 @@ document.addEventListener("DOMContentLoaded", function () {
             const unitValue =
                 existing &&
                 existing.unit !== undefined
-                    ? String(existing.unit)
+                    ? String(
+                        existing.unit
+                    ).trim()
                     : "";
 
 
             const bloomValue =
                 existing &&
                 existing.bloom_level !== undefined
-                    ? String(existing.bloom_level)
+                    ? String(
+                        existing.bloom_level
+                    ).trim()
                     : "1";
 
 
             const coValue =
                 existing &&
                 existing.co
-                    ? existing.co
+                    ? String(
+                        existing.co
+                    ).trim()
                     : "CO1";
 
 
@@ -1118,7 +1291,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 existing.difficulty
                     ? String(
                         existing.difficulty
-                    ).toLowerCase()
+                    ).trim().toLowerCase()
                     : "easy";
 
 
@@ -1454,16 +1627,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                         settings.push({
 
-                            // -----------------------------
-                            // QUESTION SLOT
-                            // -----------------------------
+                            slot_number:
+                                i,
 
-                            slot_number: i,
-
-
-                            // -----------------------------
-                            // INDIVIDUAL UNIT
-                            // -----------------------------
 
                             unit:
                                 unit
@@ -1471,19 +1637,11 @@ document.addEventListener("DOMContentLoaded", function () {
                                     : "",
 
 
-                            // -----------------------------
-                            // BLOOM
-                            // -----------------------------
-
                             bloom_level:
                                 bloom
                                     ? bloom.value
                                     : "1",
 
-
-                            // -----------------------------
-                            // CO
-                            // -----------------------------
 
                             co:
                                 co
@@ -1493,10 +1651,6 @@ document.addEventListener("DOMContentLoaded", function () {
                                     )
                                     : "CO1",
 
-
-                            // -----------------------------
-                            // DIFFICULTY
-                            // -----------------------------
 
                             difficulty:
                                 difficulty
@@ -1509,7 +1663,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                     // -----------------------------------------
-                    // SAVE JSON
+                    // SAVE JSON INTO HIDDEN INPUT
                     // -----------------------------------------
 
                     if (hiddenInput) {
@@ -1679,6 +1833,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             );
 
 
+
                         let questionSettings = [];
 
 
@@ -1717,6 +1872,12 @@ document.addEventListener("DOMContentLoaded", function () {
                             getAttemptInfo(rule);
 
 
+                        console.log(
+                            "SAVE PATTERN - QUESTION SETTINGS:",
+                            JSON.stringify(questionSettings, null, 2)
+                        );    
+
+
                         rows.push({
 
                             display_order:
@@ -1736,10 +1897,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 "",
 
 
-                            // ---------------------------------
-                            // SECTION UNIT IS NOW EMPTY
-                            // ---------------------------------
-                            // Unit belongs to each question
+                            // Individual unit belongs
                             // inside question_settings.
 
                             unit:
@@ -1770,17 +1928,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                     : "",
 
 
-                            // ---------------------------------
-                            // NUMBER OF QUESTIONS
-                            // ---------------------------------
-
                             number_of_questions:
                                 attemptInfo.available,
 
-
-                            // ---------------------------------
-                            // INDIVIDUAL SETTINGS
-                            // ---------------------------------
 
                             question_settings:
                                 questionSettings
@@ -1841,10 +1991,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     }
 
-
-                    // -----------------------------------------
-                    // CHECK EVERY SETTING HAS SLOT NUMBER
-                    // -----------------------------------------
 
                     const invalidSetting =
                         row.question_settings.some(
@@ -1910,33 +2056,37 @@ document.addEventListener("DOMContentLoaded", function () {
                 // SEND TO DJANGO
                 // =================================================
 
-                fetch(
-                    `/papers/builder/${patternId}/save/`,
-                    {
-
-                        method: "POST",
 
 
-                        headers: {
+                        const payload = {
+                            rows: rows
+                        };
 
-                            "Content-Type":
-                                "application/json",
+                        console.log(
+                            "FINAL SAVE PAYLOAD:",
+                            JSON.stringify(payload, null, 2)
+                        );
 
-                            "X-CSRFToken":
-                                getCookie(
-                                    "csrftoken"
-                                )
+                        fetch(
+                            `/papers/builder/${patternId}/save/`,
+                            {
+                                method: "POST",
 
-                        },
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "X-CSRFToken": getCookie("csrftoken")
+                                },
 
+                                body: 
+                                    JSON.stringify(
+                                        payload
+                                    )
+                            }
+                        )
+                            
 
-                        body:
-                            JSON.stringify({
-                                rows: rows
-                            })
-
-                    }
-                )
+                    
+                
 
                 .then(
                     function (response) {
@@ -2095,34 +2245,113 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     // =========================================================
-    // INITIALIZE EXISTING ROWS
+    // LOAD SAVED PATTERN ROWS
     // =========================================================
 
-    const existingRows =
-        patternBody.querySelectorAll(
-            "tr.main-pattern-row"
-        );
+    function loadSavedRows() {
 
+        if (!patternId) {
 
-    existingRows.forEach(
-        function (row) {
+            console.error(
+                "Pattern ID not found."
+            );
 
-            // Do not convert arbitrary rows
-            // into main pattern rows.
-
-            if (
-                !row.classList.contains(
-                    "main-pattern-row"
-                )
-            ) {
-
-                return;
-
-            }
+            return;
 
         }
-    );
 
+
+        fetch(
+            `/papers/builder/${patternId}/rows/`
+        )
+
+        .then(
+            function (response) {
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "HTTP error: " +
+                        response.status
+                    );
+
+                }
+
+
+                return response.json();
+
+            }
+        )
+
+        .then(
+            function (data) {
+
+                console.log(
+                    "Saved pattern data:",
+                    data
+                );
+
+
+                if (!data.rows) {
+
+                    console.warn(
+                        "No saved rows found."
+                    );
+
+                    return;
+
+                }
+
+
+                // ---------------------------------------------
+                // Clear existing rows
+                // ---------------------------------------------
+
+                patternBody.innerHTML = "";
+
+
+                // ---------------------------------------------
+                // Re-create saved rows
+                // ---------------------------------------------
+
+                data.rows.forEach(
+                    function (row) {
+
+                        createRow(row);
+
+                    }
+                );
+
+
+                updateRowNumbers();
+
+                calculatePaperTotal();
+
+
+                console.log(
+                    "Saved pattern rows loaded successfully."
+                );
+
+            }
+        )
+
+        .catch(
+            function (error) {
+
+                console.error(
+                    "Error loading saved pattern:",
+                    error
+                );
+
+            }
+        );
+
+    }
+
+
+    // =========================================================
+    // INITIALIZE
+    // =========================================================
 
     updateRowNumbers();
 
@@ -2147,12 +2376,18 @@ document.addEventListener("DOMContentLoaded", function () {
     );
 
     console.log(
-        "Unit is configured per question"
+        "Question settings are stored per slot"
     );
 
     console.log(
         "======================================"
-
     );
+
+
+    // =========================================================
+    // LOAD SAVED PATTERN DATA
+    // =========================================================
+
+    loadSavedRows();
 
 });

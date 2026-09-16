@@ -1,5 +1,5 @@
 from docx import Document
-from docx.shared import Inches
+from docx.shared import Mm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import os
 from pathlib import Path
@@ -19,6 +19,15 @@ class DocxGenerator(PaperFormatter):
         
         # Create document
         doc = Document()
+        section = doc.sections[0]
+
+        section.page_width = Mm(210)
+        section.page_height = Mm(297)
+
+        section.top_margin = Mm(15)
+        section.bottom_margin = Mm(10)
+        section.left_margin = Mm(11)
+        section.right_margin = Mm(11)        
         
         # Header
         title = doc.add_paragraph()

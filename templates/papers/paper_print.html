@@ -1,33 +1,713 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
+{% load static %}
 
-<head>
+{% block extra_css %}
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="{% static 'css/paper_preview_pattern.css' %}">
 
-    <title>Question Paper</title>
+<style>
 
-    {% load static %}
+    /* =====================================================
+       PRINT PAPER
+    ===================================================== */
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+    @page {
+        size: A4;
+        margin: 0;
+    }
 
-    <!-- Paper CSS -->
-    <link rel="stylesheet"
-          href="{% static 'css/paper_preview.css' %}">
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        font-family: "Times New Roman", Times, serif !important;
+    }
 
-</head>
+    /* =====================================================
+       PAPER
+    ===================================================== */
 
-<body onload="window.print()">
+    .print-paper {
+        width: 210mm;
+        min-height: 297mm;
 
-<div class="paper-preview">
+        margin: 0 auto;
+        padding: 12mm 11mm 10mm 11mm;
 
-    {% include "papers/partials/paper_content.html" %}
+        background: white;
+
+        font-family: "Times New Roman", Times, serif;
+
+        color: #111;
+    }
+
+    /* =====================================================
+       HEADER
+    ===================================================== */
+
+    .print-header {
+        width: 100%;
+        margin-bottom: 5mm;
+    }
+
+    .print-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        font-size: 11pt;
+
+        line-height: 1.2;
+
+        margin-bottom: 2px;
+    }
+
+    .print-college {
+        text-align: center;
+
+        font-size: 14pt;
+
+        font-weight: bold;
+
+        margin: 2px 0 4px 0;
+    }
+
+    .print-middle {
+        display: grid;
+
+        grid-template-columns: 1fr 1.5fr 1fr;
+
+        align-items: center;
+
+        font-size: 11pt;
+
+        margin-bottom: 3px;
+    }
+
+    .print-middle-left {
+        text-align: left;
+    }
+
+    .print-middle-center {
+        text-align: center;
+
+        font-weight: bold;
+    }
+
+    .print-middle-right {
+        text-align: right;
+
+        font-weight: bold;
+    }
+
+    .print-bottom {
+        display: grid;
+
+        grid-template-columns: 1fr 1.5fr 1fr;
+
+        align-items: center;
+
+        font-size: 11pt;
+
+        margin-bottom: 5px;
+    }
+
+    .print-bottom-left {
+        text-align: left;
+
+        font-weight: bold;
+    }
+
+    .print-bottom-center {
+        text-align: center;
+
+        font-weight: bold;
+    }
+
+    .print-bottom-right {
+        text-align: right;
+
+        font-weight: bold;
+    }
+
+    .print-header-line {
+        border-bottom: 1.5px solid #111;
+
+        width: 100%;
+
+        margin-top: 3px;
+    }
+
+    /* =====================================================
+       EXAM TABLE
+    ===================================================== */
+
+    .print-exam-table {
+        width: 100%;
+
+        border-collapse: collapse;
+
+        border-spacing: 0;
+
+        table-layout: fixed;
+
+        font-family: "Times New Roman", Times, serif;
+
+        font-size: 10pt;
+
+        margin: 0;
+
+        padding: 0;
+    }
+
+    .print-exam-table col:nth-child(1) {
+        width: 11%;
+    }
+
+    .print-exam-table col:nth-child(2) {
+        width: 7%;
+    }
+
+    .print-exam-table col:nth-child(3) {
+        width: 8%;
+    }
+
+    .print-exam-table col:nth-child(4) {
+        width: 67%;
+    }
+
+    .print-exam-table col:nth-child(5) {
+        width: 7%;
+    }
+
+    /* =====================================================
+       ALL TABLE CELLS
+    ===================================================== */
+
+    .print-exam-table th,
+    .print-exam-table td {
+        border: 1px solid #777;
+
+        padding: 2px 5px;
+
+        margin: 0;
+
+        vertical-align: top;
+
+        line-height: 1.15;
+
+        height: auto;
+
+        min-height: 0;
+    }
+
+    /* =====================================================
+       TABLE HEADER
+    ===================================================== */
+
+    .print-table-header th {
+        height: auto !important;
+
+        padding: 3px 5px !important;
+
+        vertical-align: middle !important;
+
+        font-weight: bold;
+
+        line-height: 1.1;
+    }
+
+    .print-bloom-header {
+        text-align: left;
+    }
+
+    .print-center {
+        text-align: center;
+    }
+
+    /* =====================================================
+       SECTION HEADER
+    ===================================================== */
+
+    .print-section-row td {
+        padding: 3px 5px !important;
+
+        height: auto !important;
+
+        min-height: 0 !important;
+
+        vertical-align: middle !important;
+
+        font-weight: bold;
+
+        line-height: 1.15;
+    }
+
+    .print-section-number {
+        text-align: center;
+    }
+
+    .print-section-title {
+        text-align: left;
+    }
+
+    .print-section-marks {
+        text-align: center;
+    }
+
+    /* =====================================================
+       QUESTION ROW
+    ===================================================== */
+
+    .print-question-row td {
+        height: auto !important;
+
+        min-height: 0 !important;
+
+        padding: 3px 5px !important;
+
+        vertical-align: top !important;
+
+        line-height: 1.2 !important;
+    }
+
+    .print-question-row {
+        height: auto !important;
+
+        min-height: 0 !important;
+    }
+
+    /* =====================================================
+       QUESTION COLUMNS
+    ===================================================== */
+
+    .print-bloom {
+        text-align: center;
+
+        vertical-align: top !important;
+    }
+
+    .print-co {
+        text-align: center;
+
+        vertical-align: top !important;
+    }
+
+    .print-qno {
+        text-align: center;
+
+        font-weight: bold;
+
+        vertical-align: top !important;
+    }
+
+    .print-question {
+        text-align: left;
+
+        vertical-align: top !important;
+
+        white-space: normal;
+
+        overflow-wrap: anywhere;
+
+        word-break: normal;
+
+        line-height: 1.2 !important;
+    }
+
+    .print-marks {
+        text-align: center;
+
+        vertical-align: top !important;
+    }
+
+    /* =====================================================
+       REMOVE EXTRA PARAGRAPH SPACE
+    ===================================================== */
+
+    .print-question p {
+        margin: 0 !important;
+
+        padding: 0 !important;
+    }
+
+    /* =====================================================
+       PAGE BREAK
+    ===================================================== */
+
+    .print-section-row {
+        break-inside: avoid;
+
+        page-break-inside: avoid;
+    }
+
+    .print-question-row {
+        break-inside: avoid;
+
+        page-break-inside: avoid;
+    }
+
+    /* =====================================================
+       SCREEN
+    ===================================================== */
+
+    @media screen {
+
+        .print-paper {
+            width: 210mm;
+
+            min-height: 297mm;
+
+            margin: 20px auto;
+
+            box-shadow: 0 0 10px rgba(0,0,0,.15);
+
+            border: 1px solid #ccc;
+        }
+
+    }
+
+    /* =====================================================
+       PRINT
+    ===================================================== */
+
+    @media print {
+
+        .no-print,
+        .navbar,
+        .sidebar,
+        footer,
+        header,
+        .btn,
+        .modal,
+        .modal-backdrop {
+            display: none !important;
+        }
+
+        body {
+            margin: 0 !important;
+
+            padding: 0 !important;
+
+            background: white !important;
+        }
+
+        .print-paper {
+            width: 210mm !important;
+
+            min-height: 297mm !important;
+
+            margin: 0 !important;
+
+            padding: 12mm 11mm 10mm 11mm !important;
+
+            box-shadow: none !important;
+
+            border: none !important;
+        }
+
+        /*
+           VERY IMPORTANT:
+           Never allow table/question rows
+           to inherit a page-sized height.
+        */
+
+        .print-exam-table,
+        .print-exam-table tbody,
+        .print-exam-table tr,
+        .print-exam-table td,
+        .print-exam-table th {
+            height: auto !important;
+
+            min-height: 0 !important;
+        }
+
+        .print-question-row td {
+            height: auto !important;
+
+            min-height: 0 !important;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="print-paper">
+
+    <!-- =================================================
+         HEADER
+    ================================================= -->
+
+    <div class="print-header">
+
+        <div class="print-header-row">
+
+            <div class="top-left">
+                Programme:
+                {{ pattern.program.name|default:"Information Technology" }}
+            </div>
+
+            <div class="top-right">
+                Roll No. __________________
+            </div>
+
+        </div>
+
+
+        <div class="print-college">
+
+            VIDYALANKAR SCHOOL OF INFORMATION TECHNOLOGY
+
+        </div>
+
+
+        <div class="print-middle">
+
+            <div class="print-middle-left">
+
+                Date:
+                <b>
+                    {{ pattern.exam_date|date:"d/m/Y" }}
+                </b>
+
+            </div>
+
+            <div class="print-middle-center">
+
+                {{ pattern.get_exam_type_display }}
+
+            </div>
+
+            <div class="print-middle-right">
+
+                Time:
+                {{ pattern.time_allowed }}
+
+            </div>
+
+        </div>
+
+
+        <div class="print-bottom">
+
+            <div class="print-bottom-left">
+
+                {% if pattern.program %}
+                    F. Y. {{ pattern.program.name }}
+                {% endif %}
+
+                &nbsp;&nbsp;
+
+                {% if pattern.semester %}
+                    SEM - {{ pattern.semester.number }}
+                {% endif %}
+
+            </div>
+
+            <div class="print-bottom-center">
+
+                Subject:
+                {{ pattern.subject.name }}
+
+            </div>
+
+            <div class="print-bottom-right">
+
+                Marks:
+                {{ pattern.total_marks }}
+
+            </div>
+
+        </div>
+
+
+        <div class="print-header-line"></div>
+
+    </div>
+
+
+    <!-- =================================================
+         TABLE
+    ================================================= -->
+
+    <table class="print-exam-table">
+
+        <colgroup>
+
+            <col>
+
+            <col>
+
+            <col>
+
+            <col>
+
+            <col>
+
+        </colgroup>
+
+
+        <thead>
+
+            <tr class="print-table-header">
+
+                <th class="print-bloom-header">
+
+                    Bloom's<br>
+                    Taxonomy<br>
+                    Level
+
+                </th>
+
+                <th class="print-center">
+
+                    OC
+
+                </th>
+
+                <th class="print-center">
+
+                    Q.No.
+
+                </th>
+
+                <th></th>
+
+                <th class="print-center">
+
+                    Marks
+
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+        {% for row in sections %}
+
+            <!-- =========================================
+                 SECTION HEADER
+            ========================================== -->
+
+            <tr class="print-section-row">
+
+                <td></td>
+
+                <td></td>
+
+                <td class="print-section-number">
+
+                    {{ row.question_number }}
+
+                </td>
+
+                <td class="print-section-title">
+
+                    {% if row.attempt_rule == "custom" %}
+
+                        {{ row.custom_attempt_text }}
+
+                    {% else %}
+
+                        {{ row.get_attempt_rule_display }}
+
+                    {% endif %}
+
+                    {% if row.question_type %}
+
+                        -
+                        {{ row.get_question_type_display_name }}
+
+                    {% endif %}
+
+                </td>
+
+                <td class="print-section-marks">
+
+                    {{ row.marks }}
+
+                </td>
+
+            </tr>
+
+
+            <!-- =========================================
+                 QUESTIONS
+            ========================================== -->
+
+            {% for sp in row.subparts_data %}
+
+                <tr class="print-question-row">
+
+                    <td class="bloom-value">
+
+    {% if sp.question %}
+
+        {{ sp.question.bloom_level }}
+
+    {% else %}
+
+        {{ row.bloom_level }}
+
+    {% endif %}
+
+</td>
+
+
+                    <td class="print-co">
+
+                        {% if sp.co %}
+
+                            {{ sp.co }}
+
+                        {% else %}
+
+                            {{ row.co }}
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td class="print-qno">
+
+                        {{ sp.letter }}
+
+                    </td>
+
+
+                    <td class="print-question">
+
+                        {% if sp.question %}
+
+                            {{ sp.question.question_text|linebreaksbr }}
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td class="print-marks"></td>
+
+                </tr>
+
+            {% endfor %}
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
 
 </div>
 
-</body>
-
-</html>
+{% endblock %}

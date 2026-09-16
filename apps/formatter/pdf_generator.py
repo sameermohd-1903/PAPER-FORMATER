@@ -1,35 +1,32 @@
 from pathlib import Path
-from xml.sax.saxutils import escape
 
 from django.conf import settings
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
     SimpleDocTemplate,
-    Paragraph,
-    Spacer,
     Table,
     TableStyle,
+    Paragraph,
+    Spacer,
 )
 
-from .paper_formatter import PaperFormatter
 
-
-class PDFGenerator(PaperFormatter):
+class PDFGenerator:
     """
-    Generate the current GeneratedPaper as a compact
-    academic question paper PDF.
+    Generate the final question paper PDF
+    from the current PaperPattern structure.
     """
 
     @classmethod
-    def generate_paper(cls, paper):
+    def generate_pattern_pdf(cls, pattern, context):
+
         filename = (
-            f"paper_{paper.id}_"
-            f"{paper.created_at.strftime('%Y%m%d_%H%M%S')}.pdf"
+            f"paper_{pattern.id}.pdf"
         )
 
         pdf_dir = (
@@ -38,55 +35,63 @@ class PDFGenerator(PaperFormatter):
             / "pdf"
         )
 
-        pdf_dir.mkdir(parents=True, exist_ok=True)
-
-        filepath = str(pdf_dir / filename)
-
-        # -------------------------------------------------
-        # PAGE
-        # -------------------------------------------------
-
-        doc = SimpleDocTemplate(
-            filepath,
-            pagesize=A4,
-            leftMargin=11 * mm,
-            rightMargin=11 * mm,
-            topMargin=10 * mm,
-            bottomMargin=10 * mm,
-            title="Question Paper",
+        pdf_dir.mkdir(
+            parents=True,
+            exist_ok=True
         )
 
-        # -------------------------------------------------
+        filepath = pdf_dir / filename
+
+        # --------------------------------------------------
+        # DOCUMENT
+        # --------------------------------------------------
+
+        doc = SimpleDocTemplate(
+            str(filepath),
+            pagesize=A4,
+
+            rightMargin=11 * mm,
+            leftMargin=11 * mm,
+
+            topMargin=15 * mm,
+            bottomMargin=10 * mm,
+
+            title=pattern.pattern_name,
+        )
+
+        # --------------------------------------------------
         # STYLES
-        # -------------------------------------------------
+        # --------------------------------------------------
+
+        styles = getSampleStyleSheet()
 
         normal = ParagraphStyle(
             "NormalPaper",
+            parent=styles["Normal"],
             fontName="Times-Roman",
-            fontSize=10,
-            leading=12,
-            spaceAfter=0,
+            fontSize=9.5,
+            leading=11,
             spaceBefore=0,
+            spaceAfter=0,
             alignment=TA_LEFT,
         )
 
-        normal_center = ParagraphStyle(
-            "NormalCenter",
+        center = ParagraphStyle(
+            "CenterPaper",
             parent=normal,
             alignment=TA_CENTER,
         )
 
-        bold = ParagraphStyle(
-            "BoldPaper",
-            parent=normal,
+        bold_center = ParagraphStyle(
+            "BoldCenter",
+            parent=center,
             fontName="Times-Bold",
         )
 
-        header_small = ParagraphStyle(
-            "HeaderSmall",
+        bold_left = ParagraphStyle(
+            "BoldLeft",
             parent=normal,
-            fontSize=9.5,
-            leading=11,
+            fontName="Times-Bold",
         )
 
         college_style = ParagraphStyle(
@@ -98,87 +103,59 @@ class PDFGenerator(PaperFormatter):
             alignment=TA_CENTER,
         )
 
-        table_style = ParagraphStyle(
-            "Table",
-            parent=normal,
-            fontSize=9.5,
-            leading=11,
-        )
+        # --------------------------------------------------
+        # STORY
+        # --------------------------------------------------
 
-        table_center = ParagraphStyle(
-            "TableCenter",
-            parent=table_style,
-            alignment=TA_CENTER,
-        )
+        story = []
 
-        table_bold = ParagraphStyle(
-            "TableBold",
-            parent=table_style,
-            fontName="Times-Bold",
-        )
-
-        # -------------------------------------------------
-        # HELPER
-        # -------------------------------------------------
-
-        def safe(value):
-            if value is None:
-                return ""
-            return escape(str(value))
-
-        # -------------------------------------------------
+        # --------------------------------------------------
         # HEADER
-        # -------------------------------------------------
+        # --------------------------------------------------
 
         program_name = (
-            paper.pattern.program.name
-            if paper.pattern.program
-            else ""
-        )
-
-        subject_name = (
-            paper.pattern.subject.name
-            if paper.pattern.subject
+            pattern.program.name
+            if pattern.program
             else ""
         )
 
         semester_number = (
-            paper.pattern.semester.number
-            if paper.pattern.semester
+            pattern.semester.number
+            if pattern.semester
             else ""
         )
 
-        exam_date = ""
-
-        if paper.pattern.exam_date:
-            exam_date = paper.pattern.exam_date.strftime("%d/%m/%Y")
-
-        exam_type = paper.pattern.get_exam_type_display()
-
-        header = []
-
-        # Top row
-        top_row = Table(
-            [
-                [
-                    Paragraph(
-                        f"Programme: {safe(program_name)}",
-                        header_small,
-                    ),
-                    Paragraph(
-                        "Roll No. __________________",
-                        ParagraphStyle(
-                            "Roll",
-                            parent=header_small,
-                            alignment=TA_RIGHT,
-                        ),
-                    ),
-                ]
-            ],
-            colWidths=[90 * mm, 90 * mm],
+        subject_name = (
+            pattern.subject.name
+            if pattern.subject
+            else ""
         )
 
-        top_row.setStyle(
+        exam_type = (
+            pattern.get_exam_type_display()
+        )
+
+        # Row 1
+        header_row_1 = [
+            Paragraph(
+                f"Programme: {program_name}",
+                normal
+            ),
+            Paragraph(
+                "Roll No. __________________",
+                normal
+            ),
+        ]
+
+        header_table_1 = Table(
+            [header_row_1],
+            colWidths=[
+                95 * mm,
+                95 * mm,
+            ],
+        )
+
+        header_table_1.setStyle(
             TableStyle(
                 [
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -190,405 +167,450 @@ class PDFGenerator(PaperFormatter):
             )
         )
 
-        header.append(top_row)
+        story.append(header_table_1)
 
         # College
-        header.append(
+        story.append(
             Paragraph(
                 "VIDYALANKAR SCHOOL OF INFORMATION TECHNOLOGY",
                 college_style,
             )
         )
 
-        header.append(Spacer(1, 2))
+        story.append(Spacer(1, 2))
 
-        # Date / exam / time
-        middle_row = Table(
-            [
-                [
-                    Paragraph(
-                        f"Date: <b>{safe(exam_date)}</b>",
-                        header_small,
-                    ),
-                    Paragraph(
-                        safe(exam_type),
-                        ParagraphStyle(
-                            "ExamType",
-                            parent=header_small,
-                            fontName="Times-Bold",
-                            alignment=TA_CENTER,
-                        ),
-                    ),
-                    Paragraph(
-                        f"Time: <b>{safe(paper.pattern.time_allowed)}</b>",
-                        ParagraphStyle(
-                            "Time",
-                            parent=header_small,
-                            fontName="Times-Bold",
-                            alignment=TA_RIGHT,
-                        ),
-                    ),
-                ]
+        # Row 2
+        header_row_2 = [
+            Paragraph(
+                f"Date: <b>{pattern.exam_date.strftime('%d/%m/%Y')}</b>",
+                normal,
+            ),
+            Paragraph(
+                f"<b>{exam_type}</b>",
+                center,
+            ),
+            Paragraph(
+                f"<b>Time: {pattern.time_allowed}</b>",
+                center,
+            ),
+        ]
+
+        header_table_2 = Table(
+            [header_row_2],
+            colWidths=[
+                63 * mm,
+                64 * mm,
+                63 * mm,
             ],
-            colWidths=[55 * mm, 80 * mm, 45 * mm],
         )
 
-        middle_row.setStyle(
+        header_table_2.setStyle(
             TableStyle(
                 [
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                     ("LEFTPADDING", (0, 0), (-1, -1), 0),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                    ("TOPPADDING", (0, 0), (-1, -1), 1),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
                 ]
             )
         )
 
-        header.append(middle_row)
+        story.append(header_table_2)
 
-        # Course / subject / marks
-        bottom_row = Table(
-            [
-                [
-                    Paragraph(
-                        f"<b>F. Y. {safe(program_name)}</b>"
-                        f"&nbsp;&nbsp;&nbsp;"
-                        f"<b>SEM - {safe(semester_number)}</b>",
-                        header_small,
-                    ),
-                    Paragraph(
-                        f"<b>Subject: {safe(subject_name)}</b>",
-                        ParagraphStyle(
-                            "Subject",
-                            parent=header_small,
-                            alignment=TA_CENTER,
-                        ),
-                    ),
-                    Paragraph(
-                        f"<b>Marks: {safe(paper.pattern.total_marks)}</b>",
-                        ParagraphStyle(
-                            "Marks",
-                            parent=header_small,
-                            alignment=TA_RIGHT,
-                        ),
-                    ),
-                ]
+        # Row 3
+        header_row_3 = [
+            Paragraph(
+                f"F. Y. {program_name} &nbsp;&nbsp; SEM - {semester_number}",
+                bold_left,
+            ),
+            Paragraph(
+                f"<b>Subject: {subject_name}</b>",
+                center,
+            ),
+            Paragraph(
+                f"<b>Marks: {pattern.total_marks}</b>",
+                center,
+            ),
+        ]
+
+        header_table_3 = Table(
+            [header_row_3],
+            colWidths=[
+                63 * mm,
+                64 * mm,
+                63 * mm,
             ],
-            colWidths=[55 * mm, 80 * mm, 45 * mm],
         )
 
-        bottom_row.setStyle(
+        header_table_3.setStyle(
             TableStyle(
                 [
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                     ("LEFTPADDING", (0, 0), (-1, -1), 0),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                    ("TOPPADDING", (0, 0), (-1, -1), 1),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
                 ]
             )
         )
 
-        header.append(bottom_row)
+        story.append(header_table_3)
 
         # Header line
-        line = Table(
+        line_table = Table(
             [[""]],
-            colWidths=[180 * mm],
-            rowHeights=[1],
+            colWidths=[190 * mm],
+            rowHeights=[1 * mm],
         )
 
-        line.setStyle(
+        line_table.setStyle(
             TableStyle(
                 [
-                    ("LINEBELOW", (0, 0), (-1, -1), 1, colors.black),
+                    (
+                        "LINEBELOW",
+                        (0, 0),
+                        (-1, -1),
+                        1,
+                        colors.black,
+                    ),
                 ]
             )
         )
 
-        header.append(line)
-        header.append(Spacer(1, 5))
+        story.append(line_table)
 
-        # -------------------------------------------------
+        story.append(Spacer(1, 4))
+
+        # --------------------------------------------------
         # MAIN TABLE
-        # -------------------------------------------------
+        # --------------------------------------------------
 
         table_data = []
 
-        # Table header
+        # Header
         table_data.append(
             [
                 Paragraph(
-                    "Bloom's<br/>Taxonomy<br/>Level",
-                    table_bold,
+                    "<b>Bloom's<br/>Taxonomy<br/>Level</b>",
+                    normal,
                 ),
                 Paragraph(
-                    "OC",
-                    ParagraphStyle(
-                        "OCHeader",
-                        parent=table_bold,
-                        alignment=TA_CENTER,
-                    ),
+                    "<b>OC</b>",
+                    bold_center,
                 ),
                 Paragraph(
-                    "Q.No.",
-                    ParagraphStyle(
-                        "QNoHeader",
-                        parent=table_bold,
-                        alignment=TA_CENTER,
-                    ),
+                    "<b>Q.No.</b>",
+                    bold_center,
                 ),
                 Paragraph(
                     "",
-                    table_bold,
+                    normal,
                 ),
                 Paragraph(
-                    "Marks",
-                    ParagraphStyle(
-                        "MarksHeader",
-                        parent=table_bold,
-                        alignment=TA_CENTER,
-                    ),
+                    "<b>Marks</b>",
+                    bold_center,
                 ),
             ]
         )
 
-        # -------------------------------------------------
-        # GENERATED QUESTIONS
-        # -------------------------------------------------
-
-        generated_questions = (
-            paper.generated_questions
-            .select_related(
-                "question",
-                "section",
-            )
-            .order_by(
-                "display_order"
-            )
+        sections = context.get(
+            "sections",
+            []
         )
 
-        generated_by_section = {}
-
-        for generated in generated_questions:
-            generated_by_section.setdefault(
-                generated.section_id,
-                []
-            ).append(generated)
-
-        sections = (
-            paper.pattern.sections
-            .all()
-            .order_by("display_order")
-        )
-
-        for section in sections:
+        for row in sections:
 
             # ---------------------------------------------
             # SECTION HEADER
             # ---------------------------------------------
 
-            attempt_text = (
-                section.custom_attempt_text
-                if section.attempt_rule == "custom"
-                else section.get_attempt_rule_display()
-            )
+            attempt_text = ""
 
-            question_type_text = (
-                section.get_question_type_display_name()
-                if section.question_type
-                else ""
-            )
+            if getattr(
+                row,
+                "attempt_rule",
+                ""
+            ) == "custom":
 
-            section_title = safe(attempt_text)
+                attempt_text = (
+                    row.custom_attempt_text
+                )
+
+            else:
+
+                attempt_text = (
+                    row.get_attempt_rule_display()
+                )
+
+            question_type_text = ""
+
+            if row.question_type:
+
+                try:
+                    question_type_text = (
+                        row.get_question_type_display_name()
+                    )
+                except Exception:
+                    question_type_text = (
+                        row.question_type
+                    )
+
+            section_title = (
+                f"{attempt_text}"
+            )
 
             if question_type_text:
+
                 section_title += (
-                    " - "
-                    + safe(question_type_text)
+                    f" - {question_type_text}"
                 )
 
             table_data.append(
                 [
-                    "",
-                    "",
+                    Paragraph("", normal),
+                    Paragraph("", normal),
+
                     Paragraph(
-                        f"<b>{safe(section.question_number)}</b>",
-                        table_center,
+                        f"<b>{row.question_number}</b>",
+                        bold_center,
                     ),
+
                     Paragraph(
                         f"<b>{section_title}</b>",
-                        table_bold,
+                        bold_left,
                     ),
+
                     Paragraph(
-                        f"<b>{safe(section.marks)}</b>",
-                        table_center,
+                        f"<b>{row.marks}</b>",
+                        bold_center,
                     ),
                 ]
             )
 
             # ---------------------------------------------
-            # QUESTIONS IN SECTION
+            # QUESTIONS
             # ---------------------------------------------
 
-            section_questions = generated_by_section.get(
-                section.id,
-                []
-            )
+            for sp in row.subparts_data:
 
-            for index, generated in enumerate(
-                section_questions
-            ):
-
-                question = generated.question
-
-                # Bloom label
-                bloom_label = (
-                    question.get_bloom_level_display()
-                    if question.bloom_level
-                    else ""
+                question = sp.get(
+                    "question"
                 )
 
-                # CO
-                co = ""
+                if question:
 
-                # Current Question model does not have CO.
-                # PatternQuestionSetting contains CO.
-                try:
-                    setting = (
-                        section.question_settings
-                        .all()
-                        .order_by("slot_number")
-                    )[index]
+                    bloom = (
+                        question.get_bloom_level_display()
+                    )
 
-                    co = setting.co or ""
+                    question_text = (
+                        question.question_text
+                    )
 
-                except Exception:
-                    co = section.co or ""
+                else:
 
-                # Letter
-                letter = chr(
-                    ord("a") + index
+                    bloom = (
+                        getattr(
+                            row,
+                            "bloom_level",
+                            ""
+                        )
+                    )
+
+                    question_text = ""
+
+                co = sp.get(
+                    "co",
+                    getattr(row, "co", "")
+                )
+
+                letter = sp.get(
+                    "letter",
+                    ""
                 )
 
                 table_data.append(
                     [
                         Paragraph(
-                            safe(bloom_label),
-                            table_center,
+                            str(bloom),
+                            center,
                         ),
+
                         Paragraph(
-                            safe(co),
-                            table_center,
+                            str(co),
+                            center,
                         ),
+
                         Paragraph(
                             f"<b>{letter}</b>",
-                            table_center,
+                            center,
                         ),
+
                         Paragraph(
-                            safe(question.question_text)
-                            .replace("\n", "<br/>"),
-                            table_style,
+                            question_text,
+                            normal,
                         ),
-                        "",
+
+                        Paragraph(
+                            "",
+                            center,
+                        ),
                     ]
                 )
 
-        # -------------------------------------------------
+        # --------------------------------------------------
         # TABLE
-        # -------------------------------------------------
+        # --------------------------------------------------
 
-        exam_table = Table(
+        main_table = Table(
             table_data,
+
             colWidths=[
-                25 * mm,
-                13 * mm,
-                21 * mm,
-                110 * mm,
-                11 * mm,
+                20 * mm,
+                10 * mm,
+                15 * mm,
+                133 * mm,
+                12 * mm,
             ],
+
             repeatRows=1,
-            hAlign="CENTER",
+
+            splitByRow=1,
         )
 
-        exam_table.setStyle(
-            TableStyle(
+        # --------------------------------------------------
+        # TABLE STYLE
+        # --------------------------------------------------
+
+        style_commands = [
+
+            # Borders
+            (
+                "GRID",
+                (0, 0),
+                (-1, -1),
+                0.5,
+                colors.grey,
+            ),
+
+            # Vertical alignment
+            (
+                "VALIGN",
+                (0, 0),
+                (-1, -1),
+                "TOP",
+            ),
+
+            # Header
+            (
+                "VALIGN",
+                (0, 0),
+                (-1, 0),
+                "MIDDLE",
+            ),
+
+            (
+                "ALIGN",
+                (1, 0),
+                (2, -1),
+                "CENTER",
+            ),
+
+            (
+                "ALIGN",
+                (4, 0),
+                (4, -1),
+                "CENTER",
+            ),
+
+            # Compact padding
+            (
+                "LEFTPADDING",
+                (0, 0),
+                (-1, -1),
+                3,
+            ),
+
+            (
+                "RIGHTPADDING",
+                (0, 0),
+                (-1, -1),
+                3,
+            ),
+
+            (
+                "TOPPADDING",
+                (0, 0),
+                (-1, -1),
+                2,
+            ),
+
+            (
+                "BOTTOMPADDING",
+                (0, 0),
+                (-1, -1),
+                2,
+            ),
+        ]
+
+        # Make section headers bold / compact
+        data_index = 1
+
+        for row in sections:
+
+            style_commands.extend(
                 [
-                    # Borders
                     (
-                        "GRID",
-                        (0, 0),
-                        (-1, -1),
-                        0.6,
-                        colors.HexColor("#777777"),
+                        "BACKGROUND",
+                        (0, data_index),
+                        (-1, data_index),
+                        colors.white,
                     ),
 
-                    # Alignment
                     (
                         "VALIGN",
-                        (0, 0),
-                        (-1, -1),
-                        "TOP",
-                    ),
-
-                    # Header
-                    (
-                        "VALIGN",
-                        (0, 0),
-                        (-1, 0),
+                        (0, data_index),
+                        (-1, data_index),
                         "MIDDLE",
                     ),
 
-                    # Compact padding
-                    (
-                        "LEFTPADDING",
-                        (0, 0),
-                        (-1, -1),
-                        4,
-                    ),
-                    (
-                        "RIGHTPADDING",
-                        (0, 0),
-                        (-1, -1),
-                        4,
-                    ),
                     (
                         "TOPPADDING",
-                        (0, 0),
-                        (-1, -1),
-                        2,
-                    ),
-                    (
-                        "BOTTOMPADDING",
-                        (0, 0),
-                        (-1, -1),
+                        (0, data_index),
+                        (-1, data_index),
                         2,
                     ),
 
-                    # Section header
                     (
-                        "VALIGN",
-                        (0, 1),
-                        (-1, -1),
-                        "TOP",
+                        "BOTTOMPADDING",
+                        (0, data_index),
+                        (-1, data_index),
+                        2,
                     ),
                 ]
             )
+
+            data_index += 1
+
+            data_index += len(
+                row.subparts_data
+            )
+
+        main_table.setStyle(
+            TableStyle(style_commands)
         )
 
-        # -------------------------------------------------
-        # BUILD
-        # -------------------------------------------------
+        story.append(main_table)
 
-        story = []
-
-        story.extend(header)
-
-        story.append(exam_table)
+        # --------------------------------------------------
+        # BUILD PDF
+        # --------------------------------------------------
 
         doc.build(story)
 
-        return (
-            f"generated_papers/pdf/{filename}"
+        return str(
+            Path("generated_papers")
+            / "pdf"
+            / filename
         )

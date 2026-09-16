@@ -364,10 +364,92 @@
 </table>
 
 </div>
+
+
+</div>
+
+
+<!-- =========================
+     PAGINATION
+========================= -->
+
+{% if page_obj.paginator.num_pages > 1 %}
+
+<nav aria-label="Question Bank Pagination" class="mt-4 mb-4">
+
+    <ul class="pagination justify-content-center">
+
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a
+                    class="page-link"
+                    href="?page={{ page_obj.previous_page_number }}{% if selected_level %}&level={{ selected_level }}{% endif %}{% if selected_program %}&program={{ selected_program }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_subject %}&subject={{ selected_subject }}{% endif %}"
+                >
+                    Previous
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Previous</span>
+            </li>
+        {% endif %}
+
+
+        {% for num in page_obj.paginator.page_range %}
+
+            {% if page_obj.number == num %}
+
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+
+            {% else %}
+
+                <li class="page-item">
+                    <a
+                        class="page-link"
+                        href="?page={{ num }}{% if selected_level %}&level={{ selected_level }}{% endif %}{% if selected_program %}&program={{ selected_program }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_subject %}&subject={{ selected_subject }}{% endif %}"
+                    >
+                        {{ num }}
+                    </a>
+                </li>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {% if page_obj.has_next %}
+
+            <li class="page-item">
+                <a
+                    class="page-link"
+                    href="?page={{ page_obj.next_page_number }}{% if selected_level %}&level={{ selected_level }}{% endif %}{% if selected_program %}&program={{ selected_program }}{% endif %}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_subject %}&subject={{ selected_subject }}{% endif %}"
+                >
+                    Next
+                </a>
+            </li>
+
+        {% else %}
+
+            <li class="page-item disabled">
+                <span class="page-link">Next</span>
+            </li>
+
+        {% endif %}
+
+    </ul>
+
+</nav>
+
+{% endif %}
+
+
+
+
+
   </form>
 
-  <!-- Table and Pagination -->
-  <!-- Your existing table and pagination code here -->
 
 </div>
 {% load static %}
@@ -375,14 +457,14 @@
 
 </div>
 
-<div id="selected-values"
+{% comment %} <div id="selected-values"
 
     data-level="{{ selected_level }}"
     data-program="{{ selected_program }}"
     data-semester="{{ selected_semester }}"
     data-subject="{{ selected_subject }}">
 
-</div>
+</div> {% endcomment %}
 
 
 

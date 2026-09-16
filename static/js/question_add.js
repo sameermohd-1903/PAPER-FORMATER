@@ -48,13 +48,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const level = this.value;
 
         programSelect.innerHTML =
-            '<option value="">---------</option>';
+            '<option value="">Select Program</option>';
 
         semesterSelect.innerHTML =
-            '<option value="">---------</option>';
+            '<option value="">Select Semester</option>';
 
         subjectSelect.innerHTML =
-            '<option value="">---------</option>';
+            '<option value="">Select Subject</option>';
 
         if (!level) {
             return;
@@ -110,10 +110,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const programId = this.value;
 
         semesterSelect.innerHTML =
-            '<option value="">---------</option>';
+            '<option value="">Select Semester</option>';
 
         subjectSelect.innerHTML =
-            '<option value="">---------</option>';
+            '<option value="">Select Subject</option>';
 
         if (!programId) {
             return;
@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
             programSelect.value;
 
         subjectSelect.innerHTML =
-            '<option value="">---------</option>';
+            '<option value="">Select Subject</option>';
 
         if (!semesterId || !programId) {
             return;
@@ -687,3 +687,213 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 });
+
+
+
+// =====================================================
+// AI QUESTION CLASSIFICATION
+// =====================================================
+
+const aiClassifyBtn = document.getElementById(
+    "aiClassifyBtn"
+);
+
+const aiLoading = document.getElementById(
+    "aiLoading"
+);
+
+const aiResult = document.getElementById(
+    "aiResult"
+);
+
+const aiBloom = document.getElementById(
+    "aiBloom"
+);
+
+const aiDifficulty = document.getElementById(
+    "aiDifficulty"
+);
+
+const aiQuestionType = document.getElementById(
+    "aiQuestionType"
+);
+
+const questionTextField = document.getElementById(
+    "id_question_text"
+);
+
+
+if (aiClassifyBtn) {
+
+    aiClassifyBtn.addEventListener(
+        "click",
+        async function () {
+
+            const questionText =
+                questionTextField.value.trim();
+
+
+            if (!questionText) {
+
+                alert(
+                    "Please enter the question first."
+                );
+
+                questionTextField.focus();
+
+                return;
+            }
+
+
+            aiLoading.classList.remove(
+                "d-none"
+            );
+
+            aiClassifyBtn.disabled = true;
+
+
+            try {
+
+                const formData =
+                    new FormData();
+
+                formData.append(
+                    "question_text",
+                    questionText
+                );
+
+
+                const response =
+                    await fetch(
+                        aiClassifyUrl,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "X-CSRFToken":
+                                    getCookie("csrftoken")
+                            },
+
+                            body: formData
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!data.success) {
+
+                    throw new Error(
+                        data.message ||
+                        "AI classification failed."
+                    );
+
+                }
+
+
+                // ---------------------------------
+                // Bloom
+                // ---------------------------------
+
+                const bloomNames = {
+
+                    "1": "Remember",
+                    "2": "Understand",
+                    "3": "Apply",
+                    "4": "Analyze",
+                    "5": "Evaluate",
+                    "6": "Create"
+
+                };
+
+
+                aiBloom.textContent =
+                    `${data.bloom_level} - ${
+                        bloomNames[data.bloom_level]
+                    }`;
+
+
+                // ---------------------------------
+                // Difficulty
+                // ---------------------------------
+
+                aiDifficulty.textContent =
+                    data.difficulty
+                        .charAt(0)
+                        .toUpperCase() +
+                    data.difficulty.slice(1);
+
+
+                // ---------------------------------
+                // Question Type
+                // ---------------------------------
+
+                const typeNames = {
+
+                    "mcq":
+                        "Multiple Choice Questions",
+
+                    "ftq":
+                        "Following the Questions",
+
+                    "cs":
+                        "Case Study"
+
+                };
+
+
+                aiQuestionType.textContent =
+                    typeNames[data.question_type] ||
+                    data.question_type;
+
+
+                // Store AI result
+                // for Apply button later
+
+                aiResult.dataset.bloom =
+                    data.bloom_level;
+
+                aiResult.dataset.difficulty =
+                    data.difficulty;
+
+                aiResult.dataset.questionType =
+                    data.question_type;
+
+
+                aiResult.classList.remove(
+                    "d-none"
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "AI Error:",
+                    error
+                );
+
+                alert(
+                    "AI classification failed: " +
+                    error.message
+                );
+
+            }
+
+            finally {
+
+                aiLoading.classList.add(
+                    "d-none"
+                );
+
+                aiClassifyBtn.disabled =
+                    false;
+
+            }
+
+        }
+    );
+
+}

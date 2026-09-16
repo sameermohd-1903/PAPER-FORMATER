@@ -10,8 +10,14 @@ from .forms import ExcelUploadForm, SelectionForm, QuestionForm
 from .models import Question
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-
-
+from .ai_service import classify_question
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .question_regeneration_service import (
+    generate_valid_unique_question,
+)
+from .ai_service import classify_question
 
 @login_required
 def question_list(request):
@@ -132,69 +138,52 @@ def question_list(request):
 
 
 
-@require_POST
+
+
+
 @login_required
+@require_POST
 def classify_question_ajax(request):
 
-    question_text = request.POST.get("question_text", "").strip()
+    question_text = request.POST.get(
+        "question_text",
+        ""
+    ).strip()
 
     if not question_text:
 
-        return JsonResponse({
-            "success": False,
-            "message": "Please enter a question first."
-        }, status=400)
+        return JsonResponse(
+            {
+                "success": False,
+                "message": "Please enter a question first."
+            },
+            status=400
+        )
 
     try:
 
-        result = classify_question(question_text)
+        result = classify_question(
+            question_text
+        )
 
-        allowed_bloom = {
-            "1", "2", "3", "4", "5", "6"
-        }
-
-        allowed_difficulty = {
-            "easy", "medium", "hard"
-        }
-
-        allowed_question_type = {
-            "mcq", "ftq", "cs"
-        }
-
-        if result.get("bloom_level") not in allowed_bloom:
-
-            return JsonResponse({
-                "success": False,
-                "message": "AI returned an invalid Bloom level."
-            }, status=500)
-
-        if result.get("difficulty") not in allowed_difficulty:
-
-            return JsonResponse({
-                "success": False,
-                "message": "AI returned an invalid difficulty."
-            }, status=500)
-
-        if result.get("question_type") not in allowed_question_type:
-
-            return JsonResponse({
-                "success": False,
-                "message": "AI returned an invalid question type."
-            }, status=500)
-
-        return JsonResponse({
-            "success": True,
-            "bloom_level": result["bloom_level"],
-            "difficulty": result["difficulty"],
-            "question_type": result["question_type"],
-        })
+        return JsonResponse(
+            {
+                "success": True,
+                "bloom_level": result["bloom_level"],
+                "difficulty": result["difficulty"],
+                "question_type": result["question_type"],
+            }
+        )
 
     except Exception as e:
 
-        return JsonResponse({
-            "success": False,
-            "message": str(e)
-        }, status=500)
+        return JsonResponse(
+            {
+                "success": False,
+                "message": str(e)
+            },
+            status=500
+        )
 
 
 
@@ -293,28 +282,90 @@ def question_add(request):
 
             question.teacher = request.user
 
+            # ---------------------------------------------
+            # Get question text
+            # ---------------------------------------------
+
+            question_text = (
+                question.question_text or ""
+            ).strip()
+
+            if not question_text:
+
+                messages.error(
+                    request,
+                    "Question text cannot be empty."
+                )
+
+                return render(
+                    request,
+                    "questions/add.html",
+                    {"form": form}
+                )
 
             # ---------------------------------------------
-            # Similarity approval
+            # AI QUESTION CLASSIFICATION
             # ---------------------------------------------
 
-            similarity_approved = (
-                request.POST.get(
-                    "similarity_approved"
-                ) == "1"
-            )
+            try:
 
+                ai_result = classify_question(
+                    question_text
+                )
+
+                question.bloom_level = (
+                    ai_result["bloom_level"]
+                )
+
+                question.difficulty = (
+                    ai_result["difficulty"]
+                )
+
+                question.question_type = (
+                    ai_result["question_type"]
+                )
+
+            except Exception as e:
+
+                messages.error(
+                    request,
+                    f"AI classification failed: {e}"
+                )
+
+                return render(
+                    request,
+                    "questions/add.html",
+                    {"form": form}
+                )
 
             # ---------------------------------------------
             # Generate embedding
             # ---------------------------------------------
 
-            from .embedding_service import generate_embedding
+            try:
 
-            question.embedding = generate_embedding(
-                question.question_text
-            )
+                from .embedding_service import (
+                    generate_embedding
+                )
 
+                question.embedding = (
+                    generate_embedding(
+                        question_text
+                    )
+                )
+
+            except Exception as e:
+
+                messages.error(
+                    request,
+                    f"Question embedding failed: {e}"
+                )
+
+                return render(
+                    request,
+                    "questions/add.html",
+                    {"form": form}
+                )
 
             # ---------------------------------------------
             # Save question
@@ -324,7 +375,11 @@ def question_add(request):
 
             messages.success(
                 request,
-                "Question added successfully."
+                (
+                    "Question added successfully. "
+                    "Bloom, difficulty and question type "
+                    "were classified by AI."
+                )
             )
 
             return redirect(
@@ -573,3 +628,5 @@ def update_question_ajax(request):
         "question_text": question.question_text,
 
     })
+    
+  

@@ -1,83 +1,109 @@
-/* ==========================================
-   Academic Paper Typography & Global Styles
-========================================== */
+/* =========================================================
+   ACADEMIC QUESTION PAPER
+   A4 PORTRAIT - COMPACT EXAM PAPER FORMAT
+========================================================= */
+
+
+/* =========================================================
+   PAGE
+========================================================= */
 
 @page {
-    size: A4;
+    size: A4 portrait;
     margin: 0;
 }
+
+
+/* =========================================================
+   GLOBAL
+========================================================= */
 
 * {
     box-sizing: border-box;
 }
 
+html,
 body {
     margin: 0;
     padding: 0;
+    width: 100%;
     background: #eef2f5;
+    color: #111;
     font-family: "Times New Roman", Times, serif;
-    color: #111111;
 }
 
 
-/* ==========================================
-   PAPER CONTAINER
-========================================== */
+/* =========================================================
+   PAPER
+========================================================= */
 
 .paper-preview,
 .paper {
     width: 210mm;
     min-height: 297mm;
 
-    /* Compact A4 margins */
-    padding: 12mm 11mm 8mm 11mm;
-
     margin: 20px auto;
+
+    /*
+       These margins match the reference paper closely.
+    */
+    padding: 10mm 11mm 8mm 11mm;
 
     background: #ffffff;
 
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
-
     border: 1px solid #c0c0c0;
+
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
 
     font-family: "Times New Roman", Times, serif;
 
     color: #111111;
+
+    overflow: visible;
 }
 
 
-/* ==========================================
+/* =========================================================
    HEADER
-========================================== */
+========================================================= */
 
 .paper-header-container {
     width: 100%;
 
-    font-size: 14px;
-
     margin: 0;
     padding: 0;
+
+    font-size: 14px;
+
+    line-height: 1.15;
 }
 
 
-/* ==========================================
-   TOP HEADER
-========================================== */
+/* =========================================================
+   TOP ROW
+========================================================= */
 
 .header-top-row {
     display: grid;
-
     grid-template-columns: 1fr 1fr;
-
     align-items: center;
+    width: 100%;
+    margin-bottom: 5px;
+    font-size: 15px;
+    line-height: 18px;
+}
 
-    margin: 0 0 1px 0;
+.top-left {
+    text-align: left;
+    white-space: nowrap;
+}
 
-    padding: 0;
+.top-right {
+    text-align: right;
+    white-space: nowrap;
 
-    font-size: 14px;
-
-    line-height: 1.2;
+    /* Move Roll No. to the far right */
+    justify-self: end;
 }
 
 
@@ -95,11 +121,13 @@ body {
 }
 
 
-/* ==========================================
-   COLLEGE TITLE
-========================================== */
+/* =========================================================
+   COLLEGE NAME
+========================================================= */
 
 .college-title {
+    width: 100%;
+
     text-align: center;
 
     font-size: 16px;
@@ -110,28 +138,30 @@ body {
 
     padding: 0;
 
-    line-height: 1.2;
+    line-height: 1.1;
 }
 
 
-/* ==========================================
+/* =========================================================
    MIDDLE HEADER
-========================================== */
+========================================================= */
 
 .header-middle-row {
+    width: 100%;
+
     display: grid;
 
     grid-template-columns: 1fr 1.55fr 0.7fr;
 
     align-items: center;
 
-    font-size: 14px;
-
     margin: 0 0 3px 0;
 
     padding: 0;
 
-    line-height: 1.2;
+    font-size: 14px;
+
+    line-height: 1.15;
 }
 
 
@@ -154,24 +184,26 @@ body {
 }
 
 
-/* ==========================================
+/* =========================================================
    BOTTOM HEADER
-========================================== */
+========================================================= */
 
 .header-bottom-row {
+    width: 100%;
+
     display: grid;
 
     grid-template-columns: 1fr 1.55fr 0.7fr;
 
     align-items: center;
 
-    font-size: 14px;
-
     margin: 0 0 4px 0;
 
     padding: 0;
 
-    line-height: 1.2;
+    font-size: 14px;
+
+    line-height: 1.15;
 }
 
 
@@ -196,27 +228,29 @@ body {
 }
 
 
-/* ==========================================
+/* =========================================================
    HEADER LINE
-========================================== */
+========================================================= */
 
 .header-line {
     width: 100%;
 
-    border-bottom: 1.5px solid #222222;
+    border-bottom: 1.5px solid #222;
 
-    margin: 0 0 7px 0;
+    margin: 0 0 5px 0;
 
     padding: 0;
+
+    height: 0;
 }
 
 
-/* ==========================================
-   MAIN EXAM TABLE
-========================================== */
+/* =========================================================
+   MAIN TABLE
+========================================================= */
 
-table.preview-table,
-table.exam-table {
+.exam-table,
+.preview-table {
     width: 100%;
 
     border-collapse: collapse;
@@ -225,215 +259,187 @@ table.exam-table {
 
     table-layout: fixed;
 
-    font-size: 14px;
-
     margin: 0;
 
     padding: 0;
 
     font-family: "Times New Roman", Times, serif;
-}
 
-
-/* ==========================================
-   TABLE CELLS
-========================================== */
-
-.preview-table td,
-.preview-table th,
-.exam-table td,
-.exam-table th {
-
-    border: 1px solid #777777 !important;
-
-    /*
-       Very small padding.
-       This is important for compact paper.
-    */
-    padding: 2px 5px;
-
-    margin: 0;
-
-    vertical-align: top;
-
-    color: #111111;
+    font-size: 13.5px;
 
     line-height: 1.15;
 }
 
 
-/* ==========================================
+/* =========================================================
+   VERY IMPORTANT:
+   PREVENT TABLE ROWS FROM STRETCHING
+========================================================= */
+
+.exam-table tbody tr,
+.preview-table tbody tr {
+    height: auto !important;
+
+    min-height: 0 !important;
+
+    max-height: none !important;
+}
+
+
+/* =========================================================
+   TABLE CELLS
+========================================================= */
+
+.exam-table th,
+.exam-table td,
+.preview-table th,
+.preview-table td {
+    border: 1px solid #777 !important;
+
+    height: auto !important;
+
+    min-height: 0 !important;
+
+    max-height: none !important;
+
+    padding: 2px 5px !important;
+
+    margin: 0 !important;
+
+    vertical-align: top;
+
+    color: #111;
+
+    line-height: 1.15;
+}
+
+
+/* =========================================================
    COLUMN WIDTHS
-========================================== */
+
+   Total = 100%
+========================================================= */
 
 .col-bloom {
     width: 10%;
 }
-
 
 .col-co,
 .col-oc {
     width: 5%;
 }
 
-
 .col-qno {
     width: 8%;
 }
 
-
 .col-question {
     width: 70%;
 }
-
 
 .col-marks {
     width: 7%;
 }
 
 
-/* ==========================================
+/* =========================================================
    TABLE HEADER
-========================================== */
+========================================================= */
 
 .table-head {
+    height: auto !important;
 
-    /*
-       DO NOT use a large fixed height.
-    */
-    height: auto;
-
-    vertical-align: middle !important;
+    min-height: 0 !important;
 }
 
 
 .table-head th {
+    padding: 3px 5px !important;
+
+    height: auto !important;
+
+    vertical-align: middle !important;
 
     background: #ffffff;
 
     font-weight: bold;
 
-    padding: 4px 5px;
-
-    vertical-align: middle !important;
-
-    line-height: 1.15;
+    line-height: 1.1;
 }
 
-
-/* ==========================================
-   BLOOM HEADER
-========================================== */
 
 .table-head .bloom-head {
-
-    font-weight: bold;
-
     text-align: left;
 
-    line-height: 1.15;
-
     vertical-align: middle !important;
+
+    line-height: 1.1;
 }
 
 
-/* ==========================================
-   OC HEADER
-========================================== */
-
-.table-head .oc-head,
-.table-head .co-head {
-
+.table-head .oc-head {
     text-align: center;
 
     vertical-align: middle !important;
-
-    font-weight: bold;
 }
 
-
-/* ==========================================
-   QUESTION NUMBER HEADER
-========================================== */
 
 .table-head .qno-head {
-
     text-align: center;
 
     vertical-align: middle !important;
-
-    font-weight: bold;
 }
 
-
-/* ==========================================
-   QUESTION HEADER
-========================================== */
 
 .table-head .question-head {
+    text-align: left;
 
     vertical-align: middle !important;
-
-    text-align: left;
 }
 
 
-/* ==========================================
-   MARKS HEADER
-========================================== */
-
 .table-head .marks-head {
-
     text-align: center;
 
     vertical-align: middle !important;
-
-    font-weight: bold;
 }
 
 
-/* ==========================================
-   QUESTION SECTION HEADER
-========================================== */
+/* =========================================================
+   SECTION HEADER
+   Example:
+
+   Q1 | Attempt Any 1 out of 2 | 5
+========================================================= */
 
 .section-header-row {
+    height: auto !important;
 
-    /*
-       IMPORTANT:
-       No fixed height.
-    */
-
-    height: auto;
+    min-height: 0 !important;
 
     font-weight: bold;
 }
 
 
 .section-header-row td {
+    height: auto !important;
+
+    min-height: 0 !important;
+
+    padding: 2px 5px !important;
 
     vertical-align: middle !important;
 
-    background-color: #ffffff;
+    line-height: 1.1;
 
-    padding-top: 2px;
-
-    padding-bottom: 2px;
-
-    line-height: 1.15;
-}
-
-
-.section-title {
-
-    font-weight: bold;
-
-    text-align: left;
+    background: #ffffff;
 }
 
 
 .question-number {
-
     text-align: center;
+
+    vertical-align: middle !important;
 
     font-weight: bold;
 
@@ -441,8 +447,18 @@ table.exam-table {
 }
 
 
-.marks-cell {
+.section-title {
+    text-align: left;
 
+    vertical-align: middle !important;
+
+    font-weight: bold;
+
+    line-height: 1.1;
+}
+
+
+.marks-cell {
     text-align: center;
 
     vertical-align: middle !important;
@@ -451,78 +467,120 @@ table.exam-table {
 }
 
 
-/* ==========================================
+/* =========================================================
    QUESTION ROW
-========================================== */
+
+   THIS IS THE MOST IMPORTANT PART
+========================================================= */
 
 .subpart-row {
+    height: auto !important;
 
-    height: auto;
+    min-height: 0 !important;
 
-    margin: 0;
+    max-height: none !important;
 
-    padding: 0;
+    margin: 0 !important;
+
+    padding: 0 !important;
 }
 
 
 .subpart-row td {
+    height: auto !important;
 
-    background-color: #ffffff;
+    min-height: 0 !important;
 
-    /*
-       Compact row.
-    */
-    padding-top: 2px;
+    max-height: none !important;
 
-    padding-bottom: 2px;
+    padding: 2px 5px !important;
 
-    line-height: 1.2;
+    margin: 0 !important;
 
-    vertical-align: top;
+    vertical-align: top !important;
+
+    line-height: 1.15;
+
+    background: #ffffff;
 }
 
 
-/* ==========================================
-   BLOOM / OC / Q.NO.
-========================================== */
+/* =========================================================
+   BLOOM
+========================================================= */
 
-.bloom-value,
-.oc-value,
-.co-value,
-.qno-value {
+.bloom-value {
+    width: 10%;
 
     text-align: center;
 
     vertical-align: top !important;
 
-    padding-top: 2px !important;
-
-    padding-bottom: 2px !important;
-
     white-space: nowrap;
+
+    padding: 2px 3px !important;
+
+    line-height: 1.1;
 }
 
 
-/* ==========================================
+/* =========================================================
+   CO / OC
+========================================================= */
+
+.oc-value,
+.co-value {
+    text-align: center;
+
+    vertical-align: top !important;
+
+    white-space: nowrap;
+
+    padding: 2px 3px !important;
+
+    line-height: 1.1;
+}
+
+
+/* =========================================================
+   QUESTION LETTER
+
+   a
+   b
+   c
+========================================================= */
+
+.qno-value {
+    text-align: center;
+
+    vertical-align: top !important;
+
+    white-space: nowrap;
+
+    padding: 2px 3px !important;
+
+    line-height: 1.1;
+}
+
+
+/* =========================================================
    QUESTION TEXT CELL
-========================================== */
+========================================================= */
 
 .question-text-cell {
-
     text-align: left;
+
+    height: auto !important;
+
+    min-height: 0 !important;
+
+    max-height: none !important;
 
     padding: 2px 5px !important;
 
-    /*
-       IMPORTANT:
-       Do not give this a fixed height.
-    */
+    margin: 0 !important;
 
-    height: auto;
-
-    min-height: 0;
-
-    line-height: 1.2;
+    line-height: 1.15;
 
     white-space: normal;
 
@@ -532,23 +590,20 @@ table.exam-table {
 }
 
 
-/* ==========================================
+/* =========================================================
    QUESTION TEXT
-========================================== */
+========================================================= */
 
 .question-text {
-
-    flex: 1;
-
-    min-width: 0;
-
-    margin: 0;
-
-    padding: 0;
-
-    line-height: 1.2;
-
     display: block;
+
+    width: auto;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    line-height: 1.15;
 
     word-break: normal;
 
@@ -556,89 +611,88 @@ table.exam-table {
 }
 
 
-/* ==========================================
-   REMOVE DEFAULT PARAGRAPH SPACING
-========================================== */
+/* =========================================================
+   REMOVE PARAGRAPH SPACING
+========================================================= */
 
-.question-text-cell p,
-.question-text p {
-
+.question-text p,
+.question-text-cell p {
     margin: 0 !important;
 
     padding: 0 !important;
 
-    line-height: 1.2;
+    line-height: 1.15 !important;
 }
 
 
-/* ==========================================
-   BULLET CONTENT
-========================================== */
+/* =========================================================
+   LINE BREAKS
+========================================================= */
+
+.question-text br {
+    line-height: 1.05;
+}
+
+
+/* =========================================================
+   BULLET
+========================================================= */
 
 .question-text-cell .bullet {
-
-    margin-left: 20px;
+    margin-left: 15px;
 }
 
 
-.question-text-cell .bold {
+/* =========================================================
+   BOLD TEXT
+========================================================= */
 
+.question-text-cell .bold {
     font-weight: bold;
 }
 
 
-/* ==========================================
-   QUESTION + ACTION BUTTON
-========================================== */
+/* =========================================================
+   QUESTION + REPLACE BUTTON
+========================================================= */
 
 .question-with-action {
-
     display: flex;
 
     align-items: flex-start;
 
     justify-content: space-between;
 
-    gap: 5px;
+    gap: 4px;
 
     width: 100%;
 
-    margin: 0;
+    margin: 0 !important;
 
-    padding: 0;
+    padding: 0 !important;
 
-    line-height: 1.2;
+    line-height: 1.15;
 }
 
 
-/* ==========================================
-   QUESTION INSIDE FLEX CONTAINER
-========================================== */
-
 .question-with-action .question-text {
-
     flex: 1;
 
     min-width: 0;
 
-    margin: 0;
+    margin: 0 !important;
 
-    padding: 0;
+    padding: 0 !important;
 
-    line-height: 1.2;
-
-    word-break: normal;
-
-    overflow-wrap: break-word;
+    line-height: 1.15;
 }
 
 
-/* ==========================================
+/* =========================================================
    REPLACE BUTTON
-========================================== */
+========================================================= */
 
 .question-with-action .btn {
-
     flex-shrink: 0;
 
     white-space: nowrap;
@@ -647,7 +701,7 @@ table.exam-table {
 
     font-size: 10px;
 
-    padding: 2px 6px;
+    padding: 1px 5px;
 
     line-height: 1.2;
 
@@ -657,79 +711,67 @@ table.exam-table {
 }
 
 
-/* ==========================================
-   REPLACE BUTTON
-========================================== */
-
 .btn-replace-question {
-
     border-radius: 3px;
 
     margin: 0;
 }
 
 
-/* ==========================================
-   ADD BUTTON
-   Kept only for old HTML compatibility
-========================================== */
+/* =========================================================
+   OLD ADD BUTTON
+========================================================= */
 
 .btn-add-question {
-
     border-radius: 3px;
 
     margin: 0;
 }
 
 
-/* ==========================================
+/* =========================================================
    BUTTON HOVER
-========================================== */
+========================================================= */
 
 .question-with-action .btn:hover {
-
     cursor: pointer;
 }
 
 
-/* ==========================================
+/* =========================================================
    TEACHER ACTIONS
-========================================== */
+========================================================= */
 
 .teacher-actions-row td {
+    padding: 4px 8px !important;
 
     border-top: none !important;
 
-    border-left: 1px solid #777777 !important;
+    border-left: 1px solid #777 !important;
 
-    border-right: 1px solid #777777 !important;
+    border-right: 1px solid #777 !important;
 
-    border-bottom: 1px solid #777777 !important;
+    border-bottom: 1px solid #777 !important;
 
-    background-color: #f8f9fa !important;
-
-    padding: 4px 8px !important;
+    background: #f8f9fa !important;
 }
 
 
-/* ==========================================
-   MODAL QUESTION LIST
-========================================== */
+/* =========================================================
+   MODAL
+========================================================= */
 
 .question-item {
-
     transition: all 0.2s ease;
 }
 
 
 .question-item:hover {
-
     background-color: #f8f9fa;
 }
 
 
 .badge-used {
-
     background-color: #dc3545;
 
     color: white;
@@ -737,7 +779,6 @@ table.exam-table {
 
 
 .badge-current {
-
     background-color: #ffc107;
 
     color: #212529;
@@ -745,78 +786,98 @@ table.exam-table {
 
 
 .badge-avail {
-
     background-color: #198754;
 
     color: white;
 }
 
 
-/* ==========================================
-   RESPONSIVE VIEW
-========================================== */
+/* =========================================================
+   SCREEN RESPONSIVE
+========================================================= */
 
-@media (max-width: 1100px) {
+@media screen and (max-width: 1100px) {
 
     .paper-preview,
     .paper {
-
         width: 100%;
 
         min-height: auto;
 
-        padding: 12px;
-
         margin: 10px auto;
-    }
 
+        padding: 12px;
+    }
 
     .question-with-action {
-
-        gap: 5px;
+        gap: 4px;
     }
 
-
     .question-with-action .btn {
-
         font-size: 10px;
 
-        padding: 2px 5px;
+        padding: 1px 5px;
     }
 }
 
 
-/* ==========================================
-   PRINT MEDIA
-========================================== */
+/* =========================================================
+   PRINT
+========================================================= */
 
 @media print {
 
     @page {
-
-        size: A4;
-
+        size: A4 portrait;
         margin: 0;
     }
 
 
+    html,
     body {
+        width: 210mm;
 
-        margin: 0;
+        margin: 0 !important;
 
-        padding: 0;
+        padding: 0 !important;
 
         background: #ffffff !important;
-
-        color: #111111 !important;
 
         font-family: "Times New Roman", Times, serif !important;
     }
 
 
-    /* ======================================
+    /* ---------------------------------------------
+       PAPER
+    --------------------------------------------- */
+
+    .paper-preview,
+    .paper {
+        width: 210mm !important;
+
+        min-height: 297mm !important;
+
+        height: auto !important;
+
+        max-width: none !important;
+
+        margin: 0 !important;
+
+        padding: 10mm 11mm 8mm 11mm !important;
+
+        border: none !important;
+
+        box-shadow: none !important;
+
+        background: #ffffff !important;
+
+        overflow: visible !important;
+    }
+
+
+    /* ---------------------------------------------
        HIDE TEACHER CONTROLS
-    ====================================== */
+    --------------------------------------------- */
 
     .no-print,
     .teacher-actions-row,
@@ -827,102 +888,171 @@ table.exam-table {
     .btn,
     .modal,
     .modal-backdrop {
-
         display: none !important;
 
         visibility: hidden !important;
     }
 
 
-    /* ======================================
-       PAPER
-    ====================================== */
-
-    .paper-preview,
-    .paper {
-
-        width: 210mm !important;
-
-        min-height: 297mm !important;
-
-        margin: 0 !important;
-
-        /*
-           Compact print margins.
-        */
-        padding: 12mm 11mm 8mm 11mm !important;
-
-        border: none !important;
-
-        box-shadow: none !important;
-
-        background: #ffffff !important;
-    }
-
-
-    /* ======================================
+    /* ---------------------------------------------
        HEADER
-    ====================================== */
+    --------------------------------------------- */
 
-    .paper-header-container {
+    /* ==========================================
+   HEADER
+========================================== */
 
-        font-size: 14px !important;
-
-        margin: 0 !important;
-
-        padding: 0 !important;
-    }
-
-
-    .header-top-row {
-
-        margin-bottom: 1px !important;
-
-        line-height: 1.2 !important;
-    }
+.paper-header-container {
+    width: 100%;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 15px;
+    line-height: 1.15;
+    margin-bottom: 0;
+}
 
 
-    .college-title {
+/* ==========================================
+   TOP ROW
+   Programme ---------------- Roll No.
+========================================== */
 
-        margin-top: 1px !important;
+.header-top-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
 
-        margin-bottom: 4px !important;
+    width: 100%;
 
-        line-height: 1.2 !important;
-    }
+    margin-bottom: 5px;
 
+    font-size: 15px;
+    line-height: 18px;
+}
 
-    .header-middle-row {
+.top-left {
+    text-align: left;
+    white-space: nowrap;
+}
 
-        margin-bottom: 3px !important;
+.top-right {
+    text-align: right;
+    white-space: nowrap;
 
-        line-height: 1.2 !important;
-    }
-
-
-    .header-bottom-row {
-
-        margin-bottom: 4px !important;
-
-        line-height: 1.2 !important;
-    }
-
-
-    .header-line {
-
-        margin-bottom: 7px !important;
-
-        border-bottom: 1.5px solid #222222 !important;
-    }
+    /* Push Roll No. completely toward right */
+    padding-right: 0;
+}
 
 
-    /* ======================================
+/* ==========================================
+   COLLEGE NAME
+========================================== */
+
+.college-title {
+    width: 100%;
+
+    text-align: center;
+
+    font-size: 17px;
+    font-weight: bold;
+
+    line-height: 20px;
+
+    margin-top: 0;
+    margin-bottom: 6px;
+}
+
+
+/* ==========================================
+   DATE / EXAM / TIME
+========================================== */
+
+.header-middle-row {
+    display: grid;
+
+    grid-template-columns: 1fr 1.4fr 1fr;
+
+    align-items: right;
+
+    width: 100%;
+
+    font-size: 15px;
+    line-height: 18px;
+
+    margin-bottom: 5px;
+}
+
+.date-col {
+    text-align: left;
+}
+
+.exam-col {
+    text-align: center;
+    font-weight: bold;
+}
+
+.time-col {
+    text-align: right;
+    font-weight: bold;
+}
+
+
+/* ==========================================
+   COURSE / SUBJECT / MARKS
+========================================== */
+
+.header-bottom-row {
+    display: grid;
+
+    grid-template-columns: 1fr 1.4fr 1fr;
+
+    align-items: center;
+
+    width: 100%;
+
+    font-size: 15px;
+    line-height: 18px;
+
+    margin-bottom: 7px;
+}
+
+.course-col {
+    text-align: left;
+    font-weight: bold;
+}
+
+.subject-col {
+    text-align: center;
+    font-weight: bold;
+}
+
+.marks-col {
+    text-align: right;
+    font-weight: bold;
+}
+
+
+/* ==========================================
+   HEADER HORIZONTAL LINE
+========================================== */
+
+.header-line {
+    width: 100%;
+
+    border-bottom: 2px solid #222222;
+
+    margin-top: 0;
+    margin-bottom: 6px;
+
+    height: 2px;
+}
+
+
+    /* ---------------------------------------------
        TABLE
-    ====================================== */
+    --------------------------------------------- */
 
-    .preview-table,
-    .exam-table {
-
+    .exam-table,
+    .preview-table {
         width: 100% !important;
 
         border-collapse: collapse !important;
@@ -931,106 +1061,143 @@ table.exam-table {
 
         table-layout: fixed !important;
 
-        font-size: 14px !important;
-
         margin: 0 !important;
 
         padding: 0 !important;
-    }
 
-
-    .preview-table th,
-    .preview-table td,
-    .exam-table th,
-    .exam-table td {
-
-        border: 1px solid #777777 !important;
-
-        color: #111111 !important;
-
-        padding: 2px 5px !important;
-
-        line-height: 1.2 !important;
-
-        vertical-align: top !important;
-    }
-
-
-    /* ======================================
-       TABLE HEADER
-    ====================================== */
-
-    .table-head {
-
-        height: auto !important;
-    }
-
-
-    .table-head th {
-
-        padding: 4px 5px !important;
-
-        vertical-align: middle !important;
-    }
-
-
-    /* ======================================
-       SECTION HEADER
-    ====================================== */
-
-    .section-header-row {
-
-        height: auto !important;
-    }
-
-
-    .section-header-row td {
-
-        padding-top: 2px !important;
-
-        padding-bottom: 2px !important;
-
-        vertical-align: middle !important;
+        font-size: 13.5px !important;
 
         line-height: 1.15 !important;
     }
 
 
-    /* ======================================
-       QUESTION ROW
-    ====================================== */
+    /* ---------------------------------------------
+       CRITICAL:
+       NEVER STRETCH ROWS
+    --------------------------------------------- */
 
-    .subpart-row {
-
-        height: auto !important;
-    }
-
-
-    .subpart-row td {
-
-        padding-top: 2px !important;
-
-        padding-bottom: 2px !important;
-
-        line-height: 1.2 !important;
-
-        vertical-align: top !important;
-    }
-
-
-    /* ======================================
-       QUESTION TEXT
-    ====================================== */
-
-    .question-text-cell {
-
-        padding: 2px 5px !important;
-
+    .exam-table tr,
+    .preview-table tr {
         height: auto !important;
 
         min-height: 0 !important;
 
-        line-height: 1.2 !important;
+        max-height: none !important;
+    }
+
+
+    .exam-table th,
+    .exam-table td,
+    .preview-table th,
+    .preview-table td {
+        height: auto !important;
+
+        min-height: 0 !important;
+
+        max-height: none !important;
+
+        padding: 2px 5px !important;
+
+        margin: 0 !important;
+
+        line-height: 1.15 !important;
+
+        vertical-align: top !important;
+
+        border: 1px solid #777 !important;
+
+        color: #111 !important;
+    }
+
+
+    /* ---------------------------------------------
+       TABLE HEADER
+    --------------------------------------------- */
+
+    .table-head {
+        height: auto !important;
+
+        min-height: 0 !important;
+    }
+
+
+    .table-head th {
+        height: auto !important;
+
+        min-height: 0 !important;
+
+        padding: 3px 5px !important;
+
+        vertical-align: middle !important;
+
+        line-height: 1.1 !important;
+    }
+
+
+    /* ---------------------------------------------
+       SECTION HEADER
+    --------------------------------------------- */
+
+    .section-header-row {
+        height: auto !important;
+
+        min-height: 0 !important;
+    }
+
+
+    .section-header-row td {
+        height: auto !important;
+
+        min-height: 0 !important;
+
+        padding: 2px 5px !important;
+
+        vertical-align: middle !important;
+
+        line-height: 1.1 !important;
+    }
+
+
+    /* ---------------------------------------------
+       QUESTION ROW
+    --------------------------------------------- */
+
+    .subpart-row {
+        height: auto !important;
+
+        min-height: 0 !important;
+    }
+
+
+    .subpart-row td {
+        height: auto !important;
+
+        min-height: 0 !important;
+
+        max-height: none !important;
+
+        padding: 2px 5px !important;
+
+        vertical-align: top !important;
+
+        line-height: 1.15 !important;
+    }
+
+
+    /* ---------------------------------------------
+       QUESTION TEXT
+    --------------------------------------------- */
+
+    .question-text-cell {
+        height: auto !important;
+
+        min-height: 0 !important;
+
+        max-height: none !important;
+
+        padding: 2px 5px !important;
+
+        line-height: 1.15 !important;
 
         white-space: normal !important;
 
@@ -1042,21 +1209,19 @@ table.exam-table {
 
     .question-text-cell p,
     .question-text p {
-
         margin: 0 !important;
 
         padding: 0 !important;
 
-        line-height: 1.2 !important;
+        line-height: 1.15 !important;
     }
 
 
-    /* ======================================
-       REMOVE FLEX IN PRINT
-    ====================================== */
+    /* ---------------------------------------------
+       REMOVE REPLACE BUTTONS
+    --------------------------------------------- */
 
     .question-with-action {
-
         display: block !important;
 
         width: 100% !important;
@@ -1065,29 +1230,40 @@ table.exam-table {
 
         padding: 0 !important;
 
-        line-height: 1.2 !important;
+        line-height: 1.15 !important;
     }
 
 
     .question-text {
-
         display: inline !important;
 
         margin: 0 !important;
 
         padding: 0 !important;
 
-        line-height: 1.2 !important;
+        line-height: 1.15 !important;
     }
 
 
-    /* ======================================
-       PREVENT EXTRA SPACE
-    ====================================== */
-
     .question-with-action .btn {
-
         display: none !important;
     }
 
+
+    /* ---------------------------------------------
+       KEEP QUESTION TOGETHER WHEN POSSIBLE
+    --------------------------------------------- */
+
+    .subpart-row {
+        break-inside: avoid;
+
+        page-break-inside: avoid;
+    }
+
+
+    .section-header-row {
+        break-after: avoid;
+
+        page-break-after: avoid;
+    }
 }

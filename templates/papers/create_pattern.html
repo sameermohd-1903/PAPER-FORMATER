@@ -67,7 +67,7 @@
                         >
 
                             <option value="">
-                                --------
+                                Select Level
                             </option>
 
                             <option value="UG">
@@ -87,50 +87,74 @@
 
                     <div class="col-md-3 mb-3">
 
-                        <label
-                            for="id_program"
-                            class="form-label"
-                        >
-                            Program
-                        </label>
+    <label
+        for="id_program"
+        class="form-label"
+    >
+        Program
+    </label>
 
-                        {{ form.program }}
+    <select
+        id="id_program"
+        name="program"
+        class="form-select"
+        required
+    >
+        <option value="">
+            Select Program
+        </option>
+    </select>
 
-                    </div>
+</div>
 
 
                     <!-- SEMESTER -->
 
-                    <div class="col-md-3 mb-3">
+<div class="col-md-3 mb-3">
 
-                        <label
-                            for="id_semester"
-                            class="form-label"
-                        >
-                            Semester
-                        </label>
+    <label
+        for="id_semester"
+        class="form-label"
+    >
+        Semester
+    </label>
 
-                        {{ form.semester }}
+    <select
+        id="id_semester"
+        name="semester"
+        class="form-select"
+        required
+    >
+        <option value="">
+            Select Semester
+        </option>
+    </select>
 
-                    </div>
+</div>
 
 
                     <!-- SUBJECT -->
+<div class="col-md-3 mb-3">
 
-                    <div class="col-md-3 mb-3">
+    <label
+        for="id_subject"
+        class="form-label"
+    >
+        Subject
+    </label>
 
-                        <label
-                            for="id_subject"
-                            class="form-label"
-                        >
-                            Subject
-                        </label>
+    <select
+        id="id_subject"
+        name="subject"
+        class="form-select"
+        required
+    >
+        <option value="">
+            Select Subject
+        </option>
+    </select>
 
-                        {{ form.subject }}
-
-                    </div>
-
-                </div>
+</div>
 
 
                 <!-- ====================================== -->
@@ -389,327 +413,166 @@
 <!-- PATTERN BUILDER JAVASCRIPT -->
 <!-- ====================================================== -->
 
-<script src="{% static 'js/create_pattern.js' %}?v=1"></script>
+<script src="{% static 'js/create_pattern.js' %}?v=2"></script>
 
 <!-- ====================================================== -->
 <!-- CASCADING DROPDOWN JAVASCRIPT -->
 <!-- ====================================================== -->
 
 <script>
-
 document.addEventListener("DOMContentLoaded", function () {
 
-    // ==================================================
-    // GET ELEMENTS
-    // ==================================================
+    const levelSelect = document.getElementById("level");
+    const programSelect = document.getElementById("id_program");
+    const semesterSelect = document.getElementById("id_semester");
+    const subjectSelect = document.getElementById("id_subject");
 
-    const levelSelect =
-        document.getElementById("level");
-
-    const programSelect =
-        document.getElementById("id_program");
-
-    const semesterSelect =
-        document.getElementById("id_semester");
-
-    const subjectSelect =
-        document.getElementById("id_subject");
+    const PROGRAMS_URL = "{% url 'academic:get_programs' %}";
+    const SEMESTERS_URL = "{% url 'academic:get_semesters' %}";
+    const SUBJECTS_URL = "{% url 'academic:get_subjects' %}";
 
 
-    // ==================================================
-    // SAFETY CHECK
-    // ==================================================
+    // =====================================================
+    // LEVEL → PROGRAM
+    // =====================================================
 
-    if (
-        !levelSelect ||
-        !programSelect ||
-        !semesterSelect ||
-        !subjectSelect
-    ) {
+    levelSelect.addEventListener("change", async function () {
 
-        console.error(
-            "Cascading dropdown elements not found."
-        );
-
-        return;
-
-    }
-
-
-    // ==================================================
-    // RESET PROGRAM
-    // ==================================================
-
-    function resetProgram() {
+        const level = this.value;
 
         programSelect.innerHTML =
-            '<option value="">---------</option>';
-
-    }
-
-
-    // ==================================================
-    // RESET SEMESTER
-    // ==================================================
-
-    function resetSemester() {
+            '<option value="">Select Program</option>';
 
         semesterSelect.innerHTML =
-            '<option value="">---------</option>';
-
-    }
-
-
-    // ==================================================
-    // RESET SUBJECT
-    // ==================================================
-
-    function resetSubject() {
+            '<option value="">Select Semester</option>';
 
         subjectSelect.innerHTML =
-            '<option value="">---------</option>';
+            '<option value="">Select Subject</option>';
 
-    }
+        if (!level) {
+            return;
+        }
 
+        try {
 
-    // ==================================================
-    // LEVEL → PROGRAM
-    // ==================================================
+            const response = await fetch(
+                `${PROGRAMS_URL}?level=${encodeURIComponent(level)}`
+            );
 
-    levelSelect.addEventListener(
-        "change",
-        function () {
+            const programs = await response.json();
 
-            const level =
-                this.value;
+            programs.forEach(program => {
 
+                const option = document.createElement("option");
 
-            // Reset dependent dropdowns
+                option.value = program.id;
+                option.textContent = program.name;
 
-            resetProgram();
-            resetSemester();
-            resetSubject();
-
-
-            if (!level) {
-
-                return;
-
-            }
-
-
-            fetch(
-                `{% url 'academic:get_programs' %}?level=${encodeURIComponent(level)}`
-            )
-
-            .then(function (response) {
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        "Failed to load programs"
-                    );
-
-                }
-
-                return response.json();
-
-            })
-
-            .then(function (data) {
-
-                data.forEach(function (program) {
-
-                    const option =
-                        document.createElement("option");
-
-                    option.value =
-                        program.id;
-
-                    option.textContent =
-                        program.name;
-
-                    programSelect.appendChild(
-                        option
-                    );
-
-                });
-
-            })
-
-            .catch(function (error) {
-
-                console.error(
-                    "Program Error:",
-                    error
-                );
+                programSelect.appendChild(option);
 
             });
 
+        } catch (error) {
+
+            console.error("Error loading programs:", error);
+
         }
-    );
+
+    });
 
 
-    // ==================================================
+    // =====================================================
     // PROGRAM → SEMESTER
-    // ==================================================
+    // =====================================================
 
-    programSelect.addEventListener(
-        "change",
-        function () {
+    programSelect.addEventListener("change", async function () {
 
-            const programId =
-                this.value;
+        const programId = this.value;
 
+        semesterSelect.innerHTML =
+            '<option value="">Select Semester</option>';
 
-            // Reset dependent dropdowns
+        subjectSelect.innerHTML =
+            '<option value="">Select Subject</option>';
 
-            resetSemester();
-            resetSubject();
+        if (!programId) {
+            return;
+        }
 
+        try {
 
-            if (!programId) {
+            const response = await fetch(
+                `${SEMESTERS_URL}?program=${encodeURIComponent(programId)}`
+            );
 
-                return;
+            const semesters = await response.json();
 
-            }
+            semesters.forEach(semester => {
 
+                const option = document.createElement("option");
 
-            fetch(
-                `{% url 'academic:get_semesters' %}?program=${encodeURIComponent(programId)}`
-            )
+                option.value = semester.id;
 
-            .then(function (response) {
+                // ONLY "Semester 1", "Semester 2", etc.
+                option.textContent = `Semester ${semester.number}`;
 
-                if (!response.ok) {
-
-                    throw new Error(
-                        "Failed to load semesters"
-                    );
-
-                }
-
-                return response.json();
-
-            })
-
-            .then(function (data) {
-
-                data.forEach(function (semester) {
-
-                    const option =
-                        document.createElement("option");
-
-                    option.value =
-                        semester.id;
-
-                    option.textContent =
-                        semester.name;
-
-                    semesterSelect.appendChild(
-                        option
-                    );
-
-                });
-
-            })
-
-            .catch(function (error) {
-
-                console.error(
-                    "Semester Error:",
-                    error
-                );
+                semesterSelect.appendChild(option);
 
             });
 
+        } catch (error) {
+
+            console.error("Error loading semesters:", error);
+
         }
-    );
+
+    });
 
 
-    // ==================================================
+    // =====================================================
     // SEMESTER → SUBJECT
-    // ==================================================
+    // =====================================================
 
-    semesterSelect.addEventListener(
-        "change",
-        function () {
+    semesterSelect.addEventListener("change", async function () {
 
-            const semesterId =
-                this.value;
+        const semesterId = this.value;
+        const programId = programSelect.value;
 
-            const programId =
-                programSelect.value;
+        subjectSelect.innerHTML =
+            '<option value="">Select Subject</option>';
 
+        if (!semesterId || !programId) {
+            return;
+        }
 
-            // Reset subject
+        try {
 
-            resetSubject();
+            const response = await fetch(
+                `${SUBJECTS_URL}?program=${encodeURIComponent(programId)}&semester=${encodeURIComponent(semesterId)}`
+            );
 
+            const subjects = await response.json();
 
-            if (
-                !programId ||
-                !semesterId
-            ) {
+            subjects.forEach(subject => {
 
-                return;
+                const option = document.createElement("option");
 
-            }
+                option.value = subject.id;
+                option.textContent = subject.name;
 
-
-            fetch(
-                `{% url 'academic:get_subjects' %}?program=${encodeURIComponent(programId)}&semester=${encodeURIComponent(semesterId)}`
-            )
-
-            .then(function (response) {
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        "Failed to load subjects"
-                    );
-
-                }
-
-                return response.json();
-
-            })
-
-            .then(function (data) {
-
-                data.forEach(function (subject) {
-
-                    const option =
-                        document.createElement("option");
-
-                    option.value =
-                        subject.id;
-
-                    option.textContent =
-                        subject.name;
-
-                    subjectSelect.appendChild(
-                        option
-                    );
-
-                });
-
-            })
-
-            .catch(function (error) {
-
-                console.error(
-                    "Subject Error:",
-                    error
-                );
+                subjectSelect.appendChild(option);
 
             });
 
+        } catch (error) {
+
+            console.error("Error loading subjects:", error);
+
         }
-    );
+
+    });
 
 });
-
 </script>
 
 

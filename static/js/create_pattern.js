@@ -1453,6 +1453,24 @@ document.addEventListener("DOMContentLoaded", function () {
                         <h6>
                             Question ${index + 1} Settings
                         </h6>
+                                                <div class="mb-3">
+    <label class="form-label">Unit</label>
+
+    <select
+    class="form-select setting-unit"
+    data-index="${index}"
+>
+        <option value="">All Units</option>
+        <option value="1">Unit 1</option>
+        <option value="2">Unit 2</option>
+        <option value="3">Unit 3</option>
+        <option value="4">Unit 4</option>
+        <option value="5">Unit 5</option>
+        <option value="6">Unit 6</option>
+        <option value="7">Unit 7</option>
+        <option value="8">Unit 8</option>
+    </select>
+</div>
 
                         <label class="form-label">
                             Bloom Level
@@ -1501,6 +1519,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             <option value="Hard">Hard</option>
 
                         </select>
+
 
                     </div>
 
