@@ -12,29 +12,50 @@ from .models import Question
 class SelectionForm(forms.Form):
 
     level = forms.ChoiceField(
-        choices=Program.LEVEL_CHOICES
+        choices=Program.LEVEL_CHOICES,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select",
+            }
+        )
     )
 
     program = forms.ModelChoiceField(
-        queryset=Program.objects.none()
+        queryset=Program.objects.none(),
+        empty_label="Select Program",
+        widget=forms.Select(
+            attrs={
+                "class": "form-select",
+            }
+        )
     )
 
     semester = forms.ModelChoiceField(
-        queryset=Semester.objects.none()
+        queryset=Semester.objects.none(),
+        empty_label="Select Semester",
+        widget=forms.Select(
+            attrs={
+                "class": "form-select",
+            }
+        )
     )
 
     subject = forms.ModelChoiceField(
-        queryset=Subject.objects.none()
+        queryset=Subject.objects.none(),
+        empty_label="Select Subject",
+        widget=forms.Select(
+            attrs={
+                "class": "form-select",
+            }
+        )
     )
 
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
-        self.fields["program"].queryset = Program.objects.all()
-
+        self.fields["program"].queryset = Program.objects.none()
         self.fields["semester"].queryset = Semester.objects.none()
-
         self.fields["subject"].queryset = Subject.objects.none()
 
 
@@ -47,9 +68,19 @@ class ExcelUploadForm(forms.Form):
 
 class QuestionForm(forms.ModelForm):
 
+    # =========================================================
+    # LEVEL
+    # =========================================================
+
     level = forms.ChoiceField(
         choices=Program.LEVEL_CHOICES,
-        label="Level"
+        label="Level",
+        widget=forms.Select(
+            attrs={
+                "class": "form-select",
+                "id": "id_level",
+            }
+        )
     )
 
     class Meta:
@@ -71,12 +102,20 @@ class QuestionForm(forms.ModelForm):
 
         widgets = {
 
+            # =================================================
+            # PROGRAM
+            # =================================================
+
             "program": forms.Select(
                 attrs={
                     "class": "form-select",
                     "id": "id_program",
                 }
             ),
+
+            # =================================================
+            # SEMESTER
+            # =================================================
 
             "semester": forms.Select(
                 attrs={
@@ -85,6 +124,10 @@ class QuestionForm(forms.ModelForm):
                 }
             ),
 
+            # =================================================
+            # SUBJECT
+            # =================================================
+
             "subject": forms.Select(
                 attrs={
                     "class": "form-select",
@@ -92,11 +135,19 @@ class QuestionForm(forms.ModelForm):
                 }
             ),
 
+            # =================================================
+            # UNIT
+            # =================================================
+
             "unit": forms.Select(
                 attrs={
                     "class": "form-select",
                 }
             ),
+
+            # =================================================
+            # QUESTION TYPE
+            # =================================================
 
             "question_type": forms.Select(
                 attrs={
@@ -105,12 +156,20 @@ class QuestionForm(forms.ModelForm):
                 }
             ),
 
+            # =================================================
+            # DIFFICULTY
+            # =================================================
+
             "difficulty": forms.Select(
                 attrs={
                     "class": "form-select",
                     "id": "id_difficulty",
                 }
             ),
+
+            # =================================================
+            # BLOOM LEVEL
+            # =================================================
 
             "bloom_level": forms.Select(
                 attrs={
@@ -119,6 +178,10 @@ class QuestionForm(forms.ModelForm):
                 }
             ),
 
+            # =================================================
+            # MARKS
+            # =================================================
+
             "marks": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -126,6 +189,10 @@ class QuestionForm(forms.ModelForm):
                     "placeholder": "Enter marks",
                 }
             ),
+
+            # =================================================
+            # QUESTION TEXT
+            # =================================================
 
             "question_text": forms.Textarea(
                 attrs={
@@ -136,30 +203,82 @@ class QuestionForm(forms.ModelForm):
             ),
         }
 
+    # =========================================================
+    # INITIALIZE FORM
+    # =========================================================
+
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
-        self.fields["program"].queryset = Program.objects.all()
+        # =====================================================
+        # PROGRAM
+        # =====================================================
+
+        self.fields["program"].queryset = Program.objects.none()
+        self.fields["program"].empty_label = "Select Program"
+
+        # =====================================================
+        # SEMESTER
+        # =====================================================
 
         self.fields["semester"].queryset = Semester.objects.none()
+        self.fields["semester"].empty_label = "Select Semester"
+
+        # =====================================================
+        # SUBJECT
+        # =====================================================
 
         self.fields["subject"].queryset = Subject.objects.none()
+        self.fields["subject"].empty_label = "Select Subject"
 
-        # When the form is submitted
+        # =====================================================
+        # WHEN FORM IS SUBMITTED
+        # =====================================================
+
         if self.is_bound:
 
+            level = self.data.get("level")
             program_id = self.data.get("program")
             semester_id = self.data.get("semester")
 
+            # -------------------------------------------------
+            # LEVEL → PROGRAM
+            # -------------------------------------------------
+
+            if level:
+
+                self.fields["program"].queryset = (
+                    Program.objects
+                    .filter(level=level)
+                    .order_by("name")
+                )
+
+            # -------------------------------------------------
+            # PROGRAM → SEMESTER
+            # -------------------------------------------------
+
             if program_id:
 
-                self.fields["semester"].queryset = Semester.objects.filter(
-                    program_id=program_id
-                ).order_by("number")
+                self.fields["semester"].queryset = (
+                    Semester.objects
+                    .filter(
+                        program_id=program_id
+                    )
+                    .order_by("number")
+                )
 
-            if semester_id:
+            # -------------------------------------------------
+            # SEMESTER → SUBJECT
+            # -------------------------------------------------
 
-                self.fields["subject"].queryset = Subject.objects.filter(
-                    semester_id=semester_id
-                ).order_by("name")
+            if semester_id and program_id:
+
+                self.fields["subject"].queryset = (
+                    Subject.objects
+                    .filter(
+                        semester_id=semester_id,
+                        program_id=program_id
+                    )
+                    .order_by("name")
+                )

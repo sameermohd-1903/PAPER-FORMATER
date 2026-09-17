@@ -384,11 +384,12 @@ function enableEdit(row) {
     cells[4].innerHTML = `
         <select class="form-select form-select-sm unit-edit">
 
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
+            <option value="1">Remember</option>
+            <option value="2">Understand</option>
+            <option value="3">Apply</option>
+            <option value="4">Analyze</option>
+            <option value="5">Evaluate</option>
+            <option value="6">Create</option>
 
         </select>
     `;

@@ -3,7 +3,7 @@ from pathlib import Path
 from django.conf import settings
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
@@ -53,7 +53,7 @@ class PDFGenerator:
             rightMargin=11 * mm,
             leftMargin=11 * mm,
 
-            topMargin=15 * mm,
+            topMargin=10 * mm,
             bottomMargin=10 * mm,
 
             title=pattern.pattern_name,
@@ -69,8 +69,8 @@ class PDFGenerator:
             "NormalPaper",
             parent=styles["Normal"],
             fontName="Times-Roman",
-            fontSize=9.5,
-            leading=11,
+            fontSize=10,
+            leading=12,
             spaceBefore=0,
             spaceAfter=0,
             alignment=TA_LEFT,
@@ -80,6 +80,12 @@ class PDFGenerator:
             "CenterPaper",
             parent=normal,
             alignment=TA_CENTER,
+        )
+        
+        right = ParagraphStyle(
+            "RightPaper",
+            parent=normal,
+            alignment=TA_RIGHT,
         )
 
         bold_center = ParagraphStyle(
@@ -98,8 +104,8 @@ class PDFGenerator:
             "College",
             parent=normal,
             fontName="Times-Bold",
-            fontSize=13,
-            leading=14,
+            fontSize=13.5,
+            leading=15,
             alignment=TA_CENTER,
         )
 
@@ -143,15 +149,15 @@ class PDFGenerator:
             ),
             Paragraph(
                 "Roll No. __________________",
-                normal
+                right
             ),
         ]
 
         header_table_1 = Table(
             [header_row_1],
             colWidths=[
-                95 * mm,
-                95 * mm,
+                130 * mm,
+                58 * mm,
             ],
         )
 
@@ -177,7 +183,7 @@ class PDFGenerator:
             )
         )
 
-        story.append(Spacer(1, 2))
+        story.append(Spacer(1, 1))
 
         # Row 2
         header_row_2 = [
@@ -296,7 +302,7 @@ class PDFGenerator:
                     normal,
                 ),
                 Paragraph(
-                    "<b>OC</b>",
+                    "<b>CO</b>",
                     bold_center,
                 ),
                 Paragraph(
@@ -400,9 +406,7 @@ class PDFGenerator:
 
                 if question:
 
-                    bloom = (
-                        question.get_bloom_level_display()
-                    )
+                    bloom = question.bloom_level
 
                     question_text = (
                         question.question_text
@@ -424,6 +428,10 @@ class PDFGenerator:
                     "co",
                     getattr(row, "co", "")
                 )
+                co = str(co).strip()
+                
+                if co.upper().startswith("CO"):
+                    co = co[2:].strip()
 
                 letter = sp.get(
                     "letter",
@@ -467,11 +475,11 @@ class PDFGenerator:
             table_data,
 
             colWidths=[
-                20 * mm,
-                10 * mm,
-                15 * mm,
-                133 * mm,
-                12 * mm,
+                21 * mm,
+                11 * mm,
+                19 * mm,
+                128 * mm,
+                9 * mm,
             ],
 
             repeatRows=1,
@@ -490,8 +498,8 @@ class PDFGenerator:
                 "GRID",
                 (0, 0),
                 (-1, -1),
-                0.5,
-                colors.grey,
+                0.4,
+                colors.black,
             ),
 
             # Vertical alignment
@@ -529,28 +537,28 @@ class PDFGenerator:
                 "LEFTPADDING",
                 (0, 0),
                 (-1, -1),
-                3,
+                2.5,
             ),
 
             (
                 "RIGHTPADDING",
                 (0, 0),
                 (-1, -1),
-                3,
+                2.5,
             ),
 
             (
                 "TOPPADDING",
                 (0, 0),
                 (-1, -1),
-                2,
+                1.5,
             ),
 
             (
                 "BOTTOMPADDING",
                 (0, 0),
                 (-1, -1),
-                2,
+                1.,
             ),
         ]
 

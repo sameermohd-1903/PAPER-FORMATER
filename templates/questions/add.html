@@ -9,30 +9,29 @@ Add Question - Paper Formatter
 
 <div class="container mt-4">
 
+    <!-- ================= PAGE HEADER ================= -->
+
     <div class="d-flex justify-content-between align-items-center mb-3">
 
         <h2>Add Question</h2>
 
         <a href="{% url 'questions:list' %}"
            class="btn btn-secondary">
-
             Back to Questions
-
         </a>
 
     </div>
 
+
+    <!-- ================= QUESTION CARD ================= -->
 
     <div class="card shadow">
 
         <div class="card-header bg-primary text-white">
 
             <h5 class="mb-0">
-
                 <i class="fas fa-plus-circle"></i>
-
                 New Question
-
             </h5>
 
         </div>
@@ -44,11 +43,13 @@ Add Question - Paper Formatter
                   id="questionForm">
 
                 {% csrf_token %}
+
                 <input
-                      type="hidden"
-                      name="similarity_approved"
-                      id="similarityApproved"
-                      value="0">
+                    type="hidden"
+                    name="similarity_approved"
+                    id="similarityApproved"
+                    value="0"
+                >
 
 
                 <!-- ================= LEVEL ================= -->
@@ -137,6 +138,12 @@ Add Question - Paper Formatter
 
                     {{ form.unit }}
 
+                    {% if form.unit.errors %}
+                        <div class="text-danger">
+                            {{ form.unit.errors }}
+                        </div>
+                    {% endif %}
+
                 </div>
 
 
@@ -150,127 +157,46 @@ Add Question - Paper Formatter
 
                     {{ form.question_text }}
 
+                    {% if form.question_text.errors %}
+                        <div class="text-danger">
+                            {{ form.question_text.errors }}
+                        </div>
+                    {% endif %}
+
                 </div>
 
 
-<!-- ================= AI CLASSIFICATION ================= -->
+                <!-- ================= AI CLASSIFICATION ================= -->
 
-<div class="mb-4">
+                <div class="mb-4">
 
-    <button
-        type="button"
-        id="classifyQuestionBtn"
-        class="btn btn-info text-white">
+                    <button
+                        type="button"
+                        id="classifyQuestionBtn"
+                        class="btn btn-info text-white"
+                    >
+                        🤖 Analyze with AI
+                    </button>
 
-        🤖 Analyze with AI
+                    <span
+                        id="aiLoading"
+                        class="ms-2 d-none text-muted"
+                    >
+                        AI is analyzing the question...
+                    </span>
 
-    </button>
-
-    <span
-        id="aiLoading"
-        class="ms-2 d-none text-muted">
-
-        AI is analyzing the question...
-
-    </span>
-
-</div>
-
-
-<!-- ================= AI RESULT ================= -->
-
-<div
-    id="aiResult"
-    class="alert alert-info d-none">
-
-    <h6 class="fw-bold">
-        🤖 AI Suggested Classification
-    </h6>
-
-    <div class="row">
-
-        <div class="col-md-4">
-
-            <strong>
-                Bloom Level:
-            </strong>
-
-            <span id="aiBloom">
-            </span>
-
-        </div>
-
-        <div class="col-md-4">
-
-            <strong>
-                Difficulty:
-            </strong>
-
-            <span id="aiDifficulty">
-            </span>
-
-        </div>
-
-        <div class="col-md-4">
-
-            <strong>
-                Question Type:
-            </strong>
-
-            <span id="aiQuestionType">
-            </span>
-
-        </div>
-
-    </div>
-
-    <hr>
-
-    <small class="text-muted">
-        You can change these values before saving.
-    </small>
-
-</div>
-
-<!-- ================= SIMILARITY CHECK ================= -->
-
-<div class="mb-4">
-
-    <button
-        type="button"
-        id="checkSimilarityBtn"
-        class="btn btn-warning">
-
-        🔍 Check Similarity
-
-    </button>
-
-    <span
-        id="similarityLoading"
-        class="ms-2 d-none">
-
-        Checking for similar questions...
-
-    </span>
-
-</div>
-<!-- ================= SIMILARITY RESULT ================= -->
-
-<div
-    id="similarityResult"
-    class="d-none">
-
-</div>
+                </div>
 
 
                 <!-- ================= AI RESULT ================= -->
 
                 <div
                     id="aiResult"
-                    class="alert alert-info d-none">
+                    class="alert alert-info d-none"
+                >
 
                     <h6 class="fw-bold">
-                        🤖 AI Analysis
+                        🤖 AI Suggested Classification
                     </h6>
 
                     <div class="row">
@@ -281,8 +207,7 @@ Add Question - Paper Formatter
                                 Bloom Level:
                             </strong>
 
-                            <span id="aiBloom">
-                            </span>
+                            <span id="aiBloom"></span>
 
                         </div>
 
@@ -293,8 +218,7 @@ Add Question - Paper Formatter
                                 Difficulty:
                             </strong>
 
-                            <span id="aiDifficulty">
-                            </span>
+                            <span id="aiDifficulty"></span>
 
                         </div>
 
@@ -305,13 +229,49 @@ Add Question - Paper Formatter
                                 Question Type:
                             </strong>
 
-                            <span id="aiQuestionType">
-                            </span>
+                            <span id="aiQuestionType"></span>
 
                         </div>
 
                     </div>
 
+                    <hr>
+
+                    <small class="text-muted">
+                        You can change these values before saving.
+                    </small>
+
+                </div>
+
+
+                <!-- ================= SIMILARITY CHECK ================= -->
+
+                <div class="mb-4">
+
+                    <button
+                        type="button"
+                        id="checkSimilarityBtn"
+                        class="btn btn-warning"
+                    >
+                        🔍 Check Similarity
+                    </button>
+
+                    <span
+                        id="similarityLoading"
+                        class="ms-2 d-none"
+                    >
+                        Checking for similar questions...
+                    </span>
+
+                </div>
+
+
+                <!-- ================= SIMILARITY RESULT ================= -->
+
+                <div
+                    id="similarityResult"
+                    class="d-none"
+                >
                 </div>
 
 
@@ -324,6 +284,12 @@ Add Question - Paper Formatter
                     </label>
 
                     {{ form.question_type }}
+
+                    {% if form.question_type.errors %}
+                        <div class="text-danger">
+                            {{ form.question_type.errors }}
+                        </div>
+                    {% endif %}
 
                 </div>
 
@@ -338,10 +304,16 @@ Add Question - Paper Formatter
 
                     {{ form.difficulty }}
 
+                    {% if form.difficulty.errors %}
+                        <div class="text-danger">
+                            {{ form.difficulty.errors }}
+                        </div>
+                    {% endif %}
+
                 </div>
 
 
-                <!-- ================= BLOOM ================= -->
+                <!-- ================= BLOOM LEVEL ================= -->
 
                 <div class="mb-3">
 
@@ -350,6 +322,12 @@ Add Question - Paper Formatter
                     </label>
 
                     {{ form.bloom_level }}
+
+                    {% if form.bloom_level.errors %}
+                        <div class="text-danger">
+                            {{ form.bloom_level.errors }}
+                        </div>
+                    {% endif %}
 
                 </div>
 
@@ -364,6 +342,12 @@ Add Question - Paper Formatter
 
                     {{ form.marks }}
 
+                    {% if form.marks.errors %}
+                        <div class="text-danger">
+                            {{ form.marks.errors }}
+                        </div>
+                    {% endif %}
+
                 </div>
 
 
@@ -373,19 +357,16 @@ Add Question - Paper Formatter
 
                     <a
                         href="{% url 'questions:list' %}"
-                        class="btn btn-secondary">
-
+                        class="btn btn-secondary"
+                    >
                         Cancel
-
                     </a>
-
 
                     <button
                         type="submit"
-                        class="btn btn-primary">
-
+                        class="btn btn-primary"
+                    >
                         Save Question
-
                     </button>
 
                 </div>
@@ -404,31 +385,33 @@ Add Question - Paper Formatter
 {% block scripts %}
 
 <script>
+    window.programsUrl =
+        "{% url 'academic:get_programs' %}";
 
-const programsUrl =
-    "{% url 'academic:get_programs' %}";
+    window.semestersUrl =
+        "{% url 'academic:get_semesters' %}";
 
-const semestersUrl =
-    "{% url 'academic:get_semesters' %}";
+    window.subjectsUrl =
+        "{% url 'academic:get_subjects' %}";
 
-const subjectsUrl =
-    "{% url 'academic:get_subjects' %}";
+    window.similarityUrl =
+        "{% url 'questions:check_similarity_ajax' %}";
 
-const similarityUrl =
-    "{% url 'questions:check_similarity_ajax' %}";
-
-const aiClassifyUrl =
-    "{% url 'questions:ai_classify' %}";
-
-const classifyUrl =
-    "{% url 'questions:ai_classify' %}";
-
+    window.classifyUrl =
+        "{% url 'questions:ai_classify' %}";
 </script>
 
-<script src="{% static 'js/question_add.js' %}?v=2"></script>
+
+<script src="{% static 'js/question_add.js' %}?v=3"></script>
+
+
 <script>
 
 document.addEventListener("DOMContentLoaded", function () {
+
+    // ===============================
+    // Elements
+    // ===============================
 
     const classifyBtn =
         document.getElementById("classifyQuestionBtn");
@@ -461,10 +444,18 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("id_question_type");
 
 
+    // ===============================
+    // Stop if AI button is not present
+    // ===============================
+
     if (!classifyBtn) {
         return;
     }
 
+
+    // ===============================
+    // AI CLASSIFICATION
+    // ===============================
 
     classifyBtn.addEventListener(
         "click",
@@ -473,6 +464,10 @@ document.addEventListener("DOMContentLoaded", function () {
             const text =
                 questionText.value.trim();
 
+
+            // -------------------------------
+            // Validate question
+            // -------------------------------
 
             if (!text) {
 
@@ -486,6 +481,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
 
+            // -------------------------------
+            // Loading state
+            // -------------------------------
+
             classifyBtn.disabled = true;
 
             aiLoading.classList.remove(
@@ -497,6 +496,10 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
 
+            // -------------------------------
+            // Form data
+            // -------------------------------
+
             const formData =
                 new FormData();
 
@@ -506,6 +509,10 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
 
+            // -------------------------------
+            // CSRF
+            // -------------------------------
+
             const csrfToken =
                 document.querySelector(
                     "[name=csrfmiddlewaretoken]"
@@ -513,6 +520,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             try {
+
+                // -------------------------------
+                // Send request to Django
+                // -------------------------------
 
                 const response =
                     await fetch(
@@ -530,23 +541,30 @@ document.addEventListener("DOMContentLoaded", function () {
                     );
 
 
+                // -------------------------------
+                // Read response
+                // -------------------------------
+
                 const data =
                     await response.json();
 
 
-                if (!response.ok ||
-                    !data.success) {
+                if (
+                    !response.ok ||
+                    !data.success
+                ) {
 
                     throw new Error(
                         data.message ||
                         "AI classification failed."
                     );
+
                 }
 
 
-                // -----------------------------
+                // ===============================
                 // Set dropdown values
-                // -----------------------------
+                // ===============================
 
                 bloomSelect.value =
                     data.bloom_level;
@@ -558,58 +576,41 @@ document.addEventListener("DOMContentLoaded", function () {
                     data.question_type;
 
 
-                // -----------------------------
-                // Display readable labels
-                // -----------------------------
+                // ===============================
+                // Get labels directly from
+                // Django-rendered options
+                // ===============================
 
-                const bloomLabels = {
-                    "1": "Remember",
-                    "2": "Understand",
-                    "3": "Apply",
-                    "4": "Analyze",
-                    "5": "Evaluate",
-                    "6": "Create"
-                };
+                const bloomLabel =
+                    bloomSelect.options[
+                        bloomSelect.selectedIndex
+                    ]?.text || data.bloom_level;
 
 
-                const difficultyLabels = {
-                    "easy": "Easy",
-                    "medium": "Medium",
-                    "hard": "Hard"
-                };
+                const difficultyLabel =
+                    difficultySelect.options[
+                        difficultySelect.selectedIndex
+                    ]?.text || data.difficulty;
 
 
-                const questionTypeLabels = {
-                    "mcq":
-                        "Multiple Choice Questions",
+                const questionTypeLabel =
+                    questionTypeSelect.options[
+                        questionTypeSelect.selectedIndex
+                    ]?.text || data.question_type;
 
-                    "ftq":
-                        "Following the Questions",
 
-                    "casestudy":
-                        "Case Study"
-                };
-
+                // ===============================
+                // Display AI result
+                // ===============================
 
                 aiBloom.textContent =
-                    bloomLabels[
-                        data.bloom_level
-                    ] ||
-                    data.bloom_level;
-
+                    bloomLabel;
 
                 aiDifficulty.textContent =
-                    difficultyLabels[
-                        data.difficulty
-                    ] ||
-                    data.difficulty;
-
+                    difficultyLabel;
 
                 aiQuestionType.textContent =
-                    questionTypeLabels[
-                        data.question_type
-                    ] ||
-                    data.question_type;
+                    questionTypeLabel;
 
 
                 aiResult.classList.remove(
@@ -617,6 +618,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 );
 
             }
+
+
             catch (error) {
 
                 alert(
@@ -625,6 +628,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 );
 
             }
+
+
             finally {
 
                 classifyBtn.disabled = false;

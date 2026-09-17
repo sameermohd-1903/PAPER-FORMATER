@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
 
 from .views.login_views import (
@@ -99,10 +99,13 @@ path(
 
 # ---------------- Django Password Change ---------------- #
 
+# ---------------- Django Password Change ---------------- #
+
 path(
     "password-change/",
     auth_views.PasswordChangeView.as_view(
-        template_name="registration/password_change.html"
+        template_name="registration/password_change.html",
+        success_url=reverse_lazy("accounts:login"),
     ),
     name="password_change",
 ),
@@ -110,7 +113,7 @@ path(
 path(
     "password-change/done/",
     auth_views.PasswordChangeDoneView.as_view(
-        template_name="registration/password_change_done.html"
+        template_name="registration/password_change_done.html",
     ),
     name="password_change_done",
 ),
@@ -120,11 +123,11 @@ path(
     name="verify_otp",
 ),   
 
-path(
-    "reset-password/",
-    reset_password,
-    name="reset_password",
-),
+# path(
+#     "reset-password/",
+#     reset_password,
+#     name="reset_password",
+# ),
 
 path(
     "verify-email/<str:token>/",

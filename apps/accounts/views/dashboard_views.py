@@ -21,15 +21,16 @@ def dashboard(request):
     # Total subjects
     total_subjects = Subject.objects.count()
 
-    # Total generated papers by this teacher
+    # Generated papers by this teacher
     generated_papers = GeneratedPaper.objects.filter(
         teacher=request.user
-    ).count()
+    ).order_by("-created_at")
 
     context = {
         "total_questions": total_questions,
         "total_subjects": total_subjects,
-        "generated_papers": generated_papers,
+        "generated_papers": generated_papers.count(),
+        "recent_generated_papers": generated_papers[:5],
     }
 
     return render(
