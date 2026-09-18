@@ -17,7 +17,6 @@ user-agents==2.2.0
 ua-parser==1.0.2
 ua-parser-builtins==202606
 
-openai==3.11.0
 whitenoise==6.12.0
 requests==2.34.2
 
