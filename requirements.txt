@@ -1,10 +1,10 @@
-Django==5.0.6
-djangorestframework==3.14.0
+Django==5.2.17
+djangorestframework==3.18.1
 
 django-crispy-forms==2.3
 crispy-bootstrap5==2024.10
 
-django-environ==0.11.2
+django-environ==0.14.0
 mysqlclient==2.2.8
 
 openpyxl==3.1.5
@@ -18,6 +18,9 @@ ua-parser==1.0.2
 ua-parser-builtins==202606
 
 openai==3.11.0
+whitenoise==6.12.0
+requests==2.34.2
 
-python -m pip install whitenoise
-pip install requests
+reportlab==5.0.1
+scikit-learn==1.9.0
+sentence-transformers==6.0.1
