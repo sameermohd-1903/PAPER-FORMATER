@@ -1,0 +1,35 @@
+[project]
+name = "paper-formater"
+version = "1.0.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "Django==5.2.17",
+    "djangorestframework==3.18.1",
+    "django-crispy-forms==2.3",
+    "crispy-bootstrap5==2024.10",
+    "django-environ==0.14.0",
+    "mysqlclient==2.2.8",
+    "openpyxl==3.1.5",
+    "pandas==3.0.5",
+    "numpy==2.5.3",
+    "django-filter==24.2",
+    "user-agents==2.2.0",
+    "ua-parser==1.0.2",
+    "ua-parser-builtins==202606",
+    "whitenoise==6.12.0",
+    "requests==2.34.2",
+    "reportlab==5.0.1",
+    "scikit-learn==1.9.0",
+    "sentence-transformers==6.0.1",
+    "torch==2.14.0",
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
