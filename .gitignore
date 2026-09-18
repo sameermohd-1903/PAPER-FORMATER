@@ -39,3 +39,4 @@ htmlcov/
 
 # Database backups
 *.sql
+.vercel
