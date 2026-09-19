@@ -154,6 +154,8 @@ REST_FRAMEWORK = {
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
+RESEND_API_KEY = env("RESEND_API_KEY", default="")
+
 EMAIL_HOST = env("EMAIL_HOST")
 
 EMAIL_PORT = env.int("EMAIL_PORT")

@@ -1,5 +1,24 @@
-from django.core.mail import send_mail
+import resend
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+
+
+def _send_email(to_email, subject, message):
+    api_key = settings.RESEND_API_KEY
+
+    if not api_key:
+        raise ImproperlyConfigured("RESEND_API_KEY is not configured.")
+
+    resend.api_key = api_key
+
+    resend.Emails.send(
+        {
+            "from": "onboarding@resend.dev",
+            "to": [to_email],
+            "subject": subject,
+            "text": message,
+        }
+    )
 
 
 def send_password_otp(email, otp):
@@ -23,13 +42,7 @@ Regards,
 Paper Formatter Team
 """
 
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [email],
-        fail_silently=False,
-    )
+    _send_email(email, subject, message)
 
 
 def send_verification_email(user, token):
@@ -57,18 +70,11 @@ Regards,
 Paper Formatter Team
 """
 
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
-    
-def send_device_otp(
-    email,
-    otp,
-):
+    _send_email(user.email, subject, message)
+
+
+def send_device_otp(email, otp):
+
     subject = "Paper Formatter - New Device Verification"
 
     message = f"""
@@ -88,10 +94,4 @@ Regards,
 Paper Formatter Team
 """
 
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [email],
-        fail_silently=False,
-    )    
+    _send_email(email, subject, message)
