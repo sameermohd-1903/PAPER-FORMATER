@@ -309,4 +309,13 @@ password.addEventListener("keyup",function(){
 
 </script>
 
+<script>
+    const emailInput = document.getElementById("id_email");
+    const usernameDisplay = document.getElementById("display_username");
+
+    emailInput.addEventListener("input", function () {
+        usernameDisplay.value = this.value;
+    });
+</script>
+
 {% endblock %}
