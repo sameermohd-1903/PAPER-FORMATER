@@ -1,24 +1,47 @@
-import resend
+import requests
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 
 def _send_email(to_email, subject, message):
-    api_key = settings.RESEND_API_KEY
+    api_key = settings.BREVO_API_KEY
 
     if not api_key:
-        raise ImproperlyConfigured("RESEND_API_KEY is not configured.")
+        raise ImproperlyConfigured("BREVO_API_KEY is not configured.")
 
-    resend.api_key = api_key
+    sender_email = settings.DEFAULT_FROM_EMAIL
 
-    resend.Emails.send(
-        {
-            "from": "onboarding@resend.dev",
-            "to": [to_email],
+    if not sender_email:
+        raise ImproperlyConfigured("DEFAULT_FROM_EMAIL is not configured.")
+
+    response = requests.post(
+        "https://api.brevo.com/v3/smtp/email",
+        headers={
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json",
+        },
+        json={
+            "sender": {
+                "name": "Paper Formatter",
+                "email": sender_email,
+            },
+            "to": [
+                {
+                    "email": to_email,
+                }
+            ],
             "subject": subject,
-            "text": message,
-        }
+            "textContent": message,
+        },
+        timeout=20,
     )
+
+    if not response.ok:
+        raise RuntimeError(
+            f"Brevo email failed: {response.status_code} {response.text}"
+        )
 
 
 def send_password_otp(email, otp):
