@@ -71,7 +71,7 @@ Paper Formatter Team
 def send_verification_email(user, token):
 
     verification_link = (
-        f"http://127.0.0.1:8000/accounts/verify-email/{token}/"
+                f"{settings.SITE_URL}/accounts/verify-email/{token}/"
     )
 
     subject = "Verify Your Email - Paper Formatter"
