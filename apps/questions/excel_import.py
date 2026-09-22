@@ -176,6 +176,9 @@ class ExcelImporter:
                 "question",
                 "unit",
                 "mark",
+                "bloom",
+                "difficulty",
+                "question_type",
             ]
 
             columns = {
@@ -247,23 +250,24 @@ class ExcelImporter:
                     ]
 
                 # ---------------------------------------
-                # 🤖 AI Classification
+                # Read Classification from Excel
                 # ---------------------------------------
 
-                ai_result = classify_question(
-                    question_text
+                bloom_raw = str(
+                    row[columns["bloom"]]
+                ).strip().lower()
+
+                bloom_value = BLOOM_MAP.get(
+                    bloom_raw,
+                    bloom_raw
                 )
 
-                bloom_value = str(
-                    ai_result["bloom_level"]
-                ).strip()
-
                 difficulty_value = str(
-                    ai_result["difficulty"]
+                    row[columns["difficulty"]]
                 ).strip().lower()
 
                 question_type_value = str(
-                    ai_result["question_type"]
+                    row[columns["question_type"]]
                 ).strip().lower()
 
                 # ---------------------------------------

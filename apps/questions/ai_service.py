@@ -4,6 +4,7 @@ import re
 
 import requests
 
+from .ml_service import predict_difficulty
 
 OLLAMA_URL = os.environ.get(
     "OLLAMA_URL",
@@ -388,12 +389,13 @@ Return exactly:
         )
     ).strip()
 
-    difficulty = str(
-        result.get(
-            "difficulty",
-            ""
-        )
-    ).strip().lower()
+    # ========================================================
+    # ML DIFFICULTY PREDICTION
+    # ========================================================
+
+    difficulty = predict_difficulty(
+        question_text
+    )
 
     question_type = str(
         result.get(
