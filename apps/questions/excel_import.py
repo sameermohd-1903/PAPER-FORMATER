@@ -1,7 +1,6 @@
 import pandas as pd
 
-from .embedding_service import generate_embedding
-from .ai_service import classify_question
+from .embedding_service import generate_embeddings_batch
 from .models import Question
 
 
@@ -129,9 +128,8 @@ def find_column(df, field):
 # ---------------------------------------
 # Excel Importer
 # ---------------------------------------
-
 class ExcelImporter:
-
+    
     def __init__(
         self,
         file_path,
@@ -163,14 +161,6 @@ class ExcelImporter:
             # ---------------------------------------
             # Required Columns
             # ---------------------------------------
-
-            # AI will generate:
-            # - Bloom Level
-            # - Difficulty
-            # - Question Type
-            #
-            # Therefore these three columns are
-            # no longer required from Excel.
 
             required_fields = [
                 "question",
@@ -207,7 +197,14 @@ class ExcelImporter:
             self.imported_count = 0
 
             # ---------------------------------------
-            # Process Each Question
+            # Store Validated Questions
+            # ---------------------------------------
+
+            question_records = []
+            question_texts = []
+
+            # ---------------------------------------
+            # Process and Validate Questions
             # ---------------------------------------
 
             for index, row in df.iterrows():
@@ -238,6 +235,7 @@ class ExcelImporter:
                 )
 
                 if pd.isna(marks_value):
+
                     return False, [
                         f"Invalid marks at Excel row {index + 2}."
                     ]
@@ -245,8 +243,10 @@ class ExcelImporter:
                 marks = int(marks_value)
 
                 if marks <= 0:
+
                     return False, [
-                        f"Marks must be greater than 0 at Excel row {index + 2}."
+                        f"Marks must be greater than 0 "
+                        f"at Excel row {index + 2}."
                     ]
 
                 # ---------------------------------------
@@ -271,7 +271,7 @@ class ExcelImporter:
                 ).strip().lower()
 
                 # ---------------------------------------
-                # Normalize AI Question Type
+                # Normalize Question Type
                 # ---------------------------------------
 
                 question_type_value = QUESTION_TYPE_MAP.get(
@@ -280,7 +280,7 @@ class ExcelImporter:
                 )
 
                 # ---------------------------------------
-                # Validate AI Result
+                # Validate Bloom Level
                 # ---------------------------------------
 
                 if bloom_value not in {
@@ -293,10 +293,14 @@ class ExcelImporter:
                 }:
 
                     return False, [
-                        f"Invalid Bloom level returned by AI "
+                        f"Invalid Bloom level "
                         f"for Excel row {index + 2}: "
                         f"{bloom_value}"
                     ]
+
+                # ---------------------------------------
+                # Validate Difficulty
+                # ---------------------------------------
 
                 if difficulty_value not in {
                     "easy",
@@ -305,10 +309,14 @@ class ExcelImporter:
                 }:
 
                     return False, [
-                        f"Invalid difficulty returned by AI "
+                        f"Invalid difficulty "
                         f"for Excel row {index + 2}: "
                         f"{difficulty_value}"
                     ]
+
+                # ---------------------------------------
+                # Validate Question Type
+                # ---------------------------------------
 
                 if question_type_value not in {
                     "mcq",
@@ -317,22 +325,42 @@ class ExcelImporter:
                 }:
 
                     return False, [
-                        f"Invalid question type returned by AI "
+                        f"Invalid question type "
                         f"for Excel row {index + 2}: "
                         f"{question_type_value}"
                     ]
 
                 # ---------------------------------------
-                # Generate AI Embedding
+                # Store Question Data
                 # ---------------------------------------
 
-                embedding = generate_embedding(
-                    question_text
-                )
+                question_records.append({
+                    "unit": unit,
+                    "question_text": question_text,
+                    "bloom_level": bloom_value,
+                    "difficulty": difficulty_value,
+                    "question_type": question_type_value,
+                    "marks": marks,
+                })
 
-                # ---------------------------------------
-                # Create Question
-                # ---------------------------------------
+                question_texts.append(question_text)
+
+            # ---------------------------------------
+            # Generate All Embeddings in One Batch
+            # ---------------------------------------
+
+            embeddings = generate_embeddings_batch(
+                question_texts
+            )
+
+            # ---------------------------------------
+            # Create Questions
+            # ---------------------------------------
+
+            for record, embedding in zip(
+                question_records,
+                embeddings
+            ):
 
                 Question.objects.create(
 
@@ -344,20 +372,18 @@ class ExcelImporter:
 
                     subject=self.subject,
 
-                    unit=unit,
+                    unit=record["unit"],
 
-                    question_text=question_text,
+                    question_text=record["question_text"],
 
-                    # AI classification
-                    bloom_level=bloom_value,
+                    bloom_level=record["bloom_level"],
 
-                    difficulty=difficulty_value,
+                    difficulty=record["difficulty"],
 
-                    question_type=question_type_value,
+                    question_type=record["question_type"],
 
-                    marks=marks,
+                    marks=record["marks"],
 
-                    # AI embedding
                     embedding=embedding,
                 )
 

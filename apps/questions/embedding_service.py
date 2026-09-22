@@ -34,3 +34,31 @@ def generate_embedding(text):
     )
 
     return embedding.tolist()
+
+
+def generate_embeddings_batch(texts):
+    """Generate embeddings for multiple questions at once."""
+
+    if not texts:
+        return []
+
+    cleaned_texts = [
+        str(text).strip()
+        for text in texts
+    ]
+
+    if any(not text for text in cleaned_texts):
+        raise ValueError(
+            "Question text cannot be empty."
+        )
+
+    model = get_model()
+
+    embeddings = model.encode(
+        cleaned_texts,
+        batch_size=32,
+        normalize_embeddings=True,
+        show_progress_bar=False
+    )
+
+    return embeddings.tolist()
