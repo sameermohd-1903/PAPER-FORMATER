@@ -1,6 +1,7 @@
 import pandas as pd
 
 from .embedding_service import generate_embeddings_batch
+from .ml_service import predict_difficulty
 from .models import Question
 
 
@@ -75,11 +76,11 @@ COLUMN_ALIASES = {
         "score",
     },
 
-    "difficulty": {
-        "difficulty",
-        "level",
-        "question level",
-    },
+    # "difficulty": {
+    #     "difficulty",
+    #     "level",
+    #     "question level",
+    # },
 
     "question_type": {
         "question type",
@@ -167,7 +168,6 @@ class ExcelImporter:
                 "unit",
                 "mark",
                 "bloom",
-                "difficulty",
                 "question_type",
             ]
 
@@ -262,9 +262,9 @@ class ExcelImporter:
                     bloom_raw
                 )
 
-                difficulty_value = str(
-                    row[columns["difficulty"]]
-                ).strip().lower()
+                difficulty_value = predict_difficulty(
+                    question_text
+                )
 
                 question_type_value = str(
                     row[columns["question_type"]]
@@ -302,17 +302,17 @@ class ExcelImporter:
                 # Validate Difficulty
                 # ---------------------------------------
 
-                if difficulty_value not in {
-                    "easy",
-                    "medium",
-                    "hard",
-                }:
+                # if difficulty_value not in {
+                #     "easy",
+                #     "medium",
+                #     "hard",
+                # }:
 
-                    return False, [
-                        f"Invalid difficulty "
-                        f"for Excel row {index + 2}: "
-                        f"{difficulty_value}"
-                    ]
+                #     return False, [
+                #         f"Invalid difficulty "
+                #         f"for Excel row {index + 2}: "
+                #         f"{difficulty_value}"
+                #     ]
 
                 # ---------------------------------------
                 # Validate Question Type

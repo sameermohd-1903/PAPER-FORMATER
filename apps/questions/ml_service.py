@@ -19,19 +19,21 @@ MODEL_DIR = os.path.join(
     "ml_models"
 )
 
+# V2 TF-IDF vectorizer
 TFIDF_PATH = os.path.join(
     MODEL_DIR,
-    "difficulty_tfidf.joblib"
+    "difficulty_tfidf_v2.joblib"
 )
 
+# V2 difficulty classifier
 MODEL_PATH = os.path.join(
     MODEL_DIR,
-    "difficulty_classifier.joblib"
+    "difficulty_classifier_v2.joblib"
 )
 
 
 # ============================================================
-# LOAD MODEL
+# LOAD V2 MODEL
 # ============================================================
 
 tfidf = joblib.load(TFIDF_PATH)
@@ -72,7 +74,7 @@ def predict_difficulty(question_text):
         [question_text]
     )
 
-    # Predict difficulty
+    # Predict difficulty using V2 model
     prediction = model.predict(
         question_vector
     )[0]
