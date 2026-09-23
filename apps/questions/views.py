@@ -10,14 +10,14 @@ from .forms import ExcelUploadForm, SelectionForm, QuestionForm
 from .models import Question
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .ai_service import classify_question
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .question_regeneration_service import (
     generate_valid_unique_question,
 )
-from .ai_service import classify_question
+from .local_classification_service import classify_question
+
 
 @login_required
 def question_list(request):
