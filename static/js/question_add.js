@@ -235,3 +235,222 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
+
+
+
+
+// ============================================================
+// CHECK QUESTION SIMILARITY
+// ============================================================
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const checkSimilarityBtn =
+        document.getElementById("checkSimilarityBtn");
+
+    const similarityLoading =
+        document.getElementById("similarityLoading");
+
+    const similarityResult =
+        document.getElementById("similarityResult");
+
+    if (!checkSimilarityBtn) {
+        return;
+    }
+
+    checkSimilarityBtn.addEventListener("click", async function () {
+
+        const questionField =
+            document.getElementById("id_question_text");
+
+        const programField =
+            document.getElementById("id_program");
+
+        const semesterField =
+            document.getElementById("id_semester");
+
+        const subjectField =
+            document.getElementById("id_subject");
+
+        const questionText =
+            questionField ? questionField.value.trim() : "";
+
+        const program =
+            programField ? programField.value : "";
+
+        const semester =
+            semesterField ? semesterField.value : "";
+
+        const subject =
+            subjectField ? subjectField.value : "";
+
+        // --------------------------------------------------------
+        // Validate question
+        // --------------------------------------------------------
+
+        if (!questionText) {
+            alert("Please enter a question first.");
+            return;
+        }
+
+        // --------------------------------------------------------
+        // Validate academic selections
+        // --------------------------------------------------------
+
+        if (!program || !semester || !subject) {
+            alert(
+                "Please select Program, Semester and Subject first."
+            );
+            return;
+        }
+
+        // --------------------------------------------------------
+        // Show loading
+        // --------------------------------------------------------
+
+        similarityLoading.classList.remove("d-none");
+
+        similarityResult.classList.add("d-none");
+        similarityResult.innerHTML = "";
+
+        checkSimilarityBtn.disabled = true;
+
+        try {
+
+            const formData = new FormData();
+
+            formData.append(
+                "question_text",
+                questionText
+            );
+
+            formData.append(
+                "program",
+                program
+            );
+
+            formData.append(
+                "semester",
+                semester
+            );
+
+            formData.append(
+                "subject",
+                subject
+            );
+
+            // ----------------------------------------------------
+            // Send request
+            // ----------------------------------------------------
+
+            const response = await fetch(
+                window.similarityUrl,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "X-CSRFToken": document.querySelector(
+                            '[name=csrfmiddlewaretoken]'
+                        ).value
+                    },
+
+                    body: formData
+                }
+            );
+
+            const data = await response.json();
+
+            // ----------------------------------------------------
+            // Backend error
+            // ----------------------------------------------------
+
+            if (!response.ok || !data.success) {
+
+                throw new Error(
+                    data.message ||
+                    "Similarity check failed."
+                );
+            }
+
+            // ----------------------------------------------------
+            // No similar questions
+            // ----------------------------------------------------
+
+            if (!data.has_similar) {
+
+                similarityResult.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>✓ No Similar Questions Found</strong>
+                        <br>
+                        This question does not appear to be
+                        similar to an existing question.
+                    </div>
+                `;
+
+            }
+
+            // ----------------------------------------------------
+            // Similar questions found
+            // ----------------------------------------------------
+
+            else {
+
+                let html = `
+                    <div class="alert alert-warning">
+                        <strong>⚠ Similar Questions Found</strong>
+                        <br>
+                        The following questions may be similar:
+                    </div>
+
+                    <div class="list-group">
+                `;
+
+                data.matches.forEach(function (match) {
+
+                    html += `
+                        <div class="list-group-item">
+                            ${match.question_text || match.question || ""}
+                        </div>
+                    `;
+
+                });
+
+                html += `
+                    </div>
+                `;
+
+                similarityResult.innerHTML = html;
+            }
+
+            similarityResult.classList.remove("d-none");
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Similarity check error:",
+                error
+            );
+
+            similarityResult.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Similarity Check Failed</strong>
+                    <br>
+                    ${error.message}
+                </div>
+            `;
+
+            similarityResult.classList.remove("d-none");
+        }
+
+        finally {
+
+            similarityLoading.classList.add("d-none");
+
+            checkSimilarityBtn.disabled = false;
+        }
+
+    });
+
+});
